@@ -1,0 +1,10 @@
+^C:\USERS\ZHAOQ\DESKTOP\STUDY\GITHUB\6DOF_ROBOT\BUILD\CMAKEFILES\D92F42AE041DA86A0DB7019015450CEA\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/Test.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
