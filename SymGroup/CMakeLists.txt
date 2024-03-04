@@ -1,0 +1,1 @@
+add_library(SymGroup SymGroup.h SymGroup.cpp)
