@@ -1,8 +1,8 @@
-# Install script for directory: C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/Interval
+# Install script for directory: C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Interval
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/Test")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/SE3")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

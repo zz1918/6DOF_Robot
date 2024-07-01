@@ -22,7 +22,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{DC99F8A3-2EE6-3D4E-B1F4-E22F276798A5}</ProjectGuid>
+    <ProjectGuid>{CB5DDDD9-6196-35CB-9934-53A62046B1BB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
@@ -59,19 +59,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Interval.dir\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Interval</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\Release\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Interval.dir\Release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Interval</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\MinSizeRel\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Interval.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Interval</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\RelWithDebInfo\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Interval.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Interval</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
@@ -204,11 +204,11 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval\CMakeLists.txt">
+    <CustomBuild Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Interval\CMakeLists.txt">
       <UseUtf8Encoding>Always</UseUtf8Encoding>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/Interval/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Interval/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/Interval/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/Interval/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -217,11 +217,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/Interval/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Interval/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/Interval/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/Interval/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -230,11 +230,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/Interval/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Interval/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/Interval/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/Interval/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -243,11 +243,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/Interval/CMakeLists.txt</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Interval/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/Interval/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/Interval/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -256,17 +256,17 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval\interval.h" />
-    <ClCompile Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval\interval.cpp" />
+    <ClInclude Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Interval\interval.h" />
+    <ClCompile Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Interval\interval.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\ZERO_CHECK.vcxproj">
-      <Project>{078EB928-BB43-3E65-9677-93DAF7B65EE0}</Project>
+    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\ZERO_CHECK.vcxproj">
+      <Project>{C326051E-2322-31A0-9980-20F950854E7B}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

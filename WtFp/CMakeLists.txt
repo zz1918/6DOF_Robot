@@ -1,0 +1,21 @@
+add_library(WtFp WtFp.h WtFp.cpp)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+target_link_libraries(WtFp PUBLIC Eigen3::Eigen)
+
+if (NOT TARGET Interval)
+	add_subdirectory("../Interval" Interval)
+endif()
+target_link_libraries(WtFp PUBLIC Interval)
+target_include_directories(WtFp PUBLIC "../Interval")
+
+if (NOT TARGET SO3)
+	add_subdirectory("../SO3" SO3)
+endif()
+target_link_libraries(WtFp PUBLIC SO3)
+target_include_directories(WtFp PUBLIC "../SO3")
+
+if (NOT TARGET Solid)
+	add_subdirectory("../Solid" Solid)
+endif()
+target_link_libraries(WtFp PUBLIC Solid)
+target_include_directories(WtFp PUBLIC "../Solid")

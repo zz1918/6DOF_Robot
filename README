@@ -1,1 +1,8 @@
 This is the project for SSS framework on 6DOF robot.
+
+To compile this file, please follow these steps:
+
+mkdir build
+cd build
+cmake ../main
+cmake --build .

@@ -435,3 +435,9 @@ public:
         }
     }
 };
+
+class SE3Tree
+{
+    R3Tree* p;
+    SO3Tree* q;
+};

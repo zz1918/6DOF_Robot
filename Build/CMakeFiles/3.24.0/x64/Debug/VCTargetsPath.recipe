@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\CMakeFiles\3.24.0\x64\Debug\VCTargetsPath</FullPath>
+      <FullPath>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\CMakeFiles\3.24.0\x64\Debug\VCTargetsPath</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

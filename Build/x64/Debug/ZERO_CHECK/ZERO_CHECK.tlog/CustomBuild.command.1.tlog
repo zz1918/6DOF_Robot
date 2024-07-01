@@ -1,6 +1,6 @@
-^C:\USERS\ZHAOQ\DESKTOP\STUDY\GITHUB\6DOF_ROBOT\BUILD\CMAKEFILES\D92F42AE041DA86A0DB7019015450CEA\GENERATE.STAMP.RULE
+^C:\USERS\ZHAOQ\DESKTOP\STUDY\GITHUB\6DOF_ROBOT\BUILD\CMAKEFILES\E13D16B3B35ED9412EACFF69B45BBA77\GENERATE.STAMP.RULE
 setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/Test.sln
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/SE3.sln
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone

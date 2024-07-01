@@ -332,6 +332,10 @@ public:
                     return false;
         return true;
     }
+    bool ncontains(Matrix<Scarlar, 1, -1> X)
+    {
+        return !contains(X);
+    }
     bool is_include(MatrixInterval<Scarlar> M)
     {
         if (rows() != M.rows())
@@ -355,6 +359,18 @@ public:
                 if ((inf(i, j) < M.min()(i, j)) || (sup(i, j) > M.max()(i, j)))
                     return false;
         return true;
+    }
+    bool intersects(MatrixInterval<Scarlar> M)
+    {
+        if (rows() != M.rows())
+            return false;
+        if (cols() != M.cols())
+            return false;
+        for (Index i = 0; i < rows(); ++i)
+            for (Index j = 0; j < cols(); ++j)
+                if ((inf(i, j) <= M.max()(i, j)) || (sup(i, j) >= M.min()(i, j)))
+                    return true;
+        return false;
     }
     MatrixInterval<Scarlar> block(int startRow, int startCol, int blockRow, int blockCol)
     {

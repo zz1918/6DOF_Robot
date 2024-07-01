@@ -2,7 +2,7 @@
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/Test")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/SE3")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -34,11 +34,11 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/Interval/cmake_install.cmake")
+  include("C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/Interval/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/SymGroup/cmake_install.cmake")
+  include("C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/SymGroup/cmake_install.cmake")
 endif()
 

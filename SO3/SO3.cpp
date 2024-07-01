@@ -1,9 +1,10 @@
 // This file define the class SO3 and its transformations.
-# define M_PI           3.14159265358979323846  /* pi */
+#define M_PI           3.14159265358979323846       /* pi */
 #include<Eigen/Dense>
 using namespace Eigen;
 
-Matrix3d adv(Vector3d v)                            // 3d Vector Lie Bracket.
+// 3d Vector Lie Bracket.
+Matrix3d adv(Vector3d v)
 {
     Matrix3d Adv;
     Adv << 0, -v(2), v(1),
@@ -27,12 +28,14 @@ public:
         assert(_q.norm() > 0);
         V = _q;
     }
-    SO3(Vector4d _q)                                                // Construct from R^4 vector.
+    // Construct from R^4 vector.
+    SO3(Vector4d _q)
     {
         assert(_q.norm() > 0);
         V = _q;
     }
-    SO3(Matrix3d _r)                                                    // Construct from Orthogonal Matrix.
+    // Construct from Orthogonal Matrix.
+    SO3(Matrix3d _r)
     {
         assert((_r.transpose() * _r).isApprox(Matrix3d::Identity()));   // Check if it is orthogonal.
         if (_r.isApprox(Matrix3d::Identity()))                          // If it is identity matrix.
@@ -45,7 +48,8 @@ public:
         double sin_theta = -(_r - Matrix3d::Identity() - (1 - cos_theta) * adv(v) * adv(v))(0, 1) / v(2);
         V = Vector4d((1 + cos_theta) / sin_theta, v(0), v(1), v(2));    // a=cot(theta/2).
     }
-    SO3(Vector3d v, double theta)                                       // Construct from Axis and Angle.
+    // Construct from Axis and Angle.
+    SO3(Vector3d v, double theta)
     {
         assert(v.norm() > 0 && theta <= M_PI && theta > -M_PI);
         if (theta == 0)
@@ -53,11 +57,13 @@ public:
         else
             V = Vector4d(1 / tan(theta / 2), v(0), v(1), v(2));
     }
-    Vector4d Q()                                                    // Quaternion representation.
+    // Quaternion representation.
+    Vector4d Q()
     {
         return V.normalized();
     }
-    Matrix3d R()                                                    // Matrix representaiton.
+    // Matrix representaiton.
+    Matrix3d R()
     {
         Vector4d q = Q();
         Matrix3d _R;
@@ -66,17 +72,20 @@ public:
             2 * (q(1) * q(3) - q(0) * q(2)), 2 * (q(2) * q(3) + q(0) * q(1)), 2 * (q(0) * q(0) + q(3) * q(3)) - 1;
         return _R;
     }
-    void Axis_Angle(Vector3d &v,double &theta)                      // Axis - Angle representation.
+    // Axis - Angle representation.
+    void Axis_Angle(Vector3d &v,double &theta)
     {
         v = Vector3d(V(1), V(2), V(3)).normalized();
         theta = 2 * acos(V.normalized()(0));
         if (theta > M_PI)
             theta -= 2 * M_PI;
     }
+    // This SO3 element acts on a vector.
     Vector3d act_on(Vector3d v)
     {
         return R() * v;
     }
+    // If two SO3 elements are the same.
     bool operator==(SO3 _Q)
     {
         Vector4d _V = _Q.Q();

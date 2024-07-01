@@ -1,921 +1,1391 @@
-// This file defines the features and primitives.
-#include<Eigen/Dense>
+// Solid.cpp : This file defines solids and features for collision detections.
+// Features are a type of objects that constructs with their id for recording.
+// Solids can detect if Sep(Solids,Feature)>t? for any feature.
+// Features includes Points, Edges and Triangles which are also solids themselves.
+//
+
+//#include <iostream>
+#include <vector>
+#include <map>
+#include <Eigen/Dense>
+using namespace std;
 using namespace Eigen;
 
-VectorXd Schmit(MatrixXd basis, VectorXd v)
+
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// Help Functions ///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+
+// A help for quadratic equation, collecting roots of a * t^2 + 2 * b * t + c = 0 in [0,1].
+vector<double> quad_root(double a, double b, double c)
 {
-    assert(basis.cols() == v.size());
-    for (int i = 0; i < basis.rows(); ++i)
-        v = v - v.dot(basis.row(i)) * basis.row(i).transpose() / basis.row(i).squarenorm();
-    return v;
+    vector<double> t;
+
+    // delta/4.
+    double delta_4 = b * b - a * c;
+
+    if (delta_4 < 0)
+        return t;
+
+    // Roots: t1 = c / d1 = d2 / a, t2 = c / d2 = d1 / a.
+    double d1 = -b + sqrt(delta_4), d2 = -b - sqrt(delta_4);
+
+    // Assert if 0 <= t1 <= 1, and 0 <= t2 <= 1.
+    double a2 = a * a, c2 = c * c;
+
+    // If |c|<|a|, then we use t1 = d2 / a and t2 = d1 / a.
+    if (abs(c) < abs(a) || (abs(a) == abs(c) && c != 0))
+    {
+        // 0 <= d2 / a <= 1.
+        if (d2 * a >= 0 && d2 * a <= a2)
+            t.push_back(d2 / a);
+        // 0 <= d1 / a <= 1.
+        if (d1 * a >= 0 && d1 * a <= a2)
+            t.push_back(d1 / a);
+    }
+    else if (abs(a) < abs(c))
+    {
+        // 0 <= c/d1 <= 1.
+        if (d1 * c >= c2)
+            t.push_back(c / d1);
+        // 0 <= c/d2 <= 1.
+        if (d2 * c >= c2)
+            t.push_back(c / d2);
+    }
+    else
+        t.push_back(0);
+    return t;
 }
 
-class Feature
+// Plane (x-c).dot(n)=0 for normal vector n, line segment p+t*d for t in [0,1]. If the intersection between algebraic span is not in the segment.
+bool possible_parallels(Vector3d c, Vector3d n, Vector3d p, Vector3d d)
 {
+    double d1 = -(p - c).dot(n), d2 = d.dot(n);
+    return (d1 * d2 >= 0) && (d2 * d2 >= d1 * d2);
+}
+
+// Approximate intersection between (x-c).dot(n)=0 with p+t*d.
+Vector3d PL_int(Vector3d c, Vector3d n, Vector3d p, Vector3d d)
+{
+    double d1 = -(p - c).dot(n), d2 = d.dot(n);
+    return p + (d1 / d2) * d;
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// Declarations ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+class Solid;
+class Feature;
+class Point;
+class Edge;
+class Triangle;
+class Trapezoid;
+class Pyramid;
+class TrafficCone;
+class IceCream;
+
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// Descriptions ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+// A feature is a set that can be compared to.
+class Feature {
 public:
-    virtual bool contains(Vector3d v) = 0;                             // If v is an interior point of the feature.
-    virtual bool intersecting(Solid* S) = 0;
+    int id;
+    static int amount;
+    Feature()
+    {
+        id = amount;
+        amount++;
+    }
 };
 
-class Vertex :public Feature
-{
-    Vector3d V;
+int Feature::amount = 0;
+
+// A solid is a set that can compare to features.
+class Solid {
 public:
-    Vertex()
+    // f in this feature satiesfies Sep(this,f)>t.
+    map<int, double> true_features;
+    // f in this feature satiesfies Sep(this,f)<=t.
+    map<int, double> false_features;
+    // return true and record the result
+    bool true_update(int F_id, double t)
     {
-        V = Vector3d::Zero();
+        map<int, double>::iterator found = true_features.find(F_id);
+        if (found == true_features.end())
+            true_features.insert(make_pair(F_id, t));
+        else if (found->second > t)
+            found->second = t;
+        return true;
     }
-    Vertex(Vector3d v)
+    // return false and record the result
+    bool false_update(int F_id, double t)
     {
-        V = v;
-    }
-    Vector3d cor()
-    {
-        return V;
-    }
-    void set(Vector3d v)
-    {
-        V = v;
-    }
-    double distance(vector3d v)
-    {
-        return (v - V).norm();
-    }
-    double distance(Vertex v)
-    {
-        return distance(v.cor());
-    }
-    bool contains(Vector3d v)
-    {
+        map<int, double>::iterator found = false_features.find(F_id);
+        if (found == false_features.end())
+            false_features.insert(make_pair(F_id, t));
+        else if (found->second <= t)
+            found->second = t;
         return false;
     }
-    bool intersecting(Solid* S);
+    // return true and record the result
+    bool true_update(Feature* f, double t)
+    {
+        return true_update(f->id, t);
+    }
+    // return false and record the result
+    bool false_update(Feature* f, double t)
+    {
+        return false_update(f->id, t);
+    }
+    // If it is recorded false (return true if recorded).
+    bool contains(int F_id, double t)
+    {
+        map<int, double>::iterator found = false_features.find(F_id);
+        return ((found != false_features.end()) && found->second <= t);
+    }
+    // If it is recorded true (return true if recorded).
+    bool ncontains(int F_id, double t)
+    {
+        map<int, double>::iterator found = true_features.find(F_id);
+        return ((found != true_features.end()) && found->second >= t);
+    }
+    // If it is recorded false (return true if recorded).
+    bool contains(Feature* f, double t)                         // If previously Sep(this,f)<=t.
+    {
+        return contains(f->id, t);
+    }
+    // If it is recorded true (return true if recorded).
+    bool ncontains(Feature* f, double t)                        // If previously Sep(this,f)>t.
+    {
+        return ncontains(f->id, t);
+    }
+
+    // If two points are at different sides according to a vector.
+    bool biside(Vector3d dir, Vector3d p, Vector3d q)
+    {
+        return dir.dot(p) * dir.dot(q) < 0;
+    }
+
+    // Sep(this,f)>t?
+    virtual bool Sep(Point* f, double t) = 0;
+    virtual bool Sep(Edge* f, double t) = 0;
+    virtual bool Sep(Triangle* f, double t) = 0;
 };
 
-class Edge :public Feature
-{
-    Matrix<double, 2, 3> V;
+// Point is a feature, which is also a solid.
+class Point :public Feature, public Solid {
 public:
-    Edge()
+    Vector3d p;
+    Point(Vector3d _p)
     {
-        V = Matrix<double, 2, 3>::Zero();
+        p = _p;
     }
-    Edge(Matrix<double, 2, 3> _V)
+    // Vector from this point to vector q.
+    Vector3d direction(Vector3d q)
     {
-        V = _V;
+        return q - p;
     }
-    Edge(Vector3d v_1, Vector3d v_2)
+    // Vector from this point to point feature f.
+    Vector3d direction(Point* f)
     {
-        V.row(0) = v_1;
-        V.row(1) = v_2;
+        return direction(f->p);
     }
-    Vertex vertex(int i)
+    // Macro for direction().
+    Vector3d D(Vector3d q)
     {
-        return Vertex(V.row(i % 2));
+        return direction(q);
     }
-    Vector3d cor(int i)
+    // Macro for direction().
+    Vector3d D(Point* f)
     {
-        return V.row(i % 2);
+        return direction(f);
     }
-    void set(Vector3d v, int i)
+    // Distance from this point to point feature f.
+    double distance(Point* f)
     {
-        V.row(i % 2) = v;
+        return D(f).norm();
     }
-    Vector3d dir()                                                  // Direction vector.
+
+    // Sep(this,f)>t?
+    bool Sep(Point* f, double t = 0)
     {
-        return (V.row(1) - V.row(0)).normalized();
-    }
-    double length()                                                      // Length of the edge.
-    {
-        return (V.row(1) - V.row(0)).norm();
-    }
-    double line_distance(Vertex v)                                       // Line distance to v.
-    {
-        return dir().cross(v.cor().transpose() - cor(0)).norm();
-    }
-    Vertex line_projection(Vertex v)                                     // The projection of v onto this edge.
-    {
-        return Vertex(cor(0) + dir().dot(v.cor().transpose() - cor(0)) * dir().transpose());
-    }
-    double line_distance(Edge e)
-    {
-        if (dir().cross(e.dir()).norm() == 0)                           // Parallel means each point is an intersection.
-            return Schimit(dir().transpose(), e.cor(0) - cor(0)).norm();
-        Vector3d Normal = dir().cross(e.dir()).normalized();
-        return abs(Normal.dot(e.cor(0) - cor(0)));
-    }
-    Vertex line_intersection_projection(Edge e)                         // Nearest point on the line of this edge to line of edge e.
-    {
-        if (dir().cross(e.dir()).norm() == 0)                           // Parallel means each point is an intersection.
-            return Vertex(0);
-        Vector3d Normal = dir().cross(e.dir()).normalized();
-        Vector3d P = e.cor(0) - Normal.dot(e.cor(0) - cor(0)) * Normal.transpose();   // Project e.V(0) onto the plane contains this edge and normal with the Normal.
-        // Find Q such that P-Q=k_1*e.dir() and V.row(0)-Q=k_2*dir().
-        // This is equivalent to that P-V.row(0)=k_1*e.dir()-k_2*dir().
-        // So [e.D(), D(), Normal]*[k_1,-k_2,0]^T=P-V.row(0).
-        Matrix3d Local_Chart;
-        Local_Chart.col(0) = e.dir();
-        Local_Chart.col(1) = dir();
-        Local_Chart.col(2) = Normal;
-        Vector3d Coeff = Local_Chart.inverse() * (P - V.row(0).transpose());
-        return Vertex(P - Coeff(0) * e.dir());
-    }
-    double distance(Vertex v)                                            // Segment distance to v.
-    {
-        if (is_on(line_projection(v)))
-            return line_distance(v);
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (distance(f) > t)
+            return true_update(f, t);
         else
-            return min(vertex(0).distance(v), vertex(1).distance(v));
+            return false_update(f, t);
     }
-    double distance(Edge e)
+    // Sep(this,f)>t?
+    bool Sep(Edge* f, double t = 0);
+    // Sep(this,f)>t?
+    bool Sep(Triangle* f, double t = 0);
+};
+
+// Edge is a feature, which is also a solid.
+// This is actually half-edge.
+class Edge :public Feature,public Solid {
+public:
+    Point* Boundary[2];
+    Edge* inv;
+    Vector3d the_direction;
+    Edge(Vector3d p, Vector3d q)
     {
-        Vertex v = line_intersection_projection(e);
-        if (is_on(v))
-            return e.distance(v);
-        else
-            return min(e.distance(vertex(0)), e.distance(vertex(1)));
+        Boundary[0] = new Point(p);
+        Boundary[1] = new Point(q);
+        the_direction = direction();
+        inv = NULL;
     }
-    bool contains(Vector3d v)                                           // Point never inside the interior of edge.
+    Edge(Point* f, Point* g)
     {
+        Boundary[0] = f;
+        Boundary[1] = g;
+        the_direction = direction();
+        inv = NULL;
+    }
+    Edge(Point* f, Point* g,Vector3d dir)
+    {
+        Boundary[0] = f;
+        Boundary[1] = g;
+        the_direction = dir;
+        inv = NULL;
+    }
+
+    // Set the inverse half-edge.
+    void set_inv(Edge* f)
+    {
+        inv = f;
+    }
+
+    // return true and record the result
+    bool true_update(int F_id, double t)
+    {
+        map<int, double>::iterator found = true_features.find(F_id);
+        if (found == true_features.end())
+            true_features.insert(make_pair(F_id, t));
+        else if (found->second > t)
+            found->second = t;
+        if (inv == NULL)
+            return true;
+        // For the edge, we also need to update the inv edges.
+        found = inv->true_features.find(F_id);
+        if (found == inv->true_features.end())
+            inv->true_features.insert(make_pair(F_id, t));
+        else if (found->second > t)
+            found->second = t;
+        return true;
+    }
+    // return false and record the result
+    bool false_update(int F_id, double t)
+    {
+        map<int, double>::iterator found = false_features.find(F_id);
+        if (found == false_features.end())
+            false_features.insert(make_pair(F_id, t));
+        else if (found->second <= t)
+            found->second = t;
+        if (inv == NULL)
+            return false;
+        // For the edge, we also need to update the inv edges.
+        found = inv->false_features.find(F_id);
+        if (found == inv->false_features.end())
+            inv->false_features.insert(make_pair(F_id, t));
+        else if (found->second <= t)
+            found->second = t;
         return false;
     }
-    bool is_on(Vertex v)                                                 // If vertex is on the edge.
+    // return true and record the result
+    bool true_update(Feature* f, double t)
     {
-        return Edge(V.row(0), v.V).length() + Edge(v.V, V.row(1)).length() < length() + num_min;
+        return true_update(f->id, t);
     }
-    bool intersecting(Solid* S);
+    // return false and record the result
+    bool false_update(Feature* f, double t)
+    {
+        return false_update(f->id, t);
+    }
+
+    // The i-th point.
+    Point* P(int i)
+    {
+        return Boundary[i % 2];
+    }
+    // Vector from P(0) to P(1).
+    Vector3d direction()
+    {
+        return P(0)->direction(P(1));
+    }
+    // Macro for direction()
+    Vector3d D()
+    {
+        return the_direction;
+    }
+    // Length of the edge.
+    double length()
+    {
+        return D().norm();
+    }
+
+    //************Point Functions************//
+
+    // Distance between point p and the line of the edge.
+    double line_distance(Vector3d p)
+    {
+        return ((P(0)->D(p)).cross(D())).norm() / length();
+    }
+    // Distance between point feature f and the line of the edge.
+    double line_distance(Point* f)
+    {
+        return line_distance(f->p);
+    }
+
+    // Signature of angle formed by p-P(i)-P(i+1) (positive if and only if it is acute angle)
+    double sgn_angle(Vector3d p, int i)
+    {
+        return P(i)->D(p).dot(P(i)->D(P(i + 1)));
+    }
+    // If the projection of point p on the line of edge is in the interior of edge or not.
+    bool projects_on(Vector3d p)
+    {
+        return (sgn_angle(p, 0) > 0) && (sgn_angle(p, 0) > 0);
+    }
+    // If the projection of point feature f on the line of edge is in the interior of edge or not.
+    bool projects_on(Point* f)
+    {
+        return projects_on(f->p);
+    }
+
+    //************Edge Functions************//
+
+    // Distance between line p-q and the line of the edge.
+    double line_distance(Vector3d p, Vector3d q)
+    {
+        Vector3d Cross = D().cross(p - q);
+        if (Cross.norm() == 0)
+            return line_distance(p);
+        else
+            return Cross.dot(P(0)->D(p)) / Cross.norm();
+    }
+    // Distance between line of point features f,g and the line of the edge.
+    double line_distance(Point* f, Point* g)
+    {
+        return line_distance(f->p, g->p);
+    }
+    // Distance between line of edge feature f and the line of the edge.
+    double line_distance(Edge* f)
+    {
+        return line_distance(f->P(0), f->P(1));
+    }
+
+    // If the projection the line of this edge on line p-q is in the edge p-q or not.
+    bool projects_on(Vector3d p, Vector3d q)
+    {
+        Vector3d Cross = D().cross(p - q);
+
+        // This is the vector perpendicular to the plane constructed by D() and Cross.
+        Vector3d pq_dCross = D().cross(Cross);
+
+        // p and q should be on the two sides of the plane constructed by D() and Cross.
+        return biside(pq_dCross, P(0)->D(p), P(0)->D(q));
+    }
+    // If the projection the line of this edge on line of two point features f and g is in the edge of point features f-g or not.
+    bool projects_on(Point* f, Point* g)
+    {
+        return projects_on(f->p, g->p);
+    }
+    // If the projection of the line of this edge on line of edge feature f is in the edge feature f or not.
+    bool projects_on(Edge* f)
+    {
+        return projects_on(f->P(0), f->P(1));
+    }
+
+    //************Separation Functions************//
+
+    // Interior criterions. Sep(this^\circ,f)>t?
+    bool int_Sep(Point* f, double t)
+    {
+        if (line_distance(f) > t)
+            return true;
+        if (projects_on(f))
+            return false;
+        return true;
+    }
+    bool int_Sep(Edge* f, double t)
+    {
+        if (line_distance(f) > t)
+            return true;
+        if (projects_on(f) && f->projects_on(this))
+            return false;
+        return true;
+    }
+
+    // Sep(this,f)>t?
+    bool Sep(Point* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if ((!P(0)->Sep(f, t)) || (!P(1)->Sep(f, t)))
+            return false_update(f, t);
+        if (int_Sep(f, t))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Edge* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if ((!P(0)->Sep(f, t)) || (!P(1)->Sep(f, t)))
+            return false_update(f, t);
+        if ((!Sep(f->P(0), t)) || (!Sep(f->P(1), t)))
+            return false_update(f, t);
+        if (int_Sep(f, t))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Triangle* f, double t = 0);
 };
 
-class Triangle :public Feature
+bool Point::Sep(Edge* f, double t)
 {
+    return f->Sep(this, t);
+}
+
+// Triangle is a feature, which is also a solid.
+class Triangle : public Feature,public Solid {
 public:
-    Matrix3d V;                                                     // Face set as (0,1,2) by default.
-    Triangle()
+    Point* Corner[3];
+    Edge* Boundary[3];
+    Vector3d the_normal;
+    Triangle(Edge* f, Edge* g, Edge* h)
     {
-        V = Matrix3d::Zero();
+        Boundary[0] = f;
+        Boundary[1] = g;
+        Boundary[2] = h;
+        Corner[0] = f->P(0);
+        Corner[1] = g->P(0);
+        Corner[2] = h->P(0);
+        the_normal = Normal();
     }
-    Triangle(Matrix3d _V)
+
+    // The i-th point.
+    Point* P(int i)
     {
-        V = _V;
+        return Corner[i % 3];
     }
-    Triangle(Vector3d v0, Vector3d v1, Vector3d v2)
+    // The i-th edge.
+    Edge* E(int i)
     {
-        assert((v2 - v0).cross(v1 - v0).norm() > 0);
-        V.row(0) = v0;
-        V.row(1) = v1;
-        V.row(2) = v2;
+        return Boundary[i % 3];
     }
-    Vertex vertex(int i)
-    {
-        return Vertex(V.row(i % 3));
-    }
-    Edge edge(int i)
-    {
-        return Edge(V.row(i % 3), V.row((i + 1) % 3));
-    }
+
+    // Unit normal vector.
     Vector3d Normal()
     {
-        return (V.row(2) - V.row(0)).cross(V.row(1) - V.row(0)).normalized();
+        return E(0)->D().cross(E(1)->D()).normalized();
     }
-    double area()                                                   // Length of the triangle.
+    // Macro for Normal().
+    Vector3d N()
     {
-        return (V.row(2) - V.row(0)).cross(V.row(1) - V.row(0)).norm() / 2;
+        return the_normal;
     }
-    double plane_distance(Vertex v)                                 // Plane distnace to v.
+    // Area of the triangle.
+    double area()
     {
-        return abs(Normal().dot(v.V.transpose() - V.row(0)));
+        return E(0)->D().cross(E(1)->D()).norm() / 2;
     }
-    Vertex plane_projection(Vertex v)                                     // Plane projection of v.
-    {
-        return Vertex(v.V - Normal().dot(v.V.transpose() - V.row(0)) * Normal());
-    }
-    double distance(Vertex v)                                       // Triangle distance to v.
-    {
-        if (is_on(plane_projection(v)))
-            return plane_distance(v);
-        else
-            return min({ edge(0).distance(v),edge(1).distance(v),edge(2).distance(v) });
-    }
-    bool contains(Vector3d v)                                      // Point never inside the interior of triangle.
-    {
-        return false;
-    }
-    bool is_infront(Vector3d v)
-    {
-        return (v.transpose() - V.row(0)).dot((V.row(1) - V.row(0)).cross(V.row(2) - V.row(0))) > 0;
-    }
-    bool is_on(Vertex v)                                            // If vertex is on the triangle.
-    {
-        return Triangle(V.row(0), V.row(1), v.V).area() + Triangle(V.row(0), v.V, V.row(2)).area() + Triangle(v.V, V.row(1), V.row(2)).area() < area() + num_min;
-    }
-    bool intersects(Edge E)
-    {
-        double cos_cross_angle = Normal().dot(E.dir());
-        if (cos_cross_angle == 0)
-            return false;
-        Vector3d intersection = E.V.row(0) - (distance(E.vertex(0)) / cos_cross_angle) * E.dir().transpose();
-        if ((intersection.transpose() - E.V.row(0)).dot(E.V.row(1) - E.V.row(0)) <= 0)
-            return false;
-        if ((intersection.transpose() - E.V.row(1)).dot(E.V.row(0) - E.V.row(1)) <= 0)
-            return false;
-        Matrix3d local_chart;
-        local_chart.row(0) = V.row(1) - V.row(0);
-        local_chart.row(1) = V.row(2) - V.row(0);
-        local_chart.row(2) = intersection.transpose() - V.row(0);
-        Vector3d local_chart_solution = FullPivLU<Matrix3d>(local_chart.transpose()).kernel().col(0).normalized();
-        local_chart_solution = -local_chart_solution / local_chart_solution(2);
-        return (local_chart_solution(0) > 0) && (local_chart_solution(1) > 0) && (local_chart_solution(0) + local_chart_solution(1) < 1);
-    }
-    bool is_line_collide(Edge E)
-    {
-        double cos_cross_angle = Normal().dot(E.dir());
-        if (cos_cross_angle == 0)
-            return false;
-        Vector3d intersection = E.V.row(0) - (distance(E.vertex(0)) / cos_cross_angle) * E.dir().transpose();
-        Matrix3d local_chart;
-        local_chart.row(0) = V.row(1) - V.row(0);
-        local_chart.row(1) = V.row(2) - V.row(0);
-        local_chart.row(2) = intersection.transpose() - V.row(0);
-        Vector3d local_chart_solution = FullPivLU<Matrix3d>(local_chart.transpose()).kernel().col(0).normalized();
-        local_chart_solution = -local_chart_solution / local_chart_solution(2);
-        return (local_chart_solution(0) > 0) && (local_chart_solution(1) > 0) && (local_chart_solution(0) + local_chart_solution(1) < 1);
-    }
-    bool intersecting(Solid* S);
-};
 
-class Mesh :public Feature                                          // Require to be convex.
-{
-    Matrix<double, -1, 3> V;                                        // Vertices
-    Matrix<int, -1, 3> F;                                           // Faces defined by vertices, must sequenced by dir.
-    MatrixXi E;
-public:
-    Mesh()
+    //************Point Functions************//
+
+    // Distance between point p and the plane of the triangle.
+    double plane_distance(Vector3d p)
     {
-        E.resize(0, 0);
+        return abs(P(0)->D(p).dot(N()));
     }
-    Mesh(MatrixXd _V, MatrixXi _F)
+    // Distance between point feature f and the plane of the triangle.
+    double plane_distance(Point* f)
     {
-        assert(_V.cols() == 3);
-        assert(_F.cols() == 3);
-        assert(_F.maxCoeff() < _V.rows());
-        V = _V;
-        F = _F;
-        edges(F, E);
+        return plane_distance(f->p);
     }
-    int V_size()
+
+    // Signature of dihedral angle formed by p-(P(i)P(i+1))-P(i+2) (positive if and only if it is acute angle)
+    double sgn_angle(Vector3d p, int i)
     {
-        return V.rows();
+        return (P(i)->D(p).cross(E(i)->D())).dot(P(i)->D(P(i + 2)).cross(E(i)->D()));
     }
-    int E_size()
+    // If the projection of point p on the plane of the triangle is in the interior of triangle or not.
+    bool projects_on(Vector3d p)
     {
-        return E.rows();
+        return (sgn_angle(p, 0) > 0) && (sgn_angle(p, 1) > 0) && (sgn_angle(p, 2) > 0);
     }
-    int F_size()
+    // If the projection of point feature f on the plane of the triangle is in the interior of triangle or not.
+    bool projects_on(Point* f)
     {
-        return F.rows();
+        return projects_on(f->p);
     }
-    Vertex vertex(int i)
+
+
+    //************Edge Functions************//
+
+    // The case edge f cannot reach the plane of this within the range of f.
+    bool separate_to(Edge* f)
     {
-        return Vertex(V.row(i % V.rows()));
-    } 
-    Edge edge(int i)
-    {
-        return Edge(V.row(E(i % E.rows(), 0)), V.row(E(i % E.rows(), 1)));
+        return possible_parallels(P(0)->p, N(), f->P(0)->p, f->D());
     }
-    Triangle Face(int i)                                            // Defines a face.
+
+    // Approximate intersection between line from p towards dir and the plane of triangle.
+    Vector3d intersection(Vector3d p, Vector3d dir)
     {
-        return Triangle(V.row(F(i % F.rows(), 0)), V.row(F(i % F.rows(), 1)), V.row(F(i % F.rows(), 2)));
+        return PL_int(P(0)->p, N(), p, dir);
     }
-    bool contains(Vector3d v)                                      // Normal vector towards outside, require mesh to be convex.
+    // Approximate intersection between line of f and the plane of triangle.
+    Vector3d intersection(Edge* f)
     {
-        for (Index i = 0; i < F.rows(); ++i)
-            if (Face(i).is_infront(v))
-                return false;
+        return PL_int(P(0)->p, N(), f->P(0)->p, f->D());
+    }
+    // If the intersection between the plane of this triangle and the line of p-q is in segment p-q or not.
+    bool projected_on(Vector3d p, Vector3d q)
+    {
+        return biside(N(), P(0)->D(p), P(0)->D(q));
+    }
+    // If the intersection between the plane of this triangle and the line of two point features is in edge formed by the two features or not.
+    bool projected_on(Point* f, Point* g)
+    {
+        return projected_on(f->p, g->p);
+    }
+    // If the intersection between the plane of this triangle and the line of edge f is in f or not.
+    bool projected_on(Edge* f)
+    {
+        return projected_on(f->P(0), f->P(1));
+    }
+    // If the intersection between the line of f and the plane of triangle is in triangle.
+    bool intersects(Edge* f)
+    {
+        return projected_on(f) && projects_on(intersection(f));
+    }
+
+    //************Separation Functions************//
+
+    // Interior criterions. Sep(this^\circ,f)>t?
+    bool int_Sep(Point* f, double t)
+    {
+        if (plane_distance(f) > t)
+            return true;
+        if (projects_on(f))
+            return false;
         return true;
     }
-    bool intersecting(Solid* S);
-};
-
-class Circle                                                    // z'==0, x'^2+y'^2<=r^2, not assuming this as a feature now.
-{
-    Vector3d Center;
-    Vector3d Normal;                                            // Have to be normalized.
-    double Radius;
-    Matrix3d Transition()                                       // Transform x'-y'-z' coordinate to x-y-z coordinate.
+    bool int_Sep(Edge* f, double t)
     {
-        Vector3d new_z = Normal;
-        Vector3d new_x = Vector3d(0, new_z(2), -new_z(1)).normalized();
-        Vector3d new_y = new_z.cross(new_x);
-        Matrix3d trans;
-        trans.col(0) = new_x;
-        trans.col(1) = new_y;
-        trans.col(2) = new_z;
-        return trans;
-    }
-    Matrix3d Inv_Transition;                                    // Transform x-y-z coordinate to x'-y'-z' coordinate.
-    void initialization()
-    {
-        Inv_Transition = Transition().inverse();
-    }
-public:
-    Circle(Vector3d _Center = Vector3d::Zero(), Vector3d _Normal = Vector3d(0, 0, 1), double _Radius = 1)
-    {
-        Center = _Center;
-        Normal = _Normal.normalized();
-        Radius = _Radius;
-        initialization();
-    }
-    Vector3d Local(Vector3d v)                                  // x'-y'-z' coordinate.
-    {
-        return Inv_Transition * (v - Center);
-    }
-    bool intersects(Vertex Phi)
-    {
-        return (Phi.V - Center).dot(Normal) == 0 && (Phi.V - Center).norm() <= Radius;
-    }
-    bool intersects(Edge Phi)                                           // Circle collide with edge.
-    {
-        Edge Local_Phi(Local(Phi.V.row(0)), Local(Phi.V.row(1)));
-        if (Local_Phi.V(0, 2) * Local_Phi.V(1, 2) > 0)
+        if (separate_to(f))
+            return true;
+        if (intersects(f))
             return false;
-        if (Local_Phi.V(0, 2) == Local_Phi.V(1, 2))
-            return Phi.distance(Vertex(Vector3d::Zero())) <= Radius;
-        Vector3d Local_Base = Local_Phi.V.row(0).transpose() - Local_Phi.V(0, 2) / Local_Phi.dir()(2) * Local_Phi.dir();
-        return Local_Base.norm() <= Radius;
+        return true;
     }
-    bool intersects(Triangle Phi)                                       // Circle collide with triangle.
+
+    // Sep(this,f)>t?
+    bool Sep(Point* f, double t = 0)
     {
-        for (Index i = 0; i < 3; ++i)
-            if (intersects(Phi.edge(i)))
-                return true;
-        Triangle Local_Phi(Local(Phi.V.row(0)), Local(Phi.V.row(1)), Local(Phi.V.row(2)));
-        if ((Local_Phi.V(0, 2) * Local_Phi.V(1, 2) > 0) && (Local_Phi.V(0, 2) * Local_Phi.V(2, 2) > 0))
+        if (contains(f, t))
             return false;
-        if (Local_Phi.Normal().cross(Vector3d(0, 0, 1)).norm() == 0)
-            return Local_Phi.is_on(Vertex(Vector3d::Zero()));
-        vector<Vector3d> Local_Inter_Vertex;
-        if (Local_Phi.V(0, 2) * Local_Phi.V(1, 2) < 0)
-            Local_Inter_Vertex.push_back(Local_Phi.V.row(0).transpose() - Local_Phi.V(0, 2) / Local_Phi.edge(0).dir()(2) * Local_Phi.edge(0).dir());
-        if (Local_Phi.V(1, 2) * Local_Phi.V(2, 2) < 0)
-            Local_Inter_Vertex.push_back(Local_Phi.V.row(1).transpose() - Local_Phi.V(1, 2) / Local_Phi.edge(1).dir()(2) * Local_Phi.edge(1).dir());
-        if (Local_Phi.V(2, 2) * Local_Phi.V(0, 2) < 0)
-            Local_Inter_Vertex.push_back(Local_Phi.V.row(2).transpose() - Local_Phi.V(2, 2) / Local_Phi.edge(2).dir()(2) * Local_Phi.edge(2).dir());
-        if (Local_Phi.V(0, 2) == 0)
-            Local_Inter_Vertex.push_back(Local_Phi.V.row(0));
-        if (Local_Phi.V(1, 2) == 0)
-            Local_Inter_Vertex.push_back(Local_Phi.V.row(1));
-        if (Local_Phi.V(2, 2) == 0)
-            Local_Inter_Vertex.push_back(Local_Phi.V.row(2));
-        if (Local_Inter_Vertex.size() != 2)                     // Triangle intersecting plane x'-O'-y' singularly.
-            return false;
-        return Edge(Local_Inter_Vertex[0], Local_Inter_Vertex[1]).distance(Vertex(Vector3d::Zero())) <= Radius;
-    }
-};
-
-/*------------------------------Semi-Algebraic Sets Methods------------------------------*/
-// CSG
-
-class Solid                                                     // General class of closed convex semi-algebraic set.
-{
-public:
-    virtual bool intersects(Vertex Phi, double d = 0) = 0;          // Define virtual function for collision detections with vertex feature.
-    virtual bool intersects(Edge Phi, double d = 0) = 0;            // Define virtual function for collision detections with edge feature.
-    virtual bool intersects(Triangle Phi, double d = 0) = 0;        // Define virtual function for collision detections with triangle feature.
-    virtual bool intersects(Mesh Phi, double d = 0) = 0;            // Define virtual function for collision detections with convex mesh feature.
-    virtual Vector3d interior_sample() = 0;                         // Define virtual function for FREE/STUCK detection.
-};
-
-bool Vertex::intersecting(Solid* S, double d = 0)
-{
-    return S->intersects(*this, d);
-}
-bool Edge::intersecting(Solid* S, double d = 0)
-{
-    return S->intersects(*this, d);
-}
-bool Triangle::intersecting(Solid* S, double d = 0)
-{
-    return S->intersects(*this, d);
-}
-bool Mesh::intersecting(Solid* S, double d = 0)
-{
-    return S->intersects(*this, d);
-}
-
-class Union_Alge :public Solid                                  // This union requires to be still convex.
-{
-    vector<Solid*> Primitive;
-public:
-    Union_Alge() {};
-    void add(Solid* Alge)
-    {
-        Primitive.push_back(Alge);
-    }
-    bool intersects(Vertex Phi, double d = 0)
-    {
-        for (Index i = 0; i < Primitive.size(); ++i)
-            if (Primitive[i]->intersects(Phi, d))
-                return true;
-        return false;
-    }
-    bool intersects(Edge Phi, double d = 0)
-    {
-        for (Index i = 0; i < Primitive.size(); ++i)
-            if (Primitive[i]->intersects(Phi, d))
-                return true;
-        return false;
-    }
-    bool intersects(Triangle Phi, double d = 0)
-    {
-        for (Index i = 0; i < Primitive.size(); ++i)
-            if (Primitive[i]->intersects(Phi, d))
-                return true;
-        return false;
-    }
-    bool intersects(Mesh Phi, double d = 0)
-    {
-        for (Index i = 0; i < Primitive.size(); ++i)
-            if (Primitive[i]->intersects(Phi, d))
-                return true;
-        return false;
-    }
-    Vector3d interior_sample()
-    {
-        return Primitive[0]->interior_sample();
-    }
-};
-
-class RPrism : public Solid                                 // This is the class for our specialized restricted-prism primitive.
-{                                                           // It is constructed by connecting two triangles with paralleled edges.
-    Matrix3d Centers;                                       // Center triangle, which is the mirror plane.
-    double half_length[3];                                  // The half of length of the three paralleled edges.
-public:
-    RPrism()
-    {
-        Centers = Matrix3d::Zero();
-        half_length[0] = 0;
-        half_length[1] = 0;
-        half_length[2] = 0;
-    }
-    RPrism(Vector3d v1, Vector3d v2, Vector3d v3, double l1, double l2, double l3)
-    {
-        Centers.row(0) = v1;
-        Centers.row(1) = V2;
-        Centers.row(2) = v3;
-        half_length[0] = l1;
-        half_length[1] = l2;
-        half_length[2] = l3;
-    }
-    bool intersects(Vertex Phi, double d = 0)
-    {
-        return false;
-    }
-    bool intersects(Edge Phi, double d = 0)
-    {
-        return false;
-    }
-    bool intersects(Triangle Phi, double d = 0)
-    {
-        return false;
-    }
-    bool intersects(Mesh Phi, double d = 0)
-    {
-        return false;
-    }
-    Vector3d interior_sample()
-    {
-        return (Centers.row(0) + Centers.row(1) + Centers.row(2)) / 3;
-    }
-};
-
-class Ball :public Solid
-{
-    Vector3d Center;
-    double radius;
-public:
-    Ball(Vector3d _The_Vertex = Vector3d::Zero(), double _r = 1.0)
-    {
-        Center = Vector3d(0, 0, 0);
-        radius = 1;
-    }
-    bool intersects(Vertex Phi, double d = 0)
-    {
-        return false;
-    }
-    bool intersects(Edge Phi, double d = 0)
-    {
-        return false;
-    }
-    bool intersects(Triangle Phi, double d = 0)
-    {
-        return false;
-    }
-    bool intersects(Mesh Phi, double d = 0)
-    {
-        return false;
-    }
-    Vector3d interior_sample()
-    {
-        return Center;
-    }
-};
-
-class Cone :public Solid                                    // Cone x'^2+y'^2-k^2z'^2<=0, z'>=0, z'<=d.
-{
-    Vector3d The_Vertex;
-    Vector3d Bottom_Center;
-    double Bottom_Radius;
-    Matrix3d Inv_Transition;                                    // Transform x-y-z coordinate to x'-y'-z' coordinate.
-    Edge Axis;
-    double k, d;
-    Matrix3d Transition()                                       // Transform x'-y'-z' coordinate to x-y-z coordinate.
-    {
-        Vector3d new_z = (Bottom_Center - The_Vertex).normalized();     // Coordinate of z' under x-y-z coordinate.
-        Vector3d new_x = Vector3d(new_z(2), 0, -new_z(0));
-        if (new_x == Vector3d::Zero())
-            new_x = Vector3d(1, 0, 0);
+        if (ncontains(f, t))
+            return true;
+        for (int i = 0; i < 3; ++i)
+            if (!E(i)->Sep(f, t))
+                return false_update(f, t);
+        if (int_Sep(f, t))
+            return true_update(f, t);
         else
-            new_x = new_x.normalized();
-        Vector3d new_y = new_z.cross(new_x);
-        Matrix3d trans;
-        trans.col(0) = new_x;
-        trans.col(1) = new_y;
-        trans.col(2) = new_z;
-        return trans;
+            return false_update(f, t);
     }
-    void initialization()
+    // Sep(this,f)>t?
+    bool Sep(Edge* f, double t = 0)
     {
-        Axis = Edge(The_Vertex, Bottom_Center);
-        Inv_Transition = Transition().inverse();
-        d = Axis.length();
-        k = Bottom_Radius / d;
-    }
-public:
-    Cone(Vector3d _The_Vertex = Vector3d::Zero(), Vector3d _Bottom_Center = Vector3d(0, 0, 1), double _Bottom_Radius = 1)
-    {
-        assert(!_The_Vertex.isApprox(_Bottom_Center));
-        assert(_Bottom_Radius > 0);
-        The_Vertex = _The_Vertex;
-        Bottom_Center = _Bottom_Center;
-        Bottom_Radius = _Bottom_Radius;
-        initialization();
-    }
-    Vector3d Local(Vector3d v)                                  // x'-y'-z' coordinate.
-    {
-        return Inv_Transition * (v - The_Vertex);
-    }
-    bool intersects(Vertex Phi)
-    {
-        Vertex Proj_Phi = Axis.line_projection(Phi);
-        return (Axis.is_on(Proj_Phi)) && (Axis.line_distance(Phi) <= k * Edge(The_Vertex, Proj_Phi.V).length());
-    }
-    bool intersects(Edge Phi)                                   // Solve x'^2+y'^2-k^2z'^2==0 && (x'-x'_0)/A'==(y'-y'_0)/B'==(z'-z'_0)/C' and check if 0<=z'<=d and z' is between endpoints of edge.
-    {
-        //if (Circle(Bottom_Center, Axis.dir(), Bottom_Radius).intersects(Phi)) // If the edge collides with bottom circle.
-        //    return true;
-        if (intersects(Phi.vertex(0)) || intersects(Phi.vertex(1)))
-            return true;
-        Vector3d Local_V_0 = Local(Phi.V.row(0));
-        Vector3d Local_V_1 = Local(Phi.V.row(1));
-        double low_seg_bound = min(Local_V_0(2), Local_V_1(2));
-        double up_seg_bound = max(Local_V_0(2), Local_V_1(2));
-        Vector3d Local_Base = Local_V_0;
-        Vector3d Local_dir = Edge(Local_V_0, Local_V_1).dir();
-        if (Local_dir(2) == 0)                            // Edge perpendicular to axis.
-            return Local_Base(2) >= 0 && Local_Base(2) <= d && Edge(Local_V_0, Local_V_1).distance(Vertex(Vector3d(0, 0, Local_Base(2)))) <= k * Local_Base(2);
-        Local_dir = Local_dir / Local_dir(2); // Set C'=1.
-        Local_Base = Local_Base - Local_Base(2) / Local_dir(2) * Local_dir; // Set z'_0=0.
-        // x'=x'_0+A'z', y'=y'_0+B'z'.
-        // x'^2+y'^2-k^2z'^2=(x'_0+A'z')^2+(y'_0+B'z')^2-k^2z'^2=(A'^2+B'^2-k^2)z'^2+2(A'x'_0+B'y'_0)z'+(x'_0^2+y'_0^2).
-        // Solve (A'^2+B'^2-k^2)z'^2+2(A'x'_0+B'y'_0)z'+(x'_0^2+y'_0^2)==0.
-        double Coeff_0 = Local_dir.squaredNorm() - squa(k) - 1;
-        double Coeff_1 = 2 * Local_Base.dot(Local_dir);
-        double Coeff_2 = Local_Base.squaredNorm();
-        if (Coeff_0 == 0)
-        {
-            if (Coeff_1 == 0)
-                return squa(Local_dir(0)) + squa(Local_dir(1)) == 0;
-            double solu_z = -Coeff_2 / Coeff_1;
-            return (solu_z >= 0 && solu_z <= d && solu_z >= low_seg_bound && solu_z <= up_seg_bound);
-        }
-        double Delta = squa(Coeff_1) - 4 * Coeff_0 * Coeff_2;
-        if (Delta < 0)
+        if (contains(f, t))
             return false;
-        double solu_z_1 = (-Coeff_1 + sqrt(Delta)) / (2 * Coeff_0);
-        double solu_z_2 = (-Coeff_1 - sqrt(Delta)) / (2 * Coeff_0);
-        // Check if exists 0<=z'<=d and z' is between endpoints of edge.
-        return (solu_z_1 >= 0 && solu_z_1 <= d && solu_z_1 >= low_seg_bound && solu_z_1 <= up_seg_bound) || (solu_z_2 >= 0 && solu_z_2 <= d && solu_z_2 >= low_seg_bound && solu_z_2 <= up_seg_bound);
-    }
-    bool intersects(Triangle Phi)
-    {
-        // Collide with the boundary of Phi.
-        for (Index i = 0; i < 3; ++i)
-            if (intersects(Phi.edge(i)))
-                return true;
-        // Collide purely with the interior of Phi.
-        // Since the Gaussian curvature of cone is 0, Phi cannot collide "tangently" with cone.
-        // So only need to check the finite conditions.
-        // Case 1: Phi crosses over the cone.
-        if (Phi.intersects(Axis))
+        if (ncontains(f, t))
             return true;
-        // Case 2: Phi crosses the bottom circle.
-        if (Circle(Bottom_Center, Axis.dir(), Bottom_Radius).intersects(Phi))
-            return true;
-        // Otherwise, Phi cannot collide with cone.
-        return false;
-    }
-    bool intersects(Mesh Phi)
-    {
-        for (Index i = 0; i < Phi.F_size(); ++i)
-            if (intersects(Phi.Face(i)))
-                return true;
-        return false;
-    }
-    Vector3d interior_sample()
-    {
-        return (The_Vertex + Bottom_Center) / 2;
-    }
-};
-
-class Cylinder :public Solid                                // Cone x'^2+y'^2-r^2<=0, z'>=-d, z'<=d.
-{
-    Vector3d Bottom_Center[2];
-    double Bottom_Radius;
-    Edge Axis;
-    double d;
-    Matrix3d Inv_Transition;                                    // Transform x-y-z coordinate to x'-y'-z' coordinate.
-    Matrix3d Transition()                                       // Transform x'-y'-z' coordinate to x-y-z coordinate.
-    {
-        Vector3d new_z = (Bottom_Center[0] - Bottom_Center[1]).normalized();     // Coordinate of z' under x-y-z coordinate.
-        Vector3d new_x = Vector3d(new_z(2), 0, -new_z(0));
-        if (new_x == Vector3d::Zero())
-            new_x = Vector3d(1, 0, 0);
-        else
-            new_x = new_x.normalized();
-        Vector3d new_y = new_z.cross(new_x);
-        Matrix3d trans;
-        trans.col(0) = new_x;
-        trans.col(1) = new_y;
-        trans.col(2) = new_z;
-        return trans;
-    }
-    void initialization()
-    {
-        Axis = Edge(Bottom_Center[0], Bottom_Center[1]);
-        Inv_Transition = Transition().inverse();
-        d = Axis.length() / 2;
-    }
-public:
-    Cylinder(Vector3d _The_Vertex = Vector3d(0, 0, -1), Vector3d _Bottom_Center = Vector3d(0, 0, 1), double _Bottom_Radius = 1)
-    {
-        assert(!_The_Vertex.isApprox(_Bottom_Center));
-        assert(_Bottom_Radius > 0);
-        Bottom_Center[0] = _The_Vertex;
-        Bottom_Center[1] = _Bottom_Center;
-        Bottom_Radius = _Bottom_Radius;
-        initialization();
-    }
-    Vector3d Local(Vector3d v)                                  // x'-y'-z' coordinate.
-    {
-        return Inv_Transition * (v - (Bottom_Center[0] + Bottom_Center[1]) / 2);
-    }
-    bool intersects(Vertex Phi)
-    {
-        Vector3d Local_Phi = Local(Phi.V);
-        return squa(Local_Phi(0)) + squa(Local_Phi(1)) <= squa(Bottom_Radius) && Local_Phi(2) >= -d && Local_Phi(2) <= d;
-    }
-    bool intersects(Edge Phi)                                   // Solve x'^2+y'^2-r^2==0 && (x'-x'_0)/A'==(y'-y'_0)/B'==(z'-z'_0)/C' and check if 0<=z'<=d and z' is between endpoints of edge.
-    {
-        if (intersects(Phi.vertex(0)) || intersects(Phi.vertex(1)))
-            return true;
-        if (Circle(Bottom_Center[0], Axis.dir(), Bottom_Radius).intersects(Phi)) // If the edge collides with bottom circle (go through two bottoms).
-            return true;
-        Vector3d Local_V_0 = Local(Phi.V.row(0));
-        Vector3d Local_V_1 = Local(Phi.V.row(1));
-        double low_seg_bound = min(Local_V_0(2), Local_V_1(2));
-        double up_seg_bound = max(Local_V_0(2), Local_V_1(2));
-        Vector3d Local_Base = Local_V_0;
-        Vector3d Local_dir = Edge(Local_V_0, Local_V_1).dir();
-        if (Local_dir(2) == 0)                            // Edge perpendicular to axis.
-            return Local_Base(2) >= -d && Local_Base(2) <= d && Edge(Local_V_0, Local_V_1).distance(Vertex(Vector3d(0, 0, Local_Base(2)))) <= Bottom_Radius;
-        Local_dir = Local_dir / Local_dir(2); // Set C'=1.
-        Local_Base = Local_Base - Local_Base(2) / Local_dir(2) * Local_dir; // Set z'_0=0.
-        // x'=x'_0+A'z', y'=y'_0+B'z'.
-        // x'^2+y'^2-r^2=(x'_0+A'z')^2+(y'_0+B'z')^2-r^2=(A'^2+B'^2)z'^2+2(A'x'_0+B'y'_0)z'+(x'_0^2+y'_0^2-r^2).
-        // Solve (A'^2+B'^2)z'^2+2(A'x'_0+B'y'_0)z'+(x'_0^2+y'_0^2-r^2)==0.
-        double Coeff_0 = Local_dir.squaredNorm() - 1;
-        double Coeff_1 = 2 * Local_Base.dot(Local_dir);
-        double Coeff_2 = Local_Base.squaredNorm() - squa(Bottom_Radius);
-        if (Coeff_0 == 0)
-        {
-            if (Coeff_1 == 0)
-                return squa(Local_dir(0)) + squa(Local_dir(1)) == 0;
-            double solu_z = -Coeff_2 / Coeff_1;
-            return (solu_z >= 0 && solu_z <= d && solu_z >= low_seg_bound && solu_z <= up_seg_bound);
-        }
-        double Delta = squa(Coeff_1) - 4 * Coeff_0 * Coeff_2;
-        if (Delta < 0)
-            return false;
-        double solu_z_1 = (-Coeff_1 + sqrt(Delta)) / (2 * Coeff_0);
-        double solu_z_2 = (-Coeff_1 - sqrt(Delta)) / (2 * Coeff_0);
-        // Check if exists 0<=z'<=d and z' is between endpoints of edge.
-        return (solu_z_1 >= -d && solu_z_1 <= d && solu_z_1 >= low_seg_bound && solu_z_1 <= up_seg_bound) || (solu_z_2 >= -d && solu_z_2 <= d && solu_z_2 >= low_seg_bound && solu_z_2 <= up_seg_bound);
-    }
-    bool intersects(Triangle Phi)
-    {
-        // Collide with the boundary of Phi.
-        for (Index i = 0; i < 3; ++i)
-            if (intersects(Phi.edge(i)))
-                return true;
-        // Collide purely with the interior of Phi.
-        // Since the Gaussian curvature of cylinder is 0, Phi cannot collide "tangently" with cylinder.
-        // So only need to check the finite conditions.
-        // Case 1: Phi crosses over the cylinder.
-        if (Phi.intersects(Axis))
-            return true;
-        // Case 2: Phi crosses the bottom circles.
-        if (Circle(Bottom_Center[0], Axis.dir(), Bottom_Radius).intersects(Phi) || Circle(Bottom_Center[1], Axis.dir(), Bottom_Radius).intersects(Phi))
-            return true;
-        // Otherwise, Phi cannot collide with cylinder.
-        return false;
-    }
-    bool intersects(Mesh Phi)
-    {
-        for (Index i = 0; i < Phi.F_size(); ++i)
-            if (intersects(Phi.Face(i)))
-                return true;
-        return false;
-    }
-    Vector3d interior_sample()
-    {
-        return (Bottom_Center[0] + Bottom_Center[1]) / 2;
-    }
-};
-
-class Frustum :public Solid
-{
-
-};
-
-// Box3
-
-/*-------------------------------These parts are abandoned-------------------------------*/
-
-class Half_Plane :public Solid                                  // v^Tx+c <= 0 
-{
-public:
-    Vector3d v;
-    double c;
-    Half_Plane(Vector3d _v = Vector3d(0, 0, 1), double _c = 0)
-    {
-        assert(_v.norm() > 0);
-        v = _v;
-        c = _c;
-    }
-    bool intersects(Vertex Phi)
-    {
-        return v.dot(Phi.V) + c <= 0;
-    }
-    bool intersects(Edge Phi)
-    {
+        for (int i = 0; i < 3; ++i)
+            if (!E(i)->Sep(f, t))
+                return false_update(f, t);
         for (int i = 0; i < 2; ++i)
-            if (v.dot(Phi.V.row(i)) + c <= 0)
-                return true;
-        return false;
+            if ((!Sep(f->P(i), t)))
+                return false_update(f, t);
+        if (int_Sep(f, t))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
     }
-    bool intersects(Triangle Phi)
+    // Sep(this,f)>t?
+    bool Sep(Triangle* f, double t = 0)
     {
         for (int i = 0; i < 3; ++i)
-            if (v.dot(Phi.V.row(i)) + c <= 0)
-                return true;
-        return false;
-    }
-    bool intersects(Mesh Phi)
-    {
-        for (int i = 0; i < Phi.V_size(); ++i)
-            if (v.dot(Phi.vertex(i).V) + c <= 0)
-                return true;
-        return false;
-    }
-    Vector3d interior_sample()
-    {
-        return -((c + 1) / v.squaredNorm()) * v;
+            if (!E(i)->Sep(f, t))
+                return false_update(f, t);
+        for (int i = 0; i < 3; ++i)
+            if (!Sep(f->E(i), t))
+                return false_update(f, t);
+        return true_update(f, t);
     }
 };
 
+bool Point::Sep(Triangle* f, double t)
+{
+    return f->Sep(this, t);
+}
 
-// Algebraic operations for general convex quadratic algebraic-sets is testing now.
+bool Edge::Sep(Triangle* f, double t)
+{
+    return f->Sep(this, t);
+}
 
-#define type_emptyset 0                                             // Empty set.
-#define type_ellipse 1                                              // Ellipse or Point (have to contain center in order to be convex).
-#define type_cone 2                                                 // Cone (have to contain axis in order to be convex).
-#define type_hyperboloid_2 3                                        // Hperbloid of Two-Sheets (have not to contain center in order to be convex).
-#define type_whole_space 4                                          // Whole space.
-#define type_hyperboloid_1 -1                                       // Hyperbloid of One-Sheet (this will never form a convex set).
-#define type_non_convex -1                                          // Non-convex cases.
-#define type_impossible -1                                          // For default.
+// The segment solid is now merged into the edge (which is a solid as well as a feature).
 
-class Quadratic :public Solid                                   // x^TAx+2b^Tx+c<=0 for irreducible symmetric A.
-{                                                                   // This class includes ellipses, hyperboloids and cones.
-    Vector4d eigens()                                               // Coefficients for standard form ax^2+by^2+cz^2+d
-    {
-        Vector3cd eigen_A = A.eigenvalues();
-        return Vector4d(eigen_A(0).real(), eigen_A(1).real(), eigen_A(2).real(), c + b.dot(Center()));
-    }
-    int type()                                                      // Check the type of the irreducible quadratic set.
-    {
-        int positive_inertia_index = 0;
-        for (Index i = 0; i < 3; ++i)
-            if (Eigens(i) > 0)
-                positive_inertia_index++;
-        switch (positive_inertia_index)
-        {
-        case 0:if (Eigens(3) <= 0) return type_whole_space; else return type_non_convex;
-        case 1:return type_non_convex;
-        case 2:if (Eigens(3) > 0) return type_hyperboloid_2; else if (Eigens(3) < 0)return type_hyperboloid_1; else return type_cone;
-        case 3:if (Eigens(3) > 0) return type_emptyset; else return type_ellipse;
-        default:return type_impossible;
-        }
-    }
-    Vector3d axis()
-    {
-        switch (Type)
-        {
-        case type_ellipse:return FullPivLU<Matrix3d>(A - Eigens(0) * Matrix3d::Identity()).kernel().col(0).normalized();
-        case type_cone:
-        case type_hyperboloid_2:for (Index i = 0; i < 3; ++i)
-            if (Eigens(i) < 0)
-                return FullPivLU<Matrix3d>(A - Eigens(i) * Matrix3d::Identity()).kernel().col(0).normalized();
-        default:return Vector3d(0, 0, 0);
-        }
-    }
+// A trapezoid formed by the 4 corners where p0-p1 \\ p2-p3.
+class Trapezoid :public Solid {
 public:
-    Matrix3d A;
-    Vector3d b;
-    double c;
-    int Type;
-    Vector4d Eigens;
-    Vector3d Axis;
-    Quadratic(Matrix3d _A, Vector3d _b, double _c)
+    Point* Corner[4];
+    Edge* Boundary[4];
+    Vector3d the_normal;
+    Trapezoid(Vector3d p, Vector3d q, Vector3d dir, double l1, double l2)
     {
-        assert(_A.isApprox(_A.transpose()) && _A.determinant() != 0);
-        A = _A;
-        b = _b;
-        c = _c;
-        Eigens = eigens();
-        Type = type();
-        if (Type < 0)
-            cerr << "Warning: Defining a non-convex semi-algebraic set." << endl;
-        if (Type == type_emptyset)
-            cerr << "Warning: Defining an empty semi-algebraic set." << endl;
-        if (Type == type_whole_space)
-            cerr << "Warning: Defining the whole space as a semi-algebraic set." << endl;
-        Axis = axis();
+        Point* P0 = new Point(p);
+        Point* P1 = new Point(p + dir * l1);
+        Point* Q0 = new Point(q);
+        Point* Q1 = new Point(q + dir * l2);
+        Corner[0] = P0;
+        Corner[1] = P1;
+        Corner[2] = Q1;
+        Corner[3] = Q0;
+        Boundary[0] = new Edge(P0, P1, dir * l1);
+        Boundary[1] = new Edge(P1, Q1);
+        Boundary[2] = new Edge(Q1, Q0, -dir * l2);
+        Boundary[3] = new Edge(Q0, P0);
+        the_normal = Normal();
     }
-    Vector3d Center()                                           // Center for ellipses and hyperboloids, vertex for cones.
+    Trapezoid(Point* p0, Point* p1, Point* p2, Point* p3)
     {
-        return -A.inverse() * b;
+        Corner[0] = p0;
+        Corner[1] = p1;
+        Corner[2] = p2;
+        Corner[3] = p3;
+        Boundary[0] = new Edge(p0, p1);
+        Boundary[1] = new Edge(p1, p2);
+        Boundary[2] = new Edge(p2, p3);
+        Boundary[3] = new Edge(p3, p0);
+        the_normal = Normal();
     }
-    bool intersects(Vertex Phi)
+
+    // The i-th point.
+    Point* P(int i)
     {
-        return Phi.V.dot(A * Phi.V) + 2 * b.dot(Phi.V) + c <= 0;
+        return Corner[i % 4];
     }
-    bool intersects(Edge Phi)
+    // The i-th edge.
+    Edge* E(int i)
     {
+        return Boundary[i % 4];
+    }
+
+    // Unit normal vector.
+    Vector3d Normal()
+    {
+        return E(0)->D().cross(E(1)->D()).normalized();
+    }
+    // Macro for Normal().
+    Vector3d N()
+    {
+        return the_normal;
+    }
+    // Area of the triangle.
+    double area()
+    {
+        return (E(0)->D().cross(E(1)->D()).norm() + E(2)->D().cross(E(3)->D()).norm()) / 2;
+    }
+
+
+    //************Point Functions************//
+
+    // Distance between point p and the plane of the triangle.
+    double plane_distance(Vector3d p)
+    {
+        return abs(P(0)->D(p).dot(N()));
+    }
+    // Distance between point feature f and the plane of the triangle.
+    double plane_distance(Point* f)
+    {
+        return plane_distance(f->p);
+    }
+
+    // Signature of dihedral angle formed by p-(P(i)P(i+1))-P(i+3) (positive if and only if it is acute angle)
+    double sgn_angle(Vector3d p, int i)
+    {
+        return (P(i)->D(p).cross(E(i)->D())).dot(P(i)->D(P(i + 3)).cross(E(i)->D()));
+    }
+    // If the projection of point p on the plane of the triangle is in the interior of triangle or not.
+    bool projects_on(Vector3d p)
+    {
+        return (sgn_angle(p, 0) > 0) && (sgn_angle(p, 1) > 0) && (sgn_angle(p, 2) > 0) && (sgn_angle(p, 3) > 0);
+    }
+    // If the projection of point feature f on the plane of the triangle is in the interior of triangle or not.
+    bool projects_on(Point* f)
+    {
+        return projects_on(f->p);
+    }
+
+
+    //************Edge Functions************//
+
+    // The case edge f cannot reach the plane of this within the range of f.
+    bool separate_to(Edge* f)
+    {
+        return abs(N().dot(f->D())) < max(plane_distance(f->P(0)), plane_distance(f->P(1))) / f->length();
+    }
+
+    // Approximate intersection between line from p towards dir and the plane of triangle.
+    Vector3d intersection(Vector3d p, Vector3d dir)
+    {
+        return p - (N().dot(P(0)->D(p)) / N().dot(dir)) * (dir);
+    }
+    // Approximate intersection between line of f and the plane of triangle.
+    Vector3d intersection(Edge* f)
+    {
+        return intersection(f->P(0)->p, f->D());
+    }
+    // If the intersection between the plane of this triangle and the line of p-q is in segment p-q or not.
+    bool projected_on(Vector3d p, Vector3d q)
+    {
+        return biside(N(), P(0)->D(p), P(0)->D(q));
+    }
+    // If the intersection between the plane of this triangle and the line of two point features is in edge formed by the two features or not.
+    bool projected_on(Point* f, Point* g)
+    {
+        return projected_on(f->p, g->p);
+    }
+    // If the intersection between the plane of this triangle and the line of edge f is in f or not.
+    bool projected_on(Edge* f)
+    {
+        return projected_on(f->P(0), f->P(1));
+    }
+    // If the intersection between the line of f and the plane of triangle is in triangle.
+    bool intersects(Edge* f)
+    {
+        return projected_on(f) && projects_on(intersection(f));
+    }
+
+
+    //************Separation Functions************//
+
+    // Interior criterions. Sep(this^\circ,f)>t?
+    bool int_Sep(Point* f, double t)
+    {
+        if (plane_distance(f) > t)
+            return true;
+        if (projects_on(f))
+            return false;
         return true;
     }
-    bool intersects(Triangle Phi)
+    bool int_Sep(Edge* f, double t)
     {
+        if (separate_to(f))
+            return false;
+        if (intersects(f))
+            return false;
         return true;
     }
-    bool intersects(Mesh Phi)
+
+    // Sep(this,f)>t?
+    bool Sep(Point* f, double t = 0)
     {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        for (int i = 0; i < 4; ++i)
+            if (!E(i)->Sep(f, t))
+                return false_update(f, t);
+        if (int_Sep(f, t))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Edge* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        for (int i = 0; i < 4; ++i)
+            if (!E(i)->Sep(f, t))
+                return false_update(f, t);
+        for (int i = 0; i < 2; ++i)
+            if ((!Sep(f->P(i), t)))
+                return false_update(f, t);
+        if (int_Sep(f, t))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Triangle* f, double t = 0)
+    {
+        for (int i = 0; i < 4; ++i)
+            if (!E(i)->Sep(f, t))
+                return false_update(f, t);
+        for (int i = 0; i < 3; ++i)
+            if (!Sep(f->E(i), t))
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+};
+
+// A pyramid formed by two triangles p-q-r and p'-q'-r', where p' = p + dir * l1, q' = q + dir * l2, r' = r + dir * l3.
+class Pyramid :public Solid {
+public:
+    Point* Corner[6];
+    Edge* Side[9];
+    Trapezoid* Vertical[3];
+    Triangle* Horizontal[2];
+    Pyramid(Vector3d p, Vector3d q, Vector3d r, Vector3d dir, double l1, double l2, double l3)
+    {
+        Point* P0 = new Point(p);
+        Point* P1 = new Point(p + dir * l1);
+        Point* Q0 = new Point(q);
+        Point* Q1 = new Point(q + dir * l2);
+        Point* R0 = new Point(r);
+        Point* R1 = new Point(r + dir * l3);
+
+        // Initialize corners
+        Corner[0] = P0;
+        Corner[1] = Q0;
+        Corner[2] = R0;
+        Corner[3] = P1;
+        Corner[4] = Q1;
+        Corner[5] = R1;
+
+        // Initialize sides
+        Side[0] = new Edge(P0, P1);
+        Side[1] = new Edge(Q0, Q1);
+        Side[2] = new Edge(R0, R1);
+        Side[3] = new Edge(P0, Q0);
+        Side[4] = new Edge(Q0, R0);
+        Side[5] = new Edge(R0, P0);
+        Side[6] = new Edge(P1, Q1);
+        Side[7] = new Edge(Q1, R1);
+        Side[8] = new Edge(R1, P1);
+
+        // Initialize boundaries
+        Vertical[0] = new Trapezoid(P0, P1, Q1, Q0);
+        Vertical[1] = new Trapezoid(Q0, Q1, R1, R0);
+        Vertical[2] = new Trapezoid(R0, R1, P1, P0);
+        Horizontal[0] = new Triangle(Side[3], Side[4], Side[5]);
+        Horizontal[1] = new Triangle(Side[6], Side[7], Side[8]);
+    }
+
+    Point* P(int i)
+    {
+        return Corner[i % 6];
+    }
+    Edge* E(int i)
+    {
+        return Side[i % 9];
+    }
+    Trapezoid* V(int i)
+    {
+        return Vertical[i % 3];
+    }
+    Triangle* H(int i)
+    {
+        return Horizontal[i % 2];
+    }
+
+    // If a point p is inside the convex hull formed by the corners or not.
+    bool inside(Vector3d p)
+    {
+        if (H(0)->P(0)->D(p).dot(H(0)->N()) * H(1)->P(0)->D(p).dot(H(1)->N()) > 0)
+            return false;
+        if (V(0)->P(0)->D(p).dot(V(0)->N()) * V(1)->P(0)->D(p).dot(V(1)->N()) < 0)
+            return false;
+        if (V(0)->P(0)->D(p).dot(V(0)->N()) * V(2)->P(0)->D(p).dot(V(2)->N()) < 0)
+            return false;
         return true;
     }
-    Vector3d interior_sample()
+    // If a point feature may inside this pyramid.
+    bool inside(Point* f)
     {
-        switch (Type)
+        return inside(f->p);
+    }
+    // If an edge feature may inside this pyramid.
+    bool inside(Edge* f)
+    {
+        return inside(f->P(0));
+    }
+    // If a triangle feature may inside this pyramid.
+    bool inside(Triangle* f)
+    {
+        return inside(f->P(0));
+    }
+
+    // Sep(this,f)>t?
+    bool Sep(Point* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (inside(f))
+            return false_update(f, t);
+        for (int i = 0; i < 3; ++i)
+            if (!V(i)->Sep(f, t))
+                return false_update(f, t);
+        for (int i = 0; i < 2; ++i)
+            if (!H(i)->Sep(f, t))
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Edge* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (inside(f))
+            return false_update(f, t);
+        for (int i = 0; i < 3; ++i)
+            if (!V(i)->Sep(f, t))
+                return false_update(f, t);
+        for (int i = 0; i < 2; ++i)
+            if (!H(i)->Sep(f, t))
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Triangle* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (inside(f))
+            return false_update(f, t);
+        for (int i = 0; i < 3; ++i)
+            if (!V(i)->Sep(f, t))
+                return false_update(f, t);
+        for (int i = 0; i < 2; ++i)
+            if (!H(i)->Sep(f, t))
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+};
+
+// A ball with center o and radius r.
+class Ball :public Solid {
+public:
+    Point* origin;
+    double radius;
+    Ball(Vector3d o, double r)
+    {
+        origin = new Point(o);
+        radius = r;
+    }
+    Ball(Point* O, double r)
+    {
+        origin = O;
+        radius = r;
+    }
+
+    Point* O()
+    {
+        return origin;
+    }
+    double R()
+    {
+        return radius;
+    }
+
+    //************Separation Functions************//
+
+    // The separation is given by the Minkowski sum lemma.
+    
+    // Sep(this,f)>t?
+    bool Sep(Point* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (O()->Sep(f, t + R()))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Edge* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (O()->Sep(f, t + R()))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Triangle* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (O()->Sep(f, t + R()))
+            return true_update(f, t);
+        else
+            return false_update(f, t);
+    }
+};
+
+// This is a 2d circular-surface of a right cone with apex v, and base disc(c,r).
+class TrafficCone :public Solid {
+public:
+    Vector3d apex;
+    Vector3d center;
+    double radius;
+
+    Edge* axis;
+    Matrix3d Inv_Transition;
+    double k, d;
+    // k*k
+    double k2;
+
+    TrafficCone(Vector3d v, Vector3d c, double r)
+    {
+        apex = v;
+        center = c;
+        radius = r;
+        axis = new Edge(v, c);
+        Inv_Transition = Transition().inverse();
+        d = axis->length();
+        k = radius / d;
+        k2 = k * k;
+    }
+
+    //************Linear Transformation Functions************//
+
+    // SO(3) matrix that makes this into (x-x_0)^2+(y-y_0)^2=k^2(z-z_0)^2, 0<=z-z_0<=d.
+    Matrix3d Transition()
+    {
+        Vector3d new_z = (center - apex).normalized();          // Coordinate of z under original coordinate.
+        Vector3d new_x = Vector3d(new_z(2), 0, -new_z(0));
+        if (new_x == Vector3d::Zero())
+            new_x = Vector3d(1, 0, 0);
+        else
+            new_x = new_x.normalized();
+        Vector3d new_y = new_z.cross(new_x);
+        Matrix3d trans;
+        trans.col(0) = new_x;
+        trans.col(1) = new_y;
+        trans.col(2) = new_z;
+        return trans;
+    }
+    // Linear transformation that makes this into x^2+y^2=k^2z^2, 0<=z<=d.
+    Vector3d Local(Vector3d p)
+    {
+        return Inv_Transition * (p - apex);
+    }
+    // Local coordinate of a point feature f.
+    Vector3d Local(Point* f)
+    {
+        return Local(f->p);
+    }
+    // Local coordinates of an edge feature f.
+    pair<Vector3d,Vector3d> Local(Edge* f)
+    {
+        return make_pair(Local(f->P(0)), Local(f->P(1)));
+    }
+    // Local coordinates of a triangle feature f.
+    tuple<Vector3d, Vector3d, Vector3d> Local(Triangle* f)
+    {
+        return make_tuple(Local(f->P(0)), Local(f->P(1)), Local(f->P(2)));
+    }
+
+    // If a point p on the algebraic span of this traffic cone is in the interior of this traffic cone or not.
+    bool projects_on(Vector3d Lp)
+    {
+        return Lp(2) <= d && Lp(2) >= 0;
+    }
+
+    //************Point Functions************//
+
+    // If a point p is under the traffic cone.
+    bool inside(Vector3d Lp)
+    {
+        double x = Lp(0), y = Lp(1), z = Lp(2);
+        if (z < 0)
+            return false;
+        if (z > d)
+            return false;
+        if (x * x + y * y > k2 * z * z)
+            return false;
+        return true;
+    }
+    // If a point feature f is under the traffic cone.
+    bool inside(Point* f)
+    {
+        return inside(Local(f));
+    }
+    // Local closest pairs between a local point Lp and the algebraic span of this traffic cone.
+    vector<pair<Vector3d, Vector3d>> Lcp(Vector3d Lp)
+    {
+        double a = Lp(0), b = Lp(1), c = Lp(2);
+        double r = sqrt(a * a + b * b);
+        double t1 = (r - k * c) / (k2 * r + k * c), t2 = (r + k * c) / (k2 * r - k * c);
+        Vector3d Lq1 = Vector3d(a / (1 + t1), b / (1 + t1), c / (1 - k2 * t1));
+        Vector3d Lq2 = Vector3d(a / (1 + t2), b / (1 + t2), c / (1 - k2 * t2));
+        vector<pair<Vector3d, Vector3d>> Lcps;
+        Lcps.push_back(make_pair(Lq1, Lp));
+        Lcps.push_back(make_pair(Lq2, Lp));
+        return Lcps;
+    }
+    // Local closest pairs between a point feature and this traffic cone.
+    vector<pair<Vector3d, Vector3d>> Lcp(Point* f)
+    {
+        return Lcp(Local(f));
+    }
+
+    //************Edge Functions************//
+
+    // Collection of intersections between the local edge Le and this traffic cone (within the valid range 0<=t<=1).
+    vector<Vector3d> Lint(pair<Vector3d, Vector3d> Le)
+    {
+        // l(t) := v+td. Le is 0<=t<=1.
+        Vector3d v = Le.first, d = Le.second - Le.first;
+        vector<Vector3d> Lints;
+
+        // Root (t) of c_0 + 2c_1t + c_2t^2 = 0 are the intersections l(t).
+        double c0 = v.dot(v) - (k2 + 1) * v(2) * v(2);
+        double c1 = v.dot(d) - (k2 + 1) * v(2) * d(2);
+        double c2 = d.dot(d) - (k2 + 1) * d(2) * d(2);
+
+        // Collect possible intersections in Le.
+        vector<double> t = quad_root(c2, c1, c0);
+        for (int i = 0; i < t.size(); ++i)
+            Lints.push_back(v + t[i] * d);
+        return Lints;
+    }
+    // Local closest pairs between the line of Lp1-Lp2 and the algebraic span of this traffic cone.
+    vector<pair<Vector3d, Vector3d>> Lcp(pair<Vector3d, Vector3d> Le)
+    {
+        vector<pair<Vector3d, Vector3d>> Lcps;
+        Vector3d v = Le.first, d = Le.second - Le.first;
+        double a = d(0), b = d(1), c = d(2), a2 = a * a, b2 = b * b, c2 = c * c;
+        double kappa = k * c, kappa2 = kappa * kappa;
+
+        // Solving quadratic equation for perpendicular conditions.
+        double detA = kappa2 * (kappa2 - a2 - b2);
+
+        if (detA > 0)
+            return Lcps;
+
+        // nx * x + nyi * y = 0 are the possible planes containing p (normal vector is (nx,nyi,0)).
+        double nx = kappa2 - a2, ny1 = a * b + sqrt(-detA), ny2 = a * b - sqrt(-detA);
+        Vector3d n1 = Vector3d(nx, ny1, 0).normalized(), n2 = Vector3d(nx, ny2, 0).normalized();
+
+        // If the plane n1 detects a pair (irrelavant pairs are OK to be pushed).
+        if (!possible_parallels(Vector3d::Zero(), n1, v, d))
         {
-        case type_ellipse:return Center();
-        case type_cone:return Center() + Axis;
-        case type_hyperboloid_2:return Center() + 2 * sqrt(Eigens(3) / max({ abs(Eigens(0)),abs(Eigens(1)),abs(Eigens(2)) })) * Axis;
-        case type_whole_space:return Center();
-        default:return Center();
+            Vector3d q = PL_int(Vector3d::Zero(), n1, v, d);
+            vector<pair<Vector3d, Vector3d>> q_pair = Lcp(q);
+            for (int i = 0; i < q_pair.size(); ++i)
+                Lcps.push_back(q_pair[i]);
         }
+        // If the plane n2 detects a pair (irrelavant pairs are OK to be pushed).
+        if (!possible_parallels(Vector3d::Zero(), n2, v, d))
+        {
+            Vector3d q = PL_int(Vector3d::Zero(), n2, v, d);
+            vector<pair<Vector3d, Vector3d>> q_pair = Lcp(q);
+            for (int i = 0; i < q_pair.size(); ++i)
+                Lcps.push_back(q_pair[i]);
+        }
+        return Lcps;
+    }
+    // Local closest pairs between an edge feature and this traffic cone.
+    vector<pair<Vector3d, Vector3d>> Lcp(Edge* f)
+    {
+        pair<Vector3d, Vector3d> Le = Local(f);
+        vector<pair<Vector3d, Vector3d>> CP = Lcp(Le);
+        vector<Vector3d> LINT = Lint(Le);
+        for (int i = 0; i < LINT.size(); ++i)
+            CP.push_back(make_pair(LINT[i], LINT[i]));
+        return CP;
+    }
+
+
+    //************Triangle Functions************//
+
+    // There are no closest pairs between a triangle feature and this traffic cone.
+    
+    // If the axis intersects a triangle feature.
+    bool axis_int(Triangle* f)
+    {
+        return f->int_Sep(axis, 0);
+    }
+
+    //******************Separation Functions*****************//
+
+    // Sep(this,f)>t?
+    // This separation is only given by the interior separation.
+    bool Sep(Point* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        vector<pair<Vector3d, Vector3d>> Lcps = Lcp(f);
+        for (int i = 0; i < Lcps.size(); ++i)
+            if (projects_on(Lcps[i].first) && (Lcps[i].first - Lcps[i].second).norm() <= t)
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+    // Sep(this,f)>t?
+    // This separation is only given by the interior separation.
+    bool Sep(Edge* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        for (int i = 0; i < 2; ++i)
+            if (!Sep(f->P(i), t))
+                return false_update(f, t);
+        vector<pair<Vector3d, Vector3d>> Lcps = Lcp(f);
+        for (int i = 0; i < Lcps.size(); ++i)
+            if (projects_on(Lcps[i].first) && f->projects_on(Lcps[i].second) && (Lcps[i].first - Lcps[i].second).norm() <= t)
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+    // Sep(this,f)>t?
+    // This separation is only given by the interior separation.
+    bool Sep(Triangle* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        for (int i = 0; i < 3; ++i)
+            if (!Sep(f->E(i), t))
+                return false_update(f, t);
+        if (axis_int(f))
+            return false_update(f, t);
+        return true_update(f, t);
     }
 };
 
-Quadratic ball(Vector3d center, double radius)                  // (x-c)^T(x-c)-r^2<=0
-{
-    return Quadratic(Matrix3d::Identity(), -center, -squa(radius) + center.squaredNorm());
-}
+// An ice-cream is formed by the union of a traffic cone with a ball.
+// An ice-cream is defined by the apex v, center of ball o, and radius of ball r.
+class IceCream :public Solid {
+public:
+    Point* apex;
+    Ball* base;
+    TrafficCone* conic;
+    IceCream(Vector3d v,Vector3d o,double r)
+    {
+        apex = new Point(v);
+        base = new Ball(o, r);
+        
+        // Compute the argument of the traffic cone.
+        Vector3d ov = v - o;
+        double h = ov.norm();
+        double k = sqrt(h * h - r * r);
+        Vector3d c = o + ((r * r) / (h * h)) * ov;
+        conic = new TrafficCone(v, c, r * k / h);
+    }
+    IceCream(Point* V, Point* O, double r)
+    {
+        apex = V;
+        base = new Ball(O, r);
 
-Quadratic inverse_ball(Vector3d center, double radius)           // (x-c_x)^2+(y-c_y)^2-(z-c_z)^2+r^2<=0
-{
-    return Quadratic(Matrix3d::Identity() - 2 * Vector3d(0, 0, 1) * Vector3d(0, 0, 1).transpose(), Vector3d(-center(0), -center(1), center(2)), squa(radius) + squa(center(0)) + squa(center(1)) - squa(center(2)));
-}
+        // Compute the argument of the traffic cone.
+        Vector3d ov = O->D(V);
+        double h = ov.norm();
+        double k = sqrt(h * h - r * r);
+        Vector3d c = O->p + ((r * r) / (h * h)) * ov;
+        conic = new TrafficCone(V->p, c, r * k / h);
+    }
 
-class Intersect_Alge : public Solid
-{
+    Point* V()
+    {
+        return apex;
+    }
+    Ball* B()
+    {
+        return base;
+    }
+    TrafficCone* C()
+    {
+        return conic;
+    }
 
+
+    //************Separation Functions************//
+
+    bool Sep(Point* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (!V()->Sep(f, t))
+            return false_update(f, t);
+        if (!B()->Sep(f, t))
+            return false_update(f, t);
+        if (!C()->Sep(f, t))
+            return false_update(f, t);
+        return true_update(f, t);
+    }
+    bool Sep(Edge* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (!V()->Sep(f, t))
+            return false_update(f, t);
+        if (!B()->Sep(f, t))
+            return false_update(f, t);
+        if (!C()->Sep(f, t))
+            return false_update(f, t);
+        return true_update(f, t);
+    }
+    bool Sep(Triangle* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (!V()->Sep(f, t))
+            return false_update(f, t);
+        if (!B()->Sep(f, t))
+            return false_update(f, t);
+        if (!C()->Sep(f, t))
+            return false_update(f, t);
+        return true_update(f, t);
+    }
 };
+
+//*************************************************************************//

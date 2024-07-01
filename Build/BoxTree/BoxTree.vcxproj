@@ -22,7 +22,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5259BB73-8756-3325-B81F-3E82C30CF6E0}</ProjectGuid>
+    <ProjectGuid>{9DFF6CF0-AF12-3EF8-A391-292ABB83B4A0}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
@@ -59,26 +59,26 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">BoxTree.dir\Debug\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">BoxTree</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Release\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">BoxTree.dir\Release\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">BoxTree</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\MinSizeRel\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\MinSizeRel\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">BoxTree.dir\MinSizeRel\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">BoxTree</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\RelWithDebInfo\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\RelWithDebInfo\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">BoxTree.dir\RelWithDebInfo\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">BoxTree</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -95,10 +95,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -111,7 +111,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -128,10 +128,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -144,7 +144,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -161,10 +161,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -177,7 +177,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -193,10 +193,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -212,7 +212,7 @@
       <UseUtf8Encoding>Always</UseUtf8Encoding>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -221,11 +221,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -234,11 +234,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -247,11 +247,11 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/BoxTree/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/Build/BoxTree/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/main -BC:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build --check-stamp-file C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -260,7 +260,7 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3Config.cmake;C:\Users\zhaoq\source\repos\eigen\out\build\x64-Debug\Eigen3ConfigVersion.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\CMakeFiles\generate.stamp</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
@@ -269,18 +269,18 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\BoxTree.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\ZERO_CHECK.vcxproj">
-      <Project>{078EB928-BB43-3E65-9677-93DAF7B65EE0}</Project>
+    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\ZERO_CHECK.vcxproj">
+      <Project>{C326051E-2322-31A0-9980-20F950854E7B}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </ProjectReference>
-    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\Interval\Interval.vcxproj">
-      <Project>{DC99F8A3-2EE6-3D4E-B1F4-E22F276798A5}</Project>
+    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\Interval\Interval.vcxproj">
+      <Project>{CB5DDDD9-6196-35CB-9934-53A62046B1BB}</Project>
       <Name>Interval</Name>
     </ProjectReference>
-    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Build\BoxTree\SymGroup\SymGroup.vcxproj">
-      <Project>{CEBB4A21-F171-399A-A952-9C2B1705C82A}</Project>
+    <ProjectReference Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\build\BoxTree\SymGroup\SymGroup.vcxproj">
+      <Project>{DF284C2B-68A2-323F-9714-D4F5BD1C6A49}</Project>
       <Name>SymGroup</Name>
     </ProjectReference>
   </ItemGroup>
