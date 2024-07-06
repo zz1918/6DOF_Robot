@@ -7,84 +7,6 @@
 //#include<Solid.h>
 #include<WtFp.h>
 using namespace std;
-/*
-void test0(int argc, char* argv[])
-{
-	if (argc < 5)
-		return;
-	Vector4d a(stod(argv[1]), stod(argv[2]), stod(argv[3]), stod(argv[4]));
-	SO3 A(a);
-	cout << A.Q().transpose() << endl;
-	cout << A.R() << endl;
-	Vector3d v_A;
-	double theta_A;
-	A.Axis_Angle(v_A, theta_A);
-	cout << v_A.transpose() << endl;
-	cout << theta_A << endl;
-	if (argc < 9)
-		return;
-	Vector4d b(stod(argv[5]), stod(argv[6]), stod(argv[7]), stod(argv[8]));
-	SO3 B(b);
-	cout << B.Q().transpose() << endl;
-	cout << B.R() << endl;
-	Vector3d v_B;
-	double theta_B;
-	B.Axis_Angle(v_B, theta_B);
-	cout << v_B.transpose() << endl;
-	cout << theta_B << endl;
-	cout << (A == B) << endl;
-}
-
-void test1(int argc, char* argv[])
-{
-	if (argc < 4)
-		return;
-	int a[3];
-	a[0] = stoi(argv[1]);
-	a[1] = stoi(argv[2]);
-	a[2] = stoi(argv[3]);
-	SymG<3> t(a);
-	cout << t << endl;
-	cout << t.inverse() << endl;
-	cout << t.act(0) << endl;
-	cout << t.act(1) << endl;
-	cout << t.act(2) << endl;
-	cout << t.inverse().act(0) << endl;
-	cout << t.inverse().act(1) << endl;
-	cout << t.inverse().act(2) << endl;
-	cout << t.binAct(0) << endl;
-	cout << t.binAct(1) << endl;
-	cout << t.binAct(2) << endl;
-	cout << t.binAct(3) << endl;
-	cout << t.binAct(4) << endl;
-	cout << t.binAct(5) << endl;
-	cout << t.binAct(6) << endl;
-	cout << t.binAct(7) << endl;
-}
-
-void test2(int argc, char* argv[])
-{
-	SO3Tree T;
-	T.cell(0)->subdivide();
-	T.cell(1)->subdivide();
-	T.cell(2)->subdivide();
-	T.cell(3)->subdivide();
-	T.cell(0)->child(0)->subdivide();
-	for (int i = 0; i < 4; ++i)
-		for (int j = 0; j < 8; ++j)
-		{
-			cout << "Cell " << i << ", child " << j << ":" << endl;
-			if (T.cell(i)->child(j) == NULL)
-			{
-				cout << "No this child." << endl;
-				continue;
-			}
-			cout << *(T.cell(i)->child(j));
-			T.cell(i)->child(j)->show_neighbor();
-			cout << endl;
-		}
-}
-*/
 
 void test0(int argc, char* argv[])
 {
@@ -93,7 +15,26 @@ void test0(int argc, char* argv[])
 
 void test1(int argc, char* argv[])
 {
-	;
+	//Pyramid(Vector3d p, Vector3d q, Vector3d r, Vector3d dir, double l1, double l2, double l3)
+	Pyramid* T = new Pyramid(Vector3d(0, 0, 0), Vector3d(0, 4, 0), Vector3d(4, 0, 0), Vector3d(0, 0, 2), 1, 1, 1);
+	Point* P = new Point(Vector3d(0, 0, 6));
+	cout << "Point" << endl;
+	cout << T->Sep(P) << endl;
+	//******************
+	/*Edge* edge = new Edge(new Point(Vector3d(10, 10, 10)), new Point(Vector3d(11, 11, 11)));
+	cout << "Edge" << endl;
+	cout << pyramid->Sep(edge) << endl;*/
+	//******************
+	for (int i = 0; i < 3; ++i)
+	{
+		cout << "T->V(" << i << ")->Sep(P): " << T->V(i)->Sep(P, 0) << endl;
+		for (int j = 0; j < 4; ++j)
+			cout << "T->V(" << i << ")->E(" << j << ")->Sep(P) : " << T->V(i)->E(j)->Sep(P, 0) << endl;
+	}
+	cout << T->V(0)->E(0)->P(0)->p.transpose() << endl;
+	cout << T->V(0)->E(0)->P(1)->p.transpose() << endl;
+	cout << T->V(0)->E(0)->int_Sep(P, 0) << endl;
+	cout << T->V(0)->E(0)->projects_on(P) << endl;
 }
 
 void test2(int argc, char* argv[])

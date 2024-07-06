@@ -352,7 +352,7 @@ public:
     // If the projection of point p on the line of edge is in the interior of edge or not.
     bool projects_on(Vector3d p)
     {
-        return (sgn_angle(p, 0) > 0) && (sgn_angle(p, 0) > 0);
+        return (sgn_angle(p, 0) > 0) && (sgn_angle(p, 1) > 0);
     }
     // If the projection of point feature f on the line of edge is in the interior of edge or not.
     bool projects_on(Point* f)
