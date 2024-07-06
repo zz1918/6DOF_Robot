@@ -1,0 +1,15 @@
+add_library(SE3Box SE3Box.h SE3Box.cpp)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+target_link_libraries(SE3Box PUBLIC Eigen3::Eigen)
+
+if (NOT TARGET Interval)
+	add_subdirectory("../Interval" Interval)
+endif()
+target_link_libraries(SE3Box PUBLIC Interval)
+target_include_directories(SE3Box PUBLIC "../Interval")
+
+if (NOT TARGET bimap)
+	add_subdirectory("../bimap" bimap)
+endif()
+target_link_libraries(SE3Box PUBLIC bimap)
+target_include_directories(SE3Box PUBLIC "../bimap")

@@ -27,6 +27,24 @@ double maxof(double a, double b, double c)
 {
 	return max(max(a, b), c);
 }
+// Bounding box of an edge.
+MatrixId B_Box(Edge* f)
+{
+	return MatrixId(f->P(0)->p, f->P(1)->p);
+}
+// Bounding box of a triangle.
+MatrixId B_Box(Triangle* f)
+{
+	Vector3d m, M;
+	m(0) = minof(f->P(0)->p(0), f->P(1)->p(0), f->P(2)->p(0));
+	m(1) = minof(f->P(0)->p(1), f->P(1)->p(1), f->P(2)->p(1));
+	m(2) = minof(f->P(0)->p(2), f->P(1)->p(2), f->P(2)->p(2));
+	M(0) = maxof(f->P(0)->p(0), f->P(1)->p(0), f->P(2)->p(0));
+	M(1) = maxof(f->P(0)->p(1), f->P(1)->p(1), f->P(2)->p(1));
+	M(2) = maxof(f->P(0)->p(2), f->P(1)->p(2), f->P(2)->p(2));
+	return MatrixId(m, M);
+}
+
 
 // Psuedo feature Mesh, which can only be detected by WtFp but cannot generally do parametric queries.
 class Mesh
@@ -109,6 +127,7 @@ public:
 // Approximate footprint for Delta robot.
 class WtFp
 {
+public:
 	// \icc_\pA and \icc_\pB.
 	IceCream* IccA, * IccB;
 	// \seg_{\pA\pB}.
@@ -246,9 +265,8 @@ class WtFp
 			return MatrixId(posmin, posmax);
 		}
 	}
-public:
 	// Constructor by a box B in \intbox W.
-	WtFp(MatrixId Bt, MatrixId Br, int wxyz)
+	WtFp(MatrixId Bt, MatrixId Br, int wxyz=0)
 	{
 		// Bt part.
 		mB = (Bt.min() + Bt.max()) / 2;
@@ -298,7 +316,7 @@ public:
 	// If the WtFp does not intersect edge feature f.
 	bool free_from(Edge* f)
 	{
-		if (bbox.ncontains(f->P(0)->p) && bbox.ncontains(f->P(1)->p))
+		if (!bbox.intersects(B_Box(f)))
 			return true;
 		if (singular)
 			return SegAB->Sep(f, dB + rB);
@@ -307,7 +325,7 @@ public:
 	// If the WtFp does not intersect triangle feature f.
 	bool free_from(Triangle* f)
 	{
-		if (bbox.ncontains(f->P(0)->p) && bbox.ncontains(f->P(1)->p) && bbox.ncontains(f->P(2)->p))
+		if (!bbox.intersects(B_Box(f)))
 			return true;
 		if (singular)
 			return SegAB->Sep(f, dB + rB);
@@ -357,3 +375,4 @@ public:
 			return FREE;
 	}
 };
+

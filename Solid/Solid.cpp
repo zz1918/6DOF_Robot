@@ -369,7 +369,7 @@ public:
         if (Cross.norm() == 0)
             return line_distance(p);
         else
-            return Cross.dot(P(0)->D(p)) / Cross.norm();
+            return abs(Cross.dot(P(0)->D(p))) / Cross.norm();
     }
     // Distance between line of point features f,g and the line of the edge.
     double line_distance(Point* f, Point* g)
@@ -801,7 +801,7 @@ public:
     bool int_Sep(Edge* f, double t)
     {
         if (separate_to(f))
-            return false;
+            return true;
         if (intersects(f))
             return false;
         return true;
@@ -843,6 +843,10 @@ public:
     // Sep(this,f)>t?
     bool Sep(Triangle* f, double t = 0)
     {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
         for (int i = 0; i < 4; ++i)
             if (!E(i)->Sep(f, t))
                 return false_update(f, t);
@@ -1243,7 +1247,7 @@ public:
     // If the axis intersects a triangle feature.
     bool axis_int(Triangle* f)
     {
-        return f->int_Sep(axis, 0);
+        return !(f->int_Sep(axis, 0));
     }
 
     //******************Separation Functions*****************//

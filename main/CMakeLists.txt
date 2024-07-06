@@ -23,3 +23,11 @@ endif()
 target_link_libraries(SE3 PUBLIC WtFp)
 target_include_directories(SE3 PUBLIC "../WtFp")
 
+
+if (NOT TARGET Solid)
+	add_subdirectory("../Solid" Solid)
+endif()
+target_link_libraries(SE3 PUBLIC Solid)
+target_include_directories(SE3 PUBLIC "../Solid")
+
+

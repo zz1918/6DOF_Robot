@@ -1,15 +1,13 @@
 #include<iostream>
 #include<string>
 #include<Eigen/Dense>
-#include<SO3.h>
-#include<BoxTree.h>
+//#include<SO3.h>
+//#include<interval.h>
+//#include<BoxTree.h>
+//#include<Solid.h>
+#include<WtFp.h>
 using namespace std;
-
-class SE3
-{
-	
-};
-
+/*
 void test0(int argc, char* argv[])
 {
 	if (argc < 5)
@@ -86,10 +84,61 @@ void test2(int argc, char* argv[])
 			cout << endl;
 		}
 }
+*/
+
+void test0(int argc, char* argv[])
+{
+	;
+}
+
+void test1(int argc, char* argv[])
+{
+	;
+}
+
+void test2(int argc, char* argv[])
+{
+	Point* P1 = new Point(Vector3d(-2, -2, -2));
+	Point* P2 = new Point(Vector3d(-2, -2, 2));
+	Point* P3 = new Point(Vector3d(-2, 2, 2));
+	Edge* E1 = new Edge(P1, P2);
+	Edge* E2 = new Edge(P2, P3);
+	Edge* E3 = new Edge(P3, P1);
+	Triangle* T = new Triangle(E1, E2, E3);
+	Point* Q1 = new Point(Vector3d(1, 0, 1));
+	Point* Q2 = new Point(Vector3d(1, 0, -1));
+	Edge* F = new Edge(Q1, Q2);
+	cout << F->Sep(T, 0) << endl;
+	for (int i = 0; i < 3; ++i)
+		cout << T->E(i)->Sep(F, 0) << endl;
+	for (int i = 0; i < 2; ++i)
+		cout << T->Sep(F->P(i), 0) << endl;
+	cout << E3->int_Sep(F, 0) << endl;
+	cout<<E3->line_distance(F)<<endl;
+}
 
 void test3(int argc, char* argv[])
 {
-	;
+	double w_cell = 0.1;
+	MatrixId Bt(Vector3d(-w_cell / 2, -w_cell / 2, -w_cell / 2), Vector3d(w_cell / 2, w_cell / 2, w_cell / 2));
+	MatrixId Br = Bt;
+	WtFp footprint(Bt, Br, 0);
+	Point* P1 = new Point(Vector3d(-10, -10, -10));
+	Point* P2 = new Point(Vector3d(-10, -10, 10));
+	Point* P3 = new Point(Vector3d(-10, 10, 10));
+	Edge* E1 = new Edge(P1, P2);
+	Edge* E2 = new Edge(P2, P3);
+	Edge* E3 = new Edge(P3, P1);
+	Triangle* T = new Triangle(E1, E2, E3);
+	cout << "dB: " << footprint.dB << endl;
+	cout << "rB: " << footprint.rB << endl;
+	cout << "R: " << footprint.dB + footprint.rB << endl;
+	cout << "r: " << footprint.rB << endl;
+	cout << "Is singular? " << footprint.singular << endl;
+	cout << "Cyl^+: " << footprint.SegAB->Sep(T, footprint.dB + footprint.rB) << endl;
+	cout << "H^+: " << footprint.H->Sep(T, 0) << endl;
+	cout << "IccA: " << footprint.IccA->Sep(T, footprint.rB) << endl;
+	cout << "IccB: " << footprint.IccB->Sep(T, footprint.rB) << endl;
 }
 
 int main(int argc,char* argv[])

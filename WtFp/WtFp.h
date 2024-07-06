@@ -3,7 +3,6 @@
 
 #include "WtFp.cpp"
 
-enum predicate{ MIXED, FREE, STUCK, UNKNOWN };
 
 // *********************Help functions********************* //
 

@@ -1,0 +1,1 @@
+add_library(Bimap bimap.h bimap.cpp)

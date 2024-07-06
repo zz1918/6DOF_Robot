@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -103,10 +103,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -114,7 +114,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>SO3\Debug\SO3.lib;BoxTree\Debug\BoxTree.lib;WtFp\Debug\WtFp.lib;BoxTree\SymGroup\Debug\SymGroup.lib;SO3\Debug\SO3.lib;BoxTree\Interval\Debug\Interval.lib;WtFp\Solid\Debug\Solid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SO3\Debug\SO3.lib;BoxTree\Debug\BoxTree.lib;WtFp\Debug\WtFp.lib;WtFp\Solid\Debug\Solid.lib;BoxTree\SymGroup\Debug\SymGroup.lib;SO3\Debug\SO3.lib;BoxTree\Interval\Debug\Interval.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -129,7 +129,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -146,10 +146,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -157,7 +157,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>SO3\Release\SO3.lib;BoxTree\Release\BoxTree.lib;WtFp\Release\WtFp.lib;BoxTree\SymGroup\Release\SymGroup.lib;SO3\Release\SO3.lib;BoxTree\Interval\Release\Interval.lib;WtFp\Solid\Release\Solid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SO3\Release\SO3.lib;BoxTree\Release\BoxTree.lib;WtFp\Release\WtFp.lib;WtFp\Solid\Release\Solid.lib;BoxTree\SymGroup\Release\SymGroup.lib;SO3\Release\SO3.lib;BoxTree\Interval\Release\Interval.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -172,7 +172,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -189,10 +189,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -200,7 +200,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>SO3\MinSizeRel\SO3.lib;BoxTree\MinSizeRel\BoxTree.lib;WtFp\MinSizeRel\WtFp.lib;BoxTree\SymGroup\MinSizeRel\SymGroup.lib;SO3\MinSizeRel\SO3.lib;BoxTree\Interval\MinSizeRel\Interval.lib;WtFp\Solid\MinSizeRel\Solid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SO3\MinSizeRel\SO3.lib;BoxTree\MinSizeRel\BoxTree.lib;WtFp\MinSizeRel\WtFp.lib;WtFp\Solid\MinSizeRel\Solid.lib;BoxTree\SymGroup\MinSizeRel\SymGroup.lib;SO3\MinSizeRel\SO3.lib;BoxTree\Interval\MinSizeRel\Interval.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -215,7 +215,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/zhaoq/source/repos/eigen"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -231,10 +231,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\BoxTree;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\WtFp;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\..\Solid;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\BoxTree\..\SymGroup;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Interval;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\SO3;C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\WtFp\..\Solid;C:\Users\zhaoq\source\repos\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -242,7 +242,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>SO3\RelWithDebInfo\SO3.lib;BoxTree\RelWithDebInfo\BoxTree.lib;WtFp\RelWithDebInfo\WtFp.lib;BoxTree\SymGroup\RelWithDebInfo\SymGroup.lib;SO3\RelWithDebInfo\SO3.lib;BoxTree\Interval\RelWithDebInfo\Interval.lib;WtFp\Solid\RelWithDebInfo\Solid.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SO3\RelWithDebInfo\SO3.lib;BoxTree\RelWithDebInfo\BoxTree.lib;WtFp\RelWithDebInfo\WtFp.lib;WtFp\Solid\RelWithDebInfo\Solid.lib;BoxTree\SymGroup\RelWithDebInfo\SymGroup.lib;SO3\RelWithDebInfo\SO3.lib;BoxTree\Interval\RelWithDebInfo\Interval.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
