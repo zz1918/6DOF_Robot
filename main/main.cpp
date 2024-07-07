@@ -10,7 +10,24 @@ using namespace std;
 
 void test0(int argc, char* argv[])
 {
-	;
+	MatrixXd V(4, 3);
+	MatrixXi F(4, 3);
+	V << 1, 0, 0,
+		0, 1, 0,
+		0, 0, 1,
+		0, 0, 0;
+	F << 0, 1, 2,
+		2, 1, 3,
+		3, 1, 0,
+		0, 2, 3;
+	Mesh* M = new Mesh(V, F);
+	cout << V << endl;
+	cout << F << endl;
+	double w_cell = 0.1;
+	MatrixId Bt(Vector3d(-w_cell / 2, -w_cell / 2, -w_cell / 2), Vector3d(w_cell / 2, w_cell / 2, w_cell / 2));
+	MatrixId Br = Bt;
+	WtFp footprint(Bt, Br, 0);
+	cout << footprint.classify(M) << endl;
 }
 
 void test1(int argc, char* argv[])

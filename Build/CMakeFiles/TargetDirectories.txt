@@ -1,9 +1,0 @@
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/CMakeFiles/SE3.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/CMakeFiles/ZERO_CHECK.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/SO3/CMakeFiles/SO3.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/CMakeFiles/BoxTree.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/Interval/CMakeFiles/Interval.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/BoxTree/SymGroup/CMakeFiles/SymGroup.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/WtFp/CMakeFiles/WtFp.dir
-C:/Users/zhaoq/Desktop/Study/GitHub/6DOF_Robot/build/WtFp/Solid/CMakeFiles/Solid.dir

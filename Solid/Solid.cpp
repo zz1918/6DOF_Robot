@@ -1260,6 +1260,8 @@ public:
             return false;
         if (ncontains(f, t))
             return true;
+        if (inside(f))
+            return false_update(f, t);
         vector<pair<Vector3d, Vector3d>> Lcps = Lcp(f);
         for (int i = 0; i < Lcps.size(); ++i)
             if (projects_on(Lcps[i].first) && (Lcps[i].first - Lcps[i].second).norm() <= t)

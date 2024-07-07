@@ -3,10 +3,10 @@
 
 #include<vector>
 #include<Eigen/Dense>
-#include<Eigen/Sparse>
 #include<Interval.h>
 #include<SO3.h>
 #include<Solid.h>
+#include<bimap.h>
 using namespace std;
 using namespace Eigen;
 
@@ -51,18 +51,18 @@ class Mesh
 {
 	MatrixXd V;
 	MatrixXi F;
-	SparseMatrix<int> VE;
+	bimap<int, int, int> VE;
 	MatrixXi EV;
 
 	void edge_topology(MatrixXi F)
 	{
-		VE.setZero();
+		VE.clear();
 		EV.resize(edges.size(), 2);
 		int edge_size = 0;
 		for (int i = 0; i < F.rows(); ++i)
 			for (int j = 0; j < 3; ++j)
 			{
-				VE.insert(F(i, j), F(i, (j + 1) % 3)) = edge_size + 1;
+				VE.insert(F(i, j), F(i, (j + 1) % 3), edge_size + 1);
 				EV(edge_size, 0) = F(i, j);
 				EV(edge_size, 1) = F(i, (j + 1) % 3);
 				edge_size++;
@@ -79,7 +79,7 @@ public:
 	vector<Point*> corners;
 	vector<Edge*> edges;
 	vector<Triangle*> faces;
-	Mesh(MatrixXd _V, MatrixXi _F)
+	Mesh(MatrixXd _V, MatrixXi _F, bool show = false)
 	{
 		V = _V;
 		F = _F;
@@ -89,6 +89,8 @@ public:
 			Point* P = new Point(V.row(i));
 			corners.push_back(P);
 		}
+		if (show)
+			cout << "Points constructed." << endl;
 		// Construct edge and triangle features.
 		for (int i = 0; i < F.rows(); ++i)
 		{
@@ -102,12 +104,20 @@ public:
 
 			faces.push_back(T);
 		}
+		if (show)
+			cout << "Faces constructed." << endl;
 		// Set edge and inv-edge relations.
 		edge_topology(F);
+		if (show)
+			cout << "Topology built." << endl;
 		for (int i = 0; i < edges.size(); ++i)
 			if (Eid(EV(i, 1), EV(i, 0)))
 				edges[i]->set_inv(edges[Eid(EV(i, 1), EV(i, 0))]);
+		if (show)
+			cout << "Topology constructed." << endl;
 		bbox = MatrixId(Vector3d(V.col(0).minCoeff(), V.col(1).minCoeff(), V.col(2).minCoeff()), Vector3d(V.col(0).maxCoeff(), V.col(1).maxCoeff(), V.col(2).maxCoeff()));
+		if (show)
+			cout << "Bounding box constructed." << endl;
 	}
 	// If a point p is positive to the normals of the triangle mesh.
 	bool inside(Vector3d p)

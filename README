@@ -6,3 +6,7 @@ mkdir build
 cd build
 cmake ../main
 cmake --build .
+
+To run the program, please use (for i=0,1,2,3):
+
+Debug/SE3.exe i
