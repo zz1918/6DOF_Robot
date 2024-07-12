@@ -370,13 +370,13 @@ public:
 	{
 		if (!bbox.intersects(f->BBox()))
 			return FREE;
-		for (int i = 0; f->corners.size(); ++i)
+		for (int i = 0; i < f->corners.size(); ++i)
 			if (!free_from(f->corners[i]))
 				return MIXED;
-		for (int i = 0; f->edges.size(); ++i)
+		for (int i = 0; i < f->edges.size(); ++i)
 			if (!free_from(f->edges[i]))
 				return MIXED;
-		for (int i = 0; f->faces.size(); ++i)
+		for (int i = 0; i < f->faces.size(); ++i)
 			if (!free_from(f->faces[i]))
 				return MIXED;
 		if (f->inside(mB))

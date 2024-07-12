@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Interval\interval.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Interval\interval.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\Interval\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{3A2EC129-92D6-38D4-96DF-E4D01D75034B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{126A6F83-0AD6-3A49-8AA6-EC1D7552F2CF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

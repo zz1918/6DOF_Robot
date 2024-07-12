@@ -24,6 +24,11 @@ public:
 	{
 		n = _n;
 	}
+	// The number.
+	int num()
+	{
+		return n;
+	}
 	// If this is an empty bit.
 	bool is_empty()
 	{
@@ -53,6 +58,14 @@ public:
 	bool is_boundary()
 	{
 		return is_pos_boundary() || is_neg_boundary();
+	}
+	// If this is the boundary bit of pos.
+	bool is_boundary(bool pos)
+	{
+		if (pos)
+			return is_pos_boundary();
+		else
+			return is_neg_boundary();
 	}
 	// Positive child for this bit.
 	bit pos()
@@ -102,8 +115,49 @@ public:
 	{
 		return bit(1 << length());
 	}
+	// If two bits are neighbor.
+	bool neighbor_to(bit b)
+	{
+		if (length() > b.length())
+			return b.neighbor_to(*this);
+		int diff = b.length() - length();
+		if (((n + 1) << diff) == b.n)
+			return true;
+		if ((n << diff) == (b.n + 1))
+			return true;
+		return false;
+	}
+	// If the bit contains another bit.
+	bool contain(bit b)
+	{
+		if (length() > b.length())
+			return false;
+		int diff = b.length() - length();
+		if (((n + 1) << diff) <= b.n)
+			return false;
+		if ((n << diff) >= (b.n + 1))
+			return false;
+		return true;
+	}
+	// If the bit is contained in the other.
+	bool contained(bit b)
+	{
+		return b.contain(*this);
+	}
+	// If the bit is separated to another bit.
+	bool separate(bit b)
+	{
+		if (length() > b.length())
+			return b.separate(*this);
+		int diff = b.length() - length();
+		if (((n + 1) << diff) < b.n)
+			return true;
+		if ((n << diff) > (b.n + 1))
+			return true;
+		return false;
+	}
 	// Output the bit.
-	void out(ostream &os)
+	void out(ostream& os)
 	{
 		if (is_empty())
 			os << EMP;
@@ -322,47 +376,73 @@ public:
 		// Step 2: This is not a leaf anymore.
 		leaf = false;
 
-		// Step 3: Assign neighbors for children and re-assign neighbors for neighbors and their children.
+		// Step 3: Assign neighbors for children and re-new_child neighbors for neighbors and their children.
 
 		for (int i = 0; i < subsize; ++i)
 		{
-			R3Box* assign = children[i];
+			R3Box* new_child = children[i];
 			R3Box* target = NULL;
 			bit tcode[dim];
 			for (int j = 0; j < dim; ++j)
 			{
 				// If this is not the negative boundary of j-th direction,
 				// then there is a negative j-neighbor box (NULL otherwise).
-				if (!assign->code(j).is_neg_boundary())
+				if (!new_child->code(j).is_neg_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
 						if (k == j)
-							tcode[k] = assign->code(k).to_neg();
+							tcode[k] = new_child->code(k).to_neg();
 						else
-							tcode[k] = assign->code(k);
+							tcode[k] = new_child->code(k);
 					target = find(tcode);
-					assign->set_neg_neighbor(target, j);
-					if (assign->Depth() == target->Depth())
-						target->set_pos_neighbor(assign, j);
+					new_child->set_neg_neighbor(target, j);
+					if (new_child->Depth() == target->Depth())
+						target->set_pos_neighbor(new_child, j);
 				}
 				// If this is not the positive boundary of j-th direction,
 				// then there is a positive j-neighbor box (NULL otherwise).
-				if (!assign->code(j).is_pos_boundary())
+				if (!new_child->code(j).is_pos_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
 						if (k == j)
-							tcode[k] = assign->code(k).to_pos();
+							tcode[k] = new_child->code(k).to_pos();
 						else
-							tcode[k] = assign->code(k);
+							tcode[k] = new_child->code(k);
 					target = find(tcode);
-					assign->set_pos_neighbor(target, j);
-					if (assign->Depth() == target->Depth())
-						target->set_neg_neighbor(assign, j);
+					new_child->set_pos_neighbor(target, j);
+					if (new_child->Depth() == target->Depth())
+						target->set_neg_neighbor(new_child, j);
 				}
 			}
 		}
 	}
-    // cout *this.
+	// Check if a box is a neighbor box (not necessarily principle).
+	bool is_neighbor(R3Box* B)
+	{
+		int int_co_dim = 0;
+		for (int i = 0; i < dim; ++i)
+		{
+			if (code(i).separate(B->code(i)))
+				return false;
+			if (code(i).neighbor_to(B->code(i)))
+				int_co_dim += 1;
+		}
+		return int_co_dim == 1;
+	}
+	// Check if a box is containing a box.
+	bool is_containing(R3Box* B)
+	{
+		for (int i = 0; i < dim; ++i)
+			if (!code(i).contain(B->code(i)))
+				return false;
+		return true;
+	}
+	// Check if a box is intersecting to a box.
+	bool is_intersect(R3Box* B)
+	{
+		return is_containing(B) || B->is_containing(this);
+	}
+	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
 		for (int i = 0; i < l; ++i)
@@ -400,7 +480,7 @@ public:
 		}
 	}
 	// cout *codes.
-	void show_code(ostream& os=cout, int l = 0)
+	void show_code(ostream& os = cout, int l = 0)
 	{
 		for (int j = 0; j < l; ++j)
 			os << "      ";
@@ -655,17 +735,17 @@ public:
 		// Step 2: This is not a leaf anymore.
 		leaf = false;
 
-		// Step 3: Assign neighbors for children and re-assign neighbors for neighbors and their children.
+		// Step 3: Assign neighbors for children and re-new_child neighbors for neighbors and their children.
 
 		for (int i = 0; i < subsize; ++i)
 		{
-			SO3Box* assign = children[i];
+			SO3Box* new_child = children[i];
 			SO3Box* target = NULL;
 			bit tcode[dim];
 			if (show)
 			{
 				cout << "Assigning ";
-				assign->show_code();
+				new_child->show_code();
 			}
 			for (int j = 0; j < dim; ++j)
 			{
@@ -675,62 +755,168 @@ public:
 					continue;
 				// If this is not the negative boundary of j-th direction,
 				// then there is a negative j-neighbor box (NULL otherwise).
-				if (!assign->code(j).is_neg_boundary())
+				if (!new_child->code(j).is_neg_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
 						if (k == j)
-							tcode[k] = assign->code(k).to_neg();
+							tcode[k] = new_child->code(k).to_neg();
 						else
-							tcode[k] = assign->code(k);
+							tcode[k] = new_child->code(k);
 					target = find(tcode, wxyz, show);
-					assign->set_neg_neighbor(target, j);
-					if (assign->Depth() == target->Depth())
-						target->set_pos_neighbor(assign, j);
+					new_child->set_neg_neighbor(target, j);
+					if (new_child->Depth() == target->Depth())
+						target->set_pos_neighbor(new_child, j);
 				}
 				else
 				{
 					for (int k = 0; k < dim; ++k)
 						if (k == wxyz)
-							tcode[k] = assign->code((k + 1) % dim).neg_most();
+							tcode[k] = new_child->code((k + 1) % dim).neg_most();
 						else if (k == j)
 							tcode[k] = bit();
 						else
-							tcode[k] = assign->code(k).bar();
+							tcode[k] = new_child->code(k).bar();
 					target = find(tcode, j, show);
-					assign->set_neg_neighbor(target, j);
-					if (assign->Depth() == target->Depth())
-						target->set_neg_neighbor(assign, wxyz);
+					new_child->set_neg_neighbor(target, j);
+					if (new_child->Depth() == target->Depth())
+						target->set_neg_neighbor(new_child, wxyz);
 				}
 				// If this is not the positive boundary of j-th direction,
 				// then there is a positive j-neighbor box (NULL otherwise).
-				if (!assign->code(j).is_pos_boundary())
+				if (!new_child->code(j).is_pos_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
 						if (k == j)
-							tcode[k] = assign->code(k).to_pos();
+							tcode[k] = new_child->code(k).to_pos();
 						else
-							tcode[k] = assign->code(k);
+							tcode[k] = new_child->code(k);
 					target = find(tcode, wxyz, show);
-					assign->set_pos_neighbor(target, j);
-					if (assign->Depth() == target->Depth())
-						target->set_neg_neighbor(assign, j);
+					new_child->set_pos_neighbor(target, j);
+					if (new_child->Depth() == target->Depth())
+						target->set_neg_neighbor(new_child, j);
 				}
 				else
 				{
 					for (int k = 0; k < dim; ++k)
 						if (k == wxyz)
-							tcode[k] = assign->code((k + 1) % dim).pos_most();
+							tcode[k] = new_child->code((k + 1) % dim).pos_most();
 						else if (k == j)
 							tcode[k] = bit();
 						else
-							tcode[k] = assign->code(k);
+							tcode[k] = new_child->code(k);
 					target = find(tcode, j, show);
-					assign->set_pos_neighbor(target, j);
-					if (assign->Depth() == target->Depth())
-						target->set_pos_neighbor(assign, wxyz);
+					new_child->set_pos_neighbor(target, j);
+					if (new_child->Depth() == target->Depth())
+						target->set_pos_neighbor(new_child, wxyz);
 				}
 			}
 		}
+	}
+	// Check if a box is a neighbor box (not necessarily principle).
+	bool is_neighbor(SO3Box* B)
+	{
+		if (WXYZ() == B->WXYZ())
+		{
+			int int_co_dim = 0;
+			for (int i = 0; i < dim; ++i)
+			{
+				if (i == WXYZ())
+					continue;
+				if (code(i).separate(B->code(i)))
+					return false;
+				if (code(i).neighbor_to(B->code(i)))
+					int_co_dim += 1;
+			}
+			return int_co_dim == 1;
+		}
+		else
+		{
+			int pos_bound = -1;
+			for (int i = 0; i < dim; ++i)
+			{
+				if (i == WXYZ())
+				{
+					if (!B->code(i).is_boundary())
+						return false;
+					if (pos_bound < 0)
+					{
+						if (B->code(i).is_neg_boundary())
+							pos_bound = 0;
+						else
+							pos_bound = 1;
+					}
+					else
+					{
+						if (B->code(i).is_neg_boundary())
+						{
+							if (pos_bound != 0)
+								return false;
+						}
+						else
+						{
+							if (pos_bound != 1)
+								return false;
+						}
+					}
+				}
+				else if (i == B->WXYZ())
+				{
+					if (!code(i).is_boundary())
+						return false;
+					if (pos_bound < 0)
+					{
+						if (code(i).is_neg_boundary())
+							pos_bound = 0;
+						else
+							pos_bound = 1;
+					}
+					else
+					{
+						if (code(i).is_neg_boundary())
+						{
+							if (pos_bound != 0)
+								return false;
+						}
+						else
+						{
+							if (pos_bound != 1)
+								return false;
+						}
+					}
+				}
+			}
+			for (int i = 0; i < dim; ++i)
+			{
+				if (i != WXYZ() && i != B->WXYZ())
+				{
+					if (pos_bound == 1)
+					{
+						if ((!code(i).contain(B->code(i))) && (!code(i).contained(B->code(i))))
+							return false;
+					}
+					else
+					{
+						if ((!code(i).flip().contain(B->code(i))) && (!code(i).flip().contained(B->code(i))))
+							return false;
+					}
+				}
+			}
+		}
+	}
+	// Check if a box is containing a box.
+	bool is_containing(SO3Box* B)
+	{
+		if (WXYZ() != B->WXYZ())
+			return false;
+		for (int i = 0; i < dim; ++i)
+			if ((i != WXYZ()) && (!code(i).contain(B->code(i))))
+				return false;
+		return true;
+	}
+	// Check if a box is intersecting to a box.
+	bool is_intersect(SO3Box* B)
+	{
+		return is_containing(B) || B->is_containing(this);
 	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
@@ -856,7 +1042,7 @@ class SE3Box
 	bool leaf;
 	// Children node.
 	SE3Box* children[subsize];
-	// Neighbor node, 0 for neg, 1 for pos.
+	// Principle neighbor node, 0 for neg, 1 for pos.
 	SE3Box* neighbors[dim][2];
 	// Skip the wxyz.
 	int skip(int i)
@@ -878,6 +1064,11 @@ public:
 	SO3Box* BR()
 	{
 		return Br;
+	}
+	// Width of the box.
+	double width()
+	{
+		return min(Bt->width(), Br->width());
 	}
 	// Construct a new box.
 	SE3Box(R3Box* t, SO3Box* r)
@@ -934,7 +1125,7 @@ public:
 	{
 		return children[i % subsize];
 	}
-	// Neighbor node.
+	// Principle neighbor node.
 	SE3Box* neighbor(int i, bool pos)
 	{
 		if (pos)
@@ -942,17 +1133,27 @@ public:
 		else
 			return neighbors[i % dim][0];
 	}
-	// Positive neighbor node.
+	// Principle neighbor for translational directions.
+	SE3Box* T_neighbor(int i, bool pos)
+	{
+		return neighbor(i % subdim, pos);
+	}
+	// Principle neighbor for rotational directions.
+	SE3Box* R_neighbor(int i, bool pos)
+	{
+		return neighbor((i % (dim - subdim)) + subdim, pos);
+	}
+	// Principle positive neighbor node.
 	SE3Box* pos_neighbor(int i)
 	{
 		return neighbors[i % dim][1];
 	}
-	// Negative neighbor node.
+	// Principle negative neighbor node.
 	SE3Box* neg_neighbor(int i)
 	{
 		return neighbors[i % dim][0];
 	}
-	// Set neighbor node.
+	// Set principle neighbor node.
 	void set_neighbor(SE3Box* B, int i, bool pos)
 	{
 		if (pos)
@@ -960,23 +1161,112 @@ public:
 		else
 			neighbors[i % dim][0] = B;
 	}
-	// Set positive neighbor node.
+	// Set principle positive neighbor node.
 	void set_pos_neighbor(SE3Box* B, int i)
 	{
 		neighbors[i % dim][1] = B;
 	}
-	// Set negative neighbor node.
+	// Set principle negative neighbor node.
 	void set_neg_neighbor(SE3Box* B, int i)
 	{
 		neighbors[i % dim][0] = B;
 	}
-	// Find a target box by product table.
+	// Find a target box from product table.
 	SE3Box* find(int Btid, int Brid)
 	{
 		if (!SE3table.find(Btid, Brid))
 			return NULL;
 		else
 			return SE3list[SE3table.coeff(Btid, Brid)];
+	}
+	// Determine pinciple i-neighbor for translational directions.
+	SE3Box* find_T_neighbor(int i, bool pos, bool show = false)
+	{
+		i = i % subdim;
+		R3Box* Tneighbor = BT()->neighbor(i, pos);
+		if (Tneighbor == NULL)
+			return NULL;
+		if (Tneighbor->Depth() != BT()->Depth())
+			return parent->T_neighbor(i, pos);
+		if (show)
+		{
+			cout << endl << "Finding: ";
+			Tneighbor->show_code();
+			cout << " *";
+			BR()->show_code();
+		}
+		SE3Box* target = find(Tneighbor->ID(), BR()->ID());
+		if (show)
+		{
+			cout << endl << "Found: ";
+			if (target == NULL)
+				cout << "NULL";
+			else
+				target->show_code();
+		}
+		if (target == NULL)
+			return parent->T_neighbor(i, pos);
+		else
+			return target;
+	}
+	// Determine pinciple i-neighbor for rotational directions.
+	SE3Box* find_R_neighbor(int i, bool pos, bool show = false)
+	{
+		i = i % (dim - subdim);
+		if (i == wxyz)
+			return NULL;
+		SO3Box* Rneighbor = BR()->neighbor(i, pos);
+		if (Rneighbor == NULL)
+			return NULL;
+		if (Rneighbor->Depth() != BR()->Depth())
+			return parent->R_neighbor(i, pos);
+		if (show)
+		{
+			cout << endl << "Finding: ";
+			BT()->show_code();
+			cout << " *";
+			Rneighbor->show_code();
+		}
+		SE3Box* target = find(BT()->ID(), Rneighbor->ID());
+		if (show)
+		{
+			cout << endl << "Found: ";
+			if (target == NULL)
+				cout << "NULL";
+			else
+				target->show_code();
+		}
+		if (target == NULL)
+			return parent->R_neighbor(i, pos);
+		else
+			return target;
+	}
+	// Determine pinciple i-neighbor.
+	SE3Box* find_neighbor(int i, bool pos, bool show = false)
+	{
+		if (i < subdim)
+			return find_T_neighbor(i, pos, show);
+		else
+			return find_R_neighbor(i - subdim, pos, show);
+	}
+	// Determine if a box is aligned to this.
+	bool align_to(SE3Box* B)
+	{
+		if (B == NULL)
+			return false;
+		return BT()->Depth() == B->BT()->Depth() && BR()->Depth() == B->BR()->Depth();
+	}
+	// When the principle neighbor is aligned, determine the direction from the neighbor to this.
+	pair<int, bool> neighbor_dir(int i, bool pos)
+	{
+		if (i < subdim)
+			return make_pair(i, !pos);
+		else if (i == wxyz + subdim)
+			return make_pair(i, pos);
+		else if (!BR()->code(i - subdim).is_boundary(pos))
+			return make_pair(i, !pos);
+		else
+			return make_pair(wxyz + subdim, pos);
 	}
 	// Translational partial subdivision.
 	void R3_subdivide(bool show = false)
@@ -1003,95 +1293,29 @@ public:
 		// Step 4: Assign neighbors for children and re-assign neighbors for neighbors and their children.
 		for (int i = 0; i < subsize; ++i)
 		{
-			SE3Box* assign = children[i];
+			// The box that is going to be assigned to have a neighbor.
+			SE3Box* new_child = children[i];
+			// The box that is going to be assigned as the neighbor.
 			SE3Box* target = NULL;
 			if (show)
 			{
-				cout << "Assigning ";
-				assign->show_code();
+				cout << endl << "Assigning ";
+				new_child->show_code();
 			}
 			for (int j = 0; j < dim; ++j)
 			{
 				if (show)
-					cout << "direction " << j << ":" << endl;
-				if (j == wxyz + subdim)
-					continue;
-				// Translational direction.
-				if (j < subdim)
+					cout << endl << "direction " << j << ":";
+				// Principle negative j-neighbor.
+				for (int k = 0; k < 2; ++k)
 				{
-					// Negative direction.
-					if (Bt->neg_neighbor(j) == NULL && (!getBin(i, j)))
-						assign->set_neg_neighbor(NULL, j);
-					else
+					bool pos = bool(k % 2);
+					target = new_child->find_neighbor(j, pos, show);
+					new_child->set_neighbor(target, j, pos);
+					if (new_child->align_to(target))
 					{
-						target = find(assign->BT()->neg_neighbor(j)->ID(), assign->BR()->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_neg_neighbor(neg_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_neg_neighbor(target, j);
-							target->set_pos_neighbor(assign, j);
-						}
-					}
-					// Positive direction.
-					if (Bt->pos_neighbor(j) == NULL && getBin(i, j))
-						assign->set_pos_neighbor(NULL, j);
-					else
-					{
-						target = find(assign->BT()->pos_neighbor(j)->ID(), assign->BR()->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_pos_neighbor(pos_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_pos_neighbor(target, j);
-							target->set_neg_neighbor(assign, j);
-						}
-					}
-				}
-				// Rotational direction.
-				else
-				{
-					// Negative direction.
-					if (Br->neg_neighbor(j - subdim) == NULL)
-						assign->set_neg_neighbor(NULL, j);
-					else
-					{
-						target = find(assign->BT()->ID(), assign->BR()->neg_neighbor(j - subdim)->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_neg_neighbor(neg_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_neg_neighbor(target, j);
-							if (assign->BR()->is_neg_boundary(j - subdim))
-								target->set_neg_neighbor(assign, wxyz + subdim);
-							else
-								target->set_pos_neighbor(assign, wxyz + subdim);
-						}
-					}
-					// Positive direction.
-					if (Br->pos_neighbor(j - subdim) == NULL)
-						assign->set_pos_neighbor(NULL, j);
-					else
-					{
-						target = find(assign->BT()->ID(), assign->BR()->pos_neighbor(j - subdim)->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_pos_neighbor(pos_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_pos_neighbor(target, j);
-							if (assign->BR()->is_pos_boundary(j - subdim))
-								target->set_pos_neighbor(assign, wxyz + subdim);
-							else
-								target->set_neg_neighbor(assign, wxyz + subdim);
-						}
+						pair<int, bool> nd = new_child->neighbor_dir(j, pos);
+						target->set_neighbor(new_child, nd.first, nd.second);
 					}
 				}
 			}
@@ -1122,95 +1346,29 @@ public:
 		// Step 4: Assign neighbors for children and re-assign neighbors for neighbors and their children.
 		for (int i = 0; i < subsize; ++i)
 		{
-			SE3Box* assign = children[i];
+			SE3Box* new_child = children[i];
 			SE3Box* target = NULL;
 			if (show)
 			{
-				cout << "Assigning ";
-				assign->show_code();
+				cout << endl << "Assigning ";
+				new_child->show_code();
 			}
 			for (int j = 0; j < dim; ++j)
 			{
 				if (show)
-					cout << "direction " << j << ":" << endl;
-				if (j == wxyz + subdim)
-					continue;
-				// Translational direction.
-				if (j < subdim)
+					cout << endl << "direction " << j << ":";
+				if (show)
+					cout << endl << "direction " << j << ":";
+				// Principle negative j-neighbor.
+				for (int k = 0; k < 2; ++k)
 				{
-					// Negative direction.
-					if (Bt->neg_neighbor(j) == NULL)
-						assign->set_neg_neighbor(NULL, j);
-					else
+					bool pos = bool(k % 2);
+					target = new_child->find_neighbor(j, pos, show);
+					new_child->set_neighbor(target, j, pos);
+					if (new_child->align_to(target))
 					{
-						target = find(assign->BT()->neg_neighbor(j)->ID(), assign->BR()->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_neg_neighbor(neg_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_neg_neighbor(target, j);
-							target->set_pos_neighbor(assign, j);
-						}
-					}
-					// Positive direction.
-					if (Bt->pos_neighbor(j) == NULL)
-						assign->set_pos_neighbor(NULL, j);
-					else
-					{
-						target = find(assign->BT()->pos_neighbor(j)->ID(), assign->BR()->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_pos_neighbor(pos_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_pos_neighbor(target, j);
-							target->set_neg_neighbor(assign, j);
-						}
-					}
-				}
-				// Rotational direction.
-				else
-				{
-					// Negative direction.
-					if (Br->neg_neighbor(j - subdim) == NULL)
-						assign->set_neg_neighbor(NULL, j);
-					else
-					{
-						target = find(assign->BT()->ID(), assign->BR()->neg_neighbor(j - subdim)->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_neg_neighbor(neg_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_neg_neighbor(target, j);
-							if (assign->BR()->is_neg_boundary(j - subdim))
-								target->set_neg_neighbor(assign, wxyz + subdim);
-							else
-								target->set_pos_neighbor(assign, wxyz + subdim);
-						}
-					}
-					// Positive direction.
-					if (Br->pos_neighbor(j - subdim) == NULL)
-						assign->set_pos_neighbor(NULL, j);
-					else
-					{
-						target = find(assign->BT()->ID(), assign->BR()->pos_neighbor(j - subdim)->ID());
-						// Not found. Then the principle neighbor is the same with parent.
-						if (target == NULL)
-							assign->set_pos_neighbor(pos_neighbor(j), j);
-						// Found. Then "assign" and "target" is an aligned pair.
-						else
-						{
-							assign->set_pos_neighbor(target, j);
-							if (assign->BR()->is_pos_boundary(j - subdim))
-								target->set_pos_neighbor(assign, wxyz + subdim);
-							else
-								target->set_neg_neighbor(assign, wxyz + subdim);
-						}
+						pair<int, bool> nd = new_child->neighbor_dir(j, pos);
+						target->set_neighbor(new_child, nd.first, nd.second);
 					}
 				}
 			}
@@ -1224,6 +1382,78 @@ public:
 		else
 			SO3_subdivide(show);
 	}
+	// Check if a box is a neighbor box (not necessarily principle).
+	bool is_neighbor(SE3Box* B)
+	{
+		return(BT()->is_neighbor(B->BT()) && BR()->is_intersect(B->BR())) || (BT()->is_intersect(B->BT()) && BR()->is_neighbor(B->BR()));
+	}
+	// Collection of all neighbor boxes (not necessarily principle) in B.
+	vector<SE3Box*> adj_neighbors(SE3Box* B)
+	{
+		vector<SE3Box*> neighbors;
+		if (B == NULL)
+			return neighbors;
+		if (!is_neighbor(B))
+			return neighbors;
+		else if (B->Leaf())
+			neighbors.push_back(B);
+		else
+			for (int i = 0; i < subsize; ++i)
+			{
+				vector<SE3Box*> subneighbors = adj_neighbors(B->child(i));
+				for (int j = 0; j < subneighbors.size(); ++j)
+					neighbors.push_back(subneighbors[j]);
+			}
+		return neighbors;
+	}
+	// Collection of all neighbor boxes (not necessarily principle).
+	vector<SE3Box*> all_adj_neighbors(bool show = false)
+	{
+		vector<SE3Box*> neighbors;
+		vector<SE3Box*> subneighbors;
+		for (int i = 0; i < dim; ++i)
+		{
+			if (show)
+				cout << endl << i;
+			subneighbors = adj_neighbors(neg_neighbor(i));
+			if (show)
+			{
+				cout << endl;
+				if (neg_neighbor(i) != NULL)
+					neg_neighbor(i)->show_code();
+				else
+					cout << "NULL";
+			}
+			for (int j = 0; j < subneighbors.size(); ++j)
+			{
+				neighbors.push_back(subneighbors[j]);
+				if (show)
+				{
+					cout << endl;
+					subneighbors[j]->show_code();
+				}
+			}
+			subneighbors = adj_neighbors(pos_neighbor(i));
+			if (show)
+			{
+				cout << endl;
+				if (pos_neighbor(i) != NULL)
+					pos_neighbor(i)->show_code();
+				else
+					cout << "NULL";
+			}
+			for (int j = 0; j < subneighbors.size(); ++j)
+			{
+				neighbors.push_back(subneighbors[j]);
+				if (show)
+				{
+					cout << endl;
+					subneighbors[j]->show_code();
+				}
+			}
+		}
+		return neighbors;
+	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0)
 	{
@@ -1231,7 +1461,7 @@ public:
 			os << "      ";
 		Bt->out(os, 0, false);
 		os << " * ";
-		Br->out(os, 0, false); 
+		Br->out(os, 0, false);
 		if (leaf)
 			return;
 		for (int i = 0; i < subsize; ++i)
@@ -1273,8 +1503,9 @@ public:
 		for (int j = 0; j < l; ++j)
 			os << "      ";
 		Bt->show_code(os, 0);
-		os << " * ";
+		os << " *";
 		Br->show_code(os, 0);
+		os << " (Depth: " << Bt->Depth() << "*" << Br->Depth() << ")";
 	}
 #undef subsize
 #undef dim

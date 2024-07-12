@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\zhaoq\Desktop\Study\GitHub\6DOF_Robot\main\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{126A6F83-0AD6-3A49-8AA6-EC1D7552F2CF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
