@@ -227,6 +227,8 @@ public:
     // Make the edge constructed by V[i] and V[j].
     GraphEdge<type>* link(int i, int j)
     {
+        if (i < 0 || j < 0)
+            return NULL;
         return link(V[i], V[j]);
     }
 
