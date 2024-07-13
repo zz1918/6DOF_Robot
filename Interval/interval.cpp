@@ -2,6 +2,9 @@
 // multiplication and division of intervals and interval matrices.
 // Author: zz1918@nyu.edu
 
+#ifndef INTERVAL_H
+#define INTERVAL_H
+
 #include <iostream>
 #include <math.h>
 #include <Eigen/Dense>
@@ -579,3 +582,5 @@ ostream& operator<<(ostream& os, MatrixInterval<Scarlar> m)
 #define MatrixIi MatrixInterval<int>
 #define MatrixIf MatrixInterval<float>
 #define MatrixId MatrixInterval<double>
+
+#endif

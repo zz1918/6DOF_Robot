@@ -1,6 +1,9 @@
 // bimap.cpp : Hash table for (key1,key2)|->(content).
 //
 
+#ifndef BIMAP_H
+#define BIMAP_H
+
 #include <map>
 using namespace std;
 
@@ -35,3 +38,5 @@ public:
         bim.clear();
     }
 };
+
+#endif

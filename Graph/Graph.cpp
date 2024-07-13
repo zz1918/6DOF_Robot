@@ -2,6 +2,9 @@
 // connected(u,v) will use the union-find algorithm to check if u and v are in the same union.
 // path(u,v) will output a path connecting u and v (empty if no path).
 
+#ifndef GRAPH_H
+#define GRAPH_H
+
 #include <iostream>
 #include <vector>
 #include <list>
@@ -310,3 +313,4 @@ public:
     }
 };
 
+#endif
