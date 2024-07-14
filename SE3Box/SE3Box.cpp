@@ -453,6 +453,11 @@ public:
 	{
 		return is_containing(B) || B->is_containing(this);
 	}
+	// If the box contains a configuration.
+	bool contains(Vector3d v)
+	{
+		return range.contains(v);
+	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
@@ -1003,6 +1008,22 @@ public:
 	{
 		return is_containing(B) || B->is_containing(this);
 	}
+	// If the box contains a configuration.
+	bool contains(Vector4d v)
+	{
+		if (wxyz < 0)
+			return v(0) == 1 || v(1) == 1 || v(2) == 1 || v(3) == 1;
+		else if (v(wxyz) != 1)
+			return false;
+		else
+		{
+			Vector3d w;
+			for (int i = 0; i < 4; ++i)
+				if (i != wxyz)
+					w(skip(i)) = v(i);
+			return range.contains(w);
+		}
+	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
@@ -1183,6 +1204,27 @@ public:
 	bool is_root()
 	{
 		return Br->is_root();
+	}
+	// Is this box subdivided by BT?
+	bool is_BTsub()
+	{
+		return BTsub;
+	}
+	// Is this box subdivided by BR?
+	bool is_BRsub()
+	{
+		return BRsub;
+	}
+	// If the box contains a configuration.
+	bool contains(VectorXd v)
+	{
+		Vector3d u;
+		Vector4d w;
+		for (int i = 0; i < subdim; ++i)
+			u(i) = v(i);
+		for (int i = 0; i < (dim - subdim); ++i)
+			w(i) = v(i - subdim);
+		return Bt->contains(u) && Br->contains(w);
 	}
 	// Child node.
 	SE3Box* child(int i)
@@ -1585,32 +1627,4 @@ public:
 #undef boxsize
 #undef subdim
 };
-
-class SE3Tree
-{
-#define subsize 8
-#define dim 7
-#define boxsize 4
-#define subdim 3
-public:
-	// Root nodes.
-	SE3Box* root;
-	// SE3 initialization.
-	SE3Tree(MatrixId range)
-	{
-		R3Box* BtRoot = new R3Box(range);
-		SO3Box* BrTree = new SO3Box();
-		root = new SE3Box(BtRoot, BrTree);
-	}
-	// cout *this.
-	void out(ostream& os = cout, int l = 0)
-	{
-		root->out(os, l);
-	}
-#undef subsize
-#undef dim
-#undef boxsize
-#undef subdim
-};
-
 #endif

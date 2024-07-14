@@ -1,6 +1,9 @@
 // WtFp.cpp: This file implements the special Sigma_2 decomposition 
 //			of the approximate footprint of the Delta robot.
 
+#ifndef WTFP_H
+#define WTFP_H
+
 #include<vector>
 #include<Eigen/Dense>
 #include<Interval.h>
@@ -386,3 +389,4 @@ public:
 	}
 };
 
+#endif
