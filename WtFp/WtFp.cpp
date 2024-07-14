@@ -13,7 +13,7 @@
 using namespace std;
 using namespace Eigen;
 
-enum predicate { MIXED, FREE, STUCK, UNKNOWN };
+enum pvalue { MIXED, FREE, STUCK, UNKNOWN };
 
 #define pA Vector3d(1, 0, 0)
 #define pB Vector3d(0, 1, 0)
