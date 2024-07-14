@@ -458,6 +458,11 @@ public:
 	{
 		return range.contains(v);
 	}
+	// The center of the box.
+	Vector3d center()
+	{
+		return (range.min() + range.max()) / 2;
+	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
@@ -1024,6 +1029,20 @@ public:
 			return range.contains(w);
 		}
 	}
+	// The center of the box.
+	Vector4d center()
+	{
+		if (wxyz < 0)
+			return Vector4d(1, 0, 0, 0);
+		Vector3d v = (range.min() + range.max()) / 2;
+		Vector4d w;
+		for (int i = 0; i < 4; ++i)
+			if (i != wxyz)
+				w(i) = v(skip(i));
+			else
+				w(i) = 1;
+		return w;
+	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
@@ -1225,6 +1244,19 @@ public:
 		for (int i = 0; i < (dim - subdim); ++i)
 			w(i) = v(i - subdim);
 		return Bt->contains(u) && Br->contains(w);
+	}
+	// The center of the box.
+	VectorXd center()
+	{
+		Vector3d u = Bt->center();
+		Vector4d w = Br->center();
+		VectorXd v(dim);
+		for (int i = 0; i < dim; ++i)
+			if (i < subdim)
+				v(i) = u(i);
+			else
+				v(i) = w(i - subdim);
+		return v;
 	}
 	// Child node.
 	SE3Box* child(int i)

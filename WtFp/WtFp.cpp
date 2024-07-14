@@ -138,7 +138,7 @@ public:
 };
 
 // Approximate footprint for Delta robot.
-class WtFp
+class DeltaWtFp
 {
 public:
 	// \icc_\pA and \icc_\pB.
@@ -279,7 +279,7 @@ public:
 		}
 	}
 	// Constructor by a box B in \intbox W.
-	WtFp(MatrixId Bt, MatrixId Br, int wxyz=0)
+	DeltaWtFp(MatrixId Bt, MatrixId Br, int wxyz=0)
 	{
 		// Bt part.
 		mB = (Bt.min() + Bt.max()) / 2;
