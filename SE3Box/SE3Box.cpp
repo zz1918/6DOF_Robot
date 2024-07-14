@@ -542,7 +542,41 @@ public:
 	// Width of the box.
 	double width()
 	{
+		if (wxyz < 0)
+			return 2.0;
 		return (range.max() - range.min()).minCoeff();
+	}
+	// Construct a root box.
+	SO3Box()
+	{
+		range = MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1));
+		id = SO3list.size();
+		SO3list.push_back(this);
+		for (int i = 0; i < boxsize; ++i)
+			roots[i] = new SO3Box(MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1)), i);
+		for (int i = 0; i < boxsize; ++i)
+		{
+			roots[i]->set_root(roots);
+			for (int j = 0; j < dim; ++j)
+				if (j == i)
+					continue;
+				else
+				{
+					roots[i]->set_pos_neighbor(roots[j], j);
+					roots[i]->set_neg_neighbor(roots[j], j);
+				}
+		}
+		parent = NULL;
+		wxyz = -1;
+		depth = -1;
+		leaf = true;
+		for (int i = 0; i < subsize; ++i)
+			children[i] = NULL;
+		for (int i = 0; i < dim; ++i)
+			for (int j = 0; j < 2; ++j)
+				neighbors[i][j] = NULL;
+		for (int i = 0; i < dim; ++i)
+			codes[i] = bit();
 	}
 	// Construct a new box.
 	SO3Box(MatrixId r, int _wxyz)
@@ -590,6 +624,11 @@ public:
 	{
 		return wxyz;
 	}
+	// Is this an SO3 root?
+	bool is_root()
+	{
+		return wxyz < 0;
+	}
 	// Depth of the node.
 	int Depth()
 	{
@@ -605,14 +644,24 @@ public:
 	{
 		return leaf;
 	}
+	// Is this a leaf?
+	bool is_leaf()
+	{
+		return leaf;
+	}
 	// Child node.
 	SO3Box* child(int i)
 	{
-		return children[i % subsize];
+		if (wxyz < 0)
+			return children[i % boxsize];
+		else
+			return children[i % subsize];
 	}
 	// Child node by code.
 	SO3Box* child(int t[dim])
 	{
+		if (wxyz < 0)
+			return NULL;
 		int target = 0;
 		for (int i = 0; i < dim; ++i)
 			if (i < wxyz)
@@ -626,6 +675,8 @@ public:
 	// Neighbor node.
 	SO3Box* neighbor(int i, bool pos)
 	{
+		if (wxyz < 0)
+			return NULL;
 		if (pos)
 			return neighbors[i % dim][1];
 		else
@@ -634,21 +685,29 @@ public:
 	// Positive neighbor node.
 	SO3Box* pos_neighbor(int i)
 	{
+		if (wxyz < 0)
+			return NULL;
 		return neighbors[i % dim][1];
 	}
 	// Negative neighbor node.
 	SO3Box* neg_neighbor(int i)
 	{
+		if (wxyz < 0)
+			return NULL;
 		return neighbors[i % dim][0];
 	}
 	// If the box is the negative boundary of the root to the direction i.
 	bool is_neg_boundary(int i)
 	{
+		if (wxyz < 0)
+			return true;
 		return codes[i].is_neg_boundary();
 	}
 	// If the box is the positive boundary of the root to the direction i.
 	bool is_pos_boundary(int i)
 	{
+		if (wxyz < 0)
+			return true;
 		return codes[i].is_pos_boundary();
 	}
 	// Set neighbor node.
@@ -688,7 +747,7 @@ public:
 			cout << "In box " << _wxyz << endl;
 		}
 		SO3Box* target = roots[_wxyz];
-		while (!target->Leaf() && target->Depth() < t[(_wxyz + 1) % boxsize].length())
+		while (!target->is_leaf() && target->Depth() < t[(_wxyz + 1) % boxsize].length())
 		{
 			int tcode[dim];
 			for (int i = 0; i < dim; ++i)
@@ -699,6 +758,7 @@ public:
 		{
 			cout << "Found ";
 			target->show_code();
+			cout << endl;
 		}
 		return target;
 	}
@@ -712,42 +772,51 @@ public:
 		// Step 1: Create subdivisions.
 		// All boxes are sequenced by the lex-inequality of the range.min() coordinates.
 
-		for (int i = 0; i < subsize; ++i)
-		{
-			Vector3d new_inf, new_sup;
-			for (int j = 0; j < dim; ++j)
-				if (j == wxyz)
-					continue;
-				else if (getBin(i, skip(j)))
-				{
-					new_inf(skip(j)) = (range(skip(j)).min() + range(skip(j)).max()) / 2;
-					new_sup(skip(j)) = range(skip(j)).max();
-				}
-				else
-				{
-					new_inf(skip(j)) = range(skip(j)).min();
-					new_sup(skip(j)) = (range(skip(j)).min() + range(skip(j)).max()) / 2;
-				}
-			MatrixId new_range(new_inf, new_sup, false);
-			children[i] = new SO3Box(new_range, wxyz);
-			children[i]->set_root(roots);
-			children[i]->set_parent(this);
-			children[i]->set_depth(depth + 1);
-			for (int j = 0; j < dim; ++j)
-				if (j == wxyz)
-					children[i]->set_code(bit(), j);
-				else if (getBin(i, skip(j)))
-					children[i]->set_code(codes[j].pos(), j);
-				else
-					children[i]->set_code(codes[j].neg(), j);
-		}
-
+		if (wxyz < 0)
+			for (int i = 0; i < boxsize; ++i)
+			{
+				children[i] = root(i);
+				children[i]->set_parent(this);
+				children[i]->set_depth(depth + 1);
+			}
+		else
+			for (int i = 0; i < subsize; ++i)
+			{
+				Vector3d new_inf, new_sup;
+				for (int j = 0; j < dim; ++j)
+					if (j == wxyz)
+						continue;
+					else if (getBin(i, skip(j)))
+					{
+						new_inf(skip(j)) = (range(skip(j)).min() + range(skip(j)).max()) / 2;
+						new_sup(skip(j)) = range(skip(j)).max();
+					}
+					else
+					{
+						new_inf(skip(j)) = range(skip(j)).min();
+						new_sup(skip(j)) = (range(skip(j)).min() + range(skip(j)).max()) / 2;
+					}
+				MatrixId new_range(new_inf, new_sup, false);
+				children[i] = new SO3Box(new_range, wxyz);
+				children[i]->set_root(roots);
+				children[i]->set_parent(this);
+				children[i]->set_depth(depth + 1);
+				for (int j = 0; j < dim; ++j)
+					if (j == wxyz)
+						children[i]->set_code(bit(), j);
+					else if (getBin(i, skip(j)))
+						children[i]->set_code(codes[j].pos(), j);
+					else
+						children[i]->set_code(codes[j].neg(), j);
+			}
 
 		// Step 2: This is not a leaf anymore.
 		leaf = false;
 
 		// Step 3: Assign neighbors for children and re-new_child neighbors for neighbors and their children.
 
+		if (wxyz < 0)
+			return;
 		for (int i = 0; i < subsize; ++i)
 		{
 			SO3Box* new_child = children[i];
@@ -757,6 +826,7 @@ public:
 			{
 				cout << "Assigning ";
 				new_child->show_code();
+				cout << endl;
 			}
 			for (int j = 0; j < dim; ++j)
 			{
@@ -826,6 +896,8 @@ public:
 	// Check if a box is a neighbor box (not necessarily principle).
 	bool is_neighbor(SO3Box* B)
 	{
+		if (wxyz < 0)
+			return false;
 		if (WXYZ() == B->WXYZ())
 		{
 			int int_co_dim = 0;
@@ -917,6 +989,8 @@ public:
 	// Check if a box is containing a box.
 	bool is_containing(SO3Box* B)
 	{
+		if (wxyz < 0)
+			return true;
 		if (WXYZ() != B->WXYZ())
 			return false;
 		for (int i = 0; i < dim; ++i)
@@ -942,7 +1016,7 @@ public:
 		case 1:os << MatrixId(Vector4d(m(0), 1, m(1), m(2)), Vector4d(M(0), 1, M(1), M(2)), false).transpose(); break;
 		case 2:os << MatrixId(Vector4d(m(0), m(1), 1, m(2)), Vector4d(M(0), M(1), 1, M(2)), false).transpose(); break;
 		case 3:os << MatrixId(Vector4d(m(0), m(1), m(2), 1), Vector4d(M(0), M(1), M(2), 1), false).transpose(); break;
-		default:os << range.transpose();
+		default:os << "BASE BOX \\wh{SO(3)}";
 		}
 		if (leaf || !recur)
 			return;
@@ -959,18 +1033,20 @@ public:
 		{
 			for (int j = 0; j < l; ++j)
 				os << "      ";
-			os << "neighbor pos " << i << ":" << endl;
-			if (pos_neighbor(i) != NULL)
-				pos_neighbor(i)->show_code(os, l);
-			else
-				os << "NULL" << endl;
-			for (int j = 0; j < l; ++j)
-				os << "      ";
 			os << "neighbor neg " << i << ":" << endl;
 			if (neg_neighbor(i) != NULL)
 				neg_neighbor(i)->show_code(os, l);
 			else
-				os << "NULL" << endl;
+				os << "NULL";
+			os << endl;
+			for (int j = 0; j < l; ++j)
+				os << "      ";
+			os << "neighbor pos " << i << ":" << endl;
+			if (pos_neighbor(i) != NULL)
+				pos_neighbor(i)->show_code(os, l);
+			else
+				os << "NULL";
+			os << endl;
 		}
 	}
 	// cout *codes.
@@ -980,7 +1056,7 @@ public:
 			os << "      ";
 		for (int i = 0; i < boxsize; ++i)
 		{
-			if (i == wxyz)
+			if (wxyz < 0 || i == wxyz)
 				os << " " << EMP;
 			else
 				os << " " << code(i);
@@ -992,52 +1068,13 @@ public:
 #undef boxsize
 };
 
-class SO3Tree
-{
-#define dim 4
-#define boxsize 4
-	// Root nodes.
-	SO3Box* roots[boxsize];
-public:
-	// SO3 initialization.
-	SO3Tree()
-	{
-		for (int i = 0; i < boxsize; ++i)
-			roots[i] = new SO3Box(MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1)), i);
-		for (int i = 0; i < boxsize; ++i)
-		{
-			roots[i]->set_root(roots);
-			for (int j = 0; j < dim; ++j)
-				if (j == i)
-					continue;
-				else
-				{
-					roots[i]->set_pos_neighbor(roots[j], j);
-					roots[i]->set_neg_neighbor(roots[j], j);
-				}
-		}
-	}
-	// Get the root cell.
-	SO3Box* root(int i)
-	{
-		return roots[i % boxsize];
-	}
-	// cout *this.
-	void out(ostream& os = cout, int l = 0)
-	{
-		for (int i = 0; i < boxsize; ++i)
-			roots[i]->out(os, l);
-	}
-#undef dim
-#undef boxsize
-};
-
 class SE3Box
 {
 #define subsize 8
 #define dim 7
 #define boxsize 4
 #define subdim 3
+protected:
 	int id;
 	// Translation component.
 	R3Box* Bt;
@@ -1055,6 +1092,10 @@ class SE3Box
 	SE3Box* children[subsize];
 	// Principle neighbor node, 0 for neg, 1 for pos.
 	SE3Box* neighbors[dim][2];
+	// Is this subdividing by R3?
+	bool BTsub;
+	// Is this subdividing by SO3?
+	bool BRsub;
 	// Skip the wxyz.
 	int skip(int i)
 	{
@@ -1094,6 +1135,8 @@ public:
 		parent = NULL;
 		wxyz = Br->WXYZ();
 		leaf = true;
+		BTsub = false;
+		BRsub = false;
 		for (int i = 0; i < subsize; ++i)
 			children[i] = NULL;
 		for (int i = 0; i < dim; ++i)
@@ -1131,9 +1174,21 @@ public:
 	{
 		return leaf;
 	}
+	// Is this a leaf?
+	bool is_leaf()
+	{
+		return leaf;
+	}
+	// Is this an SO3 root box?
+	bool is_root()
+	{
+		return Br->is_root();
+	}
 	// Child node.
 	SE3Box* child(int i)
 	{
+		if (is_root() && BRsub)
+			return children[i % boxsize];
 		return children[i % subsize];
 	}
 	// Principle neighbor node.
@@ -1223,6 +1278,8 @@ public:
 	// Determine pinciple i-neighbor for rotational directions.
 	SE3Box* find_R_neighbor(int i, bool pos, bool show = false)
 	{
+		if (is_root())
+			return NULL;
 		i = i % (dim - subdim);
 		if (i == wxyz)
 			return NULL;
@@ -1272,6 +1329,8 @@ public:
 	{
 		if (i < subdim)
 			return make_pair(i, !pos);
+		else if (wxyz < 0)
+			return make_pair(-1, false);
 		else if (i == wxyz + subdim)
 			return make_pair(i, pos);
 		else if (!BR()->code(i - subdim).is_boundary(pos))
@@ -1298,8 +1357,9 @@ public:
 			children[i]->set_parent(this);
 		}
 
-		// Step 3: This is not a leaf anymore.
+		// Step 3: This is not a leaf anymore, it is subdivided by BT.
 		leaf = false;
+		BTsub = true;
 
 		// Step 4: Assign neighbors for children and re-assign neighbors for neighbors and their children.
 		for (int i = 0; i < subsize; ++i)
@@ -1344,18 +1404,20 @@ public:
 			Br->subdivide();
 
 		// Step 2: Create subdivisions.
-		for (int i = 0; i < subsize; ++i)
+		for (int i = 0; i < (is_root() ? boxsize : subsize); ++i)
 		{
 			children[i] = new SE3Box(Bt, Br->child(i));
 			children[i]->set_root(roots);
 			children[i]->set_parent(this);
 		}
 
-		// Step 3: This is not a leaf anymore.
+		// Step 3: This is not a leaf anymore, it is subdivided by BR.
 		leaf = false;
+		BRsub = true;
 
 		// Step 4: Assign neighbors for children and re-assign neighbors for neighbors and their children.
-		for (int i = 0; i < subsize; ++i)
+
+		for (int i = 0; i < (is_root() ? boxsize : subsize); ++i)
 		{
 			SE3Box* new_child = children[i];
 			SE3Box* target = NULL;
@@ -1530,42 +1592,20 @@ class SE3Tree
 #define dim 7
 #define boxsize 4
 #define subdim 3
-	// Root nodes.
-	SE3Box* roots[boxsize];
 public:
+	// Root nodes.
+	SE3Box* root;
 	// SE3 initialization.
 	SE3Tree(MatrixId range)
 	{
 		R3Box* BtRoot = new R3Box(range);
-		SO3Tree* BrTree = new SO3Tree();
-		for (int i = 0; i < boxsize; ++i)
-			roots[i] = new SE3Box(BtRoot, BrTree->root(i));
-		for (int i = 0; i < boxsize; ++i)
-		{
-			roots[i]->set_root(roots);
-			for (int j = 0; j < dim; ++j)
-				if (j < subdim || j == i + subdim)
-					continue;
-				else
-				{
-					roots[i]->set_pos_neighbor(roots[j - subdim], j);
-					roots[i]->set_neg_neighbor(roots[j - subdim], j);
-				}
-		}
-	}
-	// Get the root cell.
-	SE3Box* root(int i)
-	{
-		return roots[i % boxsize];
+		SO3Box* BrTree = new SO3Box();
+		root = new SE3Box(BtRoot, BrTree);
 	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0)
 	{
-		for (int i = 0; i < boxsize; ++i)
-		{
-			roots[i]->out(os, l);
-			os << endl;
-		}
+		root->out(os, l);
 	}
 #undef subsize
 #undef dim
