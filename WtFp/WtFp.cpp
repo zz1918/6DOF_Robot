@@ -147,12 +147,16 @@ public:
 	Edge* SegAB;
 	// Pyramid^+.
 	Pyramid* H;
+	// Special case, the approximate footprint is a ball.
+	Ball* BigO;
 	// r(B) and d(B) for box B.
 	double rB, dB;
 	// Center of box Bt.
 	Vector3d mB;
-	// If the approximate footprint is reduced (OO is inside ball SA+).
+	// If the approximate footprint is reduced (O is inside ball SA+).
 	bool singular;
+	// If the approximate footprint is initial (for SO3 roots).
+	bool initial;
 	// Centers of SA and SB (pure rotation part).
 	Vector3d opA, opB;
 	// Bounding box of approximate footprint for quick exclusion.
@@ -256,7 +260,15 @@ public:
 	// Construct the bounding box of the WtFp
 	MatrixId BBox()
 	{
-		if (singular)
+		if (initial)
+		{
+			// If the approximate footprint is initial, then the bounding box is given by the big O.
+			Vector3d posdiff = Vector3d(dB, dB, dB);
+			Vector3d posmin = mB - posdiff;
+			Vector3d posmax = mB + posdiff;
+			return MatrixId(posmin, posmax);
+		}
+		else if (singular)
 		{
 			// If the approximate footprint is singular, then the bounding box is given by the two balls.
 			double R = dB + rB;
@@ -279,11 +291,29 @@ public:
 		}
 	}
 	// Constructor by a box B in \intbox W.
-	DeltaWtFp(MatrixId Bt, MatrixId Br, int wxyz=0)
+	DeltaWtFp(MatrixId Bt, MatrixId Br = MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1)), int wxyz = -1)
 	{
+
 		// Bt part.
 		mB = (Bt.min() + Bt.max()) / 2;
 		rB = (Bt.max() - Bt.min()).norm() / 2;
+
+		// This is an SO3 root.
+		if (wxyz < 0)
+		{
+			opA = BigO->O()->p;
+			opB = BigO->O()->p;
+			dB = rB * sqrt(3) + 1;
+			BigO = new Ball(mB, dB);
+			initial = true;
+			singular = false;
+			SegAB = NULL;
+			IccA = NULL;
+			IccB = NULL;
+			H = NULL;
+			bbox = BBox();
+			return;
+		}
 
 		// Br part.
 		vector<Vector4d> Corners = make_corners(Br, wxyz);
@@ -300,20 +330,24 @@ public:
 
 		if ((dB + rB) > opA.norm() || (dB + rB) > opB.norm())
 		{
+			initial = false;
 			singular = true;
 			SegAB = new Edge(OpA, OpB);
 			IccA = NULL;
 			IccB = NULL;
 			H = NULL;
+			BigO = NULL;
 			bbox = BBox();
 		}
 		else
 		{
+			initial = false;
 			singular = false;
 			SegAB = new Edge(OpA, OpB);
 			IccA = new IceCream(OO, OpA, dB);
 			IccB = new IceCream(OO, OpB, dB);
 			H = Hull();
+			BigO = NULL;
 			bbox = BBox();
 		}
 	}
@@ -322,6 +356,8 @@ public:
 	{
 		if (bbox.ncontains(f->p))
 			return true;
+		if (initial)
+			return BigO->Sep(f);
 		if (singular)
 			return SegAB->Sep(f, dB + rB);
 		return SegAB->Sep(f, dB + rB) && H->Sep(f, 0) && IccA->Sep(f, rB) && IccB->Sep(f, rB);
@@ -331,6 +367,8 @@ public:
 	{
 		if (!bbox.intersects(B_Box(f)))
 			return true;
+		if (initial)
+			return BigO->Sep(f);
 		if (singular)
 			return SegAB->Sep(f, dB + rB);
 		return SegAB->Sep(f, dB + rB) && H->Sep(f, 0) && IccA->Sep(f, rB) && IccB->Sep(f, rB);
@@ -340,12 +378,14 @@ public:
 	{
 		if (!bbox.intersects(B_Box(f)))
 			return true;
+		if (initial)
+			return BigO->Sep(f);
 		if (singular)
 			return SegAB->Sep(f, dB + rB);
 		return SegAB->Sep(f, dB + rB) && H->Sep(f, 0) && IccA->Sep(f, rB) && IccB->Sep(f, rB);
 	}
 	// Classify the relation between WtFp with a point feature.
-	int classify(Point* f)
+	pvalue classify(Point* f)
 	{
 		if (free_from(f))
 			return FREE;
@@ -353,7 +393,7 @@ public:
 			return MIXED;
 	}
 	// Classify the relation between WtFp with a point feature.
-	int classify(Edge* f)
+	pvalue classify(Edge* f)
 	{
 		if (free_from(f))
 			return FREE;
@@ -361,7 +401,7 @@ public:
 			return MIXED;
 	}
 	// Classify the relation between WtFp with a point feature.
-	int classify(Triangle* f)
+	pvalue classify(Triangle* f)
 	{
 		if (free_from(f))
 			return FREE;
@@ -369,7 +409,7 @@ public:
 			return MIXED;
 	}
 	// Classify the relation between WtFp with a mesh.
-	int classify(Mesh* f)
+	pvalue classify(Mesh* f)
 	{
 		if (!bbox.intersects(f->BBox()))
 			return FREE;
