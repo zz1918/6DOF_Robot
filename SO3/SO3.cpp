@@ -1,4 +1,8 @@
 // This file define the class SO3 and its transformations.
+
+#ifndef SO3_H
+#define SO3_H
+
 #define M_PI           3.14159265358979323846       /* pi */
 #include<Eigen/Dense>
 using namespace Eigen;
@@ -92,3 +96,5 @@ public:
         return (V(0) * _V(1) == V(1) * _V(0)) && (V(0) * _V(2) == V(2) * _V(0)) && (V(0) * _V(3) == V(3) * _V(0));
     }
 };
+
+#endif

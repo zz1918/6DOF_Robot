@@ -1,6 +1,9 @@
 // BoxTree.cpp : BoxTree maintains the Box structures in R^d, where d is dim.
 //
 
+#ifndef BOXTREE_H
+#define BOXTREE_H
+
 #include <iostream>
 #include <iomanip>
 #include <Eigen/Dense>
@@ -441,3 +444,5 @@ class SE3Tree
     R3Tree* p;
     SO3Tree* q;
 };
+
+#endif

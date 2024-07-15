@@ -1,6 +1,9 @@
 // SymGroup.cpp : This file defines the data structure for symmetry group S_n
 // Templated by n=size.
 
+#ifndef SYMGROUP_H
+#define SYMGROUP_H
+
 #include<iostream>
 #include<iomanip>
 
@@ -142,3 +145,5 @@ std::ostream& operator<<(std::ostream& os, SymG<size> s)
     s.out(os);
     return os;
 }
+
+#endif

@@ -3,6 +3,9 @@
 // The type in the union requires a member "UnionNode* comp" to store the component that it is in the union.
 // Universal settings: if comp=NULL, then it is undefined.
 
+#ifndef UNION_H
+#define UNION_H
+
 class UnionNode
 {
 #define ROOT this
@@ -143,3 +146,5 @@ public:
             q->link(p);
     }
 };
+
+#endif
