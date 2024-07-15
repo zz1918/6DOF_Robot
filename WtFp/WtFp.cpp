@@ -409,7 +409,7 @@ public:
 			return MIXED;
 	}
 	// Classify the relation between WtFp with a mesh.
-	pvalue classify(Mesh* f)
+	pvalue classify(Mesh* f, bool show = false)
 	{
 		if (!bbox.intersects(f->BBox()))
 			return FREE;
