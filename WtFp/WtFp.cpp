@@ -301,10 +301,10 @@ public:
 		// This is an SO3 root.
 		if (wxyz < 0)
 		{
-			opA = BigO->O()->p;
-			opB = BigO->O()->p;
 			dB = rB * sqrt(3) + 1;
 			BigO = new Ball(mB, dB);
+			opA = BigO->O()->p;
+			opB = BigO->O()->p;
 			initial = true;
 			singular = false;
 			SegAB = NULL;
@@ -426,6 +426,11 @@ public:
 			return STUCK;
 		else
 			return FREE;
+	}
+	// Output the approximate footprint.
+	void out()
+	{
+
 	}
 };
 

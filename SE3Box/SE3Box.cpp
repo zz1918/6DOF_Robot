@@ -1242,7 +1242,7 @@ public:
 		for (int i = 0; i < subdim; ++i)
 			u(i) = v(i);
 		for (int i = 0; i < (dim - subdim); ++i)
-			w(i) = v(i - subdim);
+			w(i) = v(i + subdim);
 		return Bt->contains(u) && Br->contains(w);
 	}
 	// The center of the box.
