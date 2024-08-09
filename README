@@ -1,12 +1,16 @@
-This is the project for SSS framework on 6DOF robot.
+#This is the project for SSS framework on 6DOF robot.
 
-To compile this file, please follow these steps:
+#To compile this file, please follow these steps:
 
 mkdir build
 cd build
 cmake ../main
 cmake --build .
 
-To run the program, please use (for i=0,1,2,3):
+#To run the program, type:
 
-Debug/SE3.exe i
+Debug/main.exe
+
+#or
+
+Debug.main
