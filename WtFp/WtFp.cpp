@@ -4,6 +4,7 @@
 #ifndef WTFP_H
 #define WTFP_H
 
+#include<iostream>
 #include<vector>
 #include<Eigen/Dense>
 #include<Interval.h>
@@ -14,6 +15,18 @@ using namespace std;
 using namespace Eigen;
 
 enum pvalue { MIXED, FREE, STUCK, UNKNOWN };
+
+ostream& operator<<(ostream& os, pvalue p)
+{
+	switch (p)
+	{
+	case MIXED:os << "MIXED"; break;
+	case FREE:os << "FREE"; break;
+	case STUCK:os << "STUCK"; break;
+	default:os << "UNKNOWN";
+	}
+	return os;
+}
 
 #define pA Vector3d(1, 0, 0)
 #define pB Vector3d(0, 1, 0)
@@ -430,7 +443,29 @@ public:
 	// Output the approximate footprint.
 	void out()
 	{
-
+		if (initial)
+		{
+			cout << "This approximate footprint is a ball with center (";
+			cout << opA.transpose() << ") and radius " << dB << "." << endl;
+		}
+		else if (singular)
+		{
+			cout << "This approximate footprint is the convex hull of two balls S_A and S_B." << endl;
+			cout << "S_A with center (";
+			cout << opA.transpose() << ") and radius " << dB << "." << endl;
+			cout << "S_B with center (";
+			cout << opB.transpose() << ") and radius " << dB << "." << endl;
+		}
+		else
+		{
+			cout << "This approximate footprint is the convex hull of three balls S_A, S_B and S_O." << endl;
+			cout << "S_A with center (";
+			cout << opA.transpose() << ") and radius " << dB << "." << endl;
+			cout << "S_B with center (";
+			cout << opB.transpose() << ") and radius " << dB << "." << endl;
+			cout << "S_O with center (";
+			cout << mB.transpose() << ") and radius " << rB << "." << endl;
+		}
 	}
 };
 
