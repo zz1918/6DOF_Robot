@@ -1,11 +1,10 @@
 // SSS.cpp : This file programs the main SSS framework.
-// Redefinitions are in thie file. See "https://www.cnblogs.com/dan-Blog/articles/8478433.html" for solution.
 
 #ifndef SSS_H
 #define SSS_H
 
 #include <iostream>
-#include <SE3Box .h>
+#include <SE3Box.h>
 #include <WtFp.h>
 #include <Eigen/Dense>
 #include <Graph.h>
@@ -22,6 +21,21 @@ public:
 	bool empty()
 	{
 		return Vlist.empty() && Elist.empty() && Tlist.empty() && Mlist.empty();
+	}
+	void out()
+	{
+		if (empty())
+		{
+			cout << "The feature set is empty." << endl;
+			return;
+		}
+		cout << "The feature set contains: " << endl;
+		for (int i = 0; i < Vlist.size(); ++i)
+			cout << "    Point (" << Vlist[i]->p.transpose() << ")" << endl;
+		for (int i = 0; i < Elist.size(); ++i)
+			cout << "    Edge (" << Elist[i]->P(0)->p.transpose() << ")-(" << Elist[i]->P(1)->p.transpose() << ")" << endl;
+		for (int i = 0; i < Tlist.size(); ++i)
+			cout << "    Triangle (" << Tlist[i]->P(0)->p.transpose() << ")-(" << Tlist[i]->P(1)->p.transpose() << ")-(" << Tlist[i]->P(2)->p.transpose() << ")" << endl;
 	}
 };
 
@@ -48,7 +62,7 @@ public:
 		if (target == box_features.end())
 		{
 			// If b is a root.
-			if (b->Parent() == NULL)
+			if (b->is_root())
 			{
 				box_features.insert(make_pair(b->ID(), root_feature));
 				return root_feature;
@@ -71,12 +85,22 @@ public:
 			return target->second;
 	}
 	// Set the predicate of box b.
-	void set_pvalue(SE3Box* b, pvalue Cb)
+	void set_pvalue(SE3Box* b,pvalue Cb)
 	{
 		box_pvalues.insert(make_pair(b->ID(), Cb));
 	}
+	// Construct the WtFp of box b.
+	DeltaWtFp* AppFp(SE3Box* b)
+	{
+		DeltaWtFp* Fp = NULL;
+		if (b->is_root())
+			Fp = new DeltaWtFp(b->BT()->range);
+		else
+			Fp = new DeltaWtFp(b->BT()->range, b->BR()->range, b->BR()->WXYZ());
+		return Fp;
+	}
 	// Classification of b by soft pvalue.
-	pvalue classify(SE3Box* b)
+	pvalue classify(SE3Box* b, bool show = false)
 	{
 		// Known case.
 		pvalue Cb = pvalue_of(b);
@@ -90,18 +114,26 @@ public:
 		}
 
 		// Unknown case.
+
+		if (show)
+		{
+			cout << "New classifying box: ";
+			b->out();
+			cout << endl;
+		}
+
 		DeltaFeature new_phi;
-		DeltaWtFp* Fp;
-		if (b->is_root())
-			Fp = new DeltaWtFp(b->BT()->range);
-		else
-			Fp = new DeltaWtFp(b->BT()->range, b->BR()->range, b->BR()->WXYZ());
+		DeltaWtFp* Fp = AppFp(b);
+
+		if (show)
+			Fp->out();
+
 		for (int i = 0; i < phi.Vlist.size(); ++i)
 			switch (Fp->classify(phi.Vlist[i]))
 			{
 			case FREE:break;
 			case MIXED:new_phi.Vlist.push_back(phi.Vlist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); return STUCK;
+			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
 			default:return UNKNOWN;
 			}
 		for (int i = 0; i < phi.Elist.size(); ++i)
@@ -109,7 +141,7 @@ public:
 			{
 			case FREE:break;
 			case MIXED:new_phi.Elist.push_back(phi.Elist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); return STUCK;
+			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
 			default:return UNKNOWN;
 			}
 		for (int i = 0; i < phi.Tlist.size(); ++i)
@@ -117,7 +149,7 @@ public:
 			{
 			case FREE:break;
 			case MIXED:new_phi.Tlist.push_back(phi.Tlist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); return STUCK;
+			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
 			default:return UNKNOWN;
 			}
 		for (int i = 0; i < phi.Mlist.size(); ++i)
@@ -125,17 +157,23 @@ public:
 			{
 			case FREE:break;
 			case MIXED:new_phi.Mlist.push_back(phi.Mlist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); return STUCK;
+			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
 			default:return UNKNOWN;
 			}
+		if (show)
+			new_phi.out();
 		if (new_phi.empty())
 		{
 			set_pvalue(b, FREE);
+			if (show)
+				cout << "The box is FREE." << endl;
 			return FREE;
 		}
 		else
 		{
 			set_pvalue(b, MIXED);
+			if (show)
+				cout << "The box is MIXED." << endl;
 			return MIXED;
 		}
 	}
@@ -154,21 +192,35 @@ public:
 		root = new SE3Box(BtRoot, BrTree);
 	}
 	// Find the leaf box that contains v.
-	SE3Box* find(VectorXd v)
+	SE3Box* find(VectorXd v, bool show = false)
 	{
 		if (root->contains(v))
-			return find(root, v);
+			return find(root, v, show);
 		else
+		{
+			if (show)
+				cout << "(" << v.transpose() << ") not found." << endl;
 			return NULL;
+		}
 	}
 	// Find the leaf box that contains v from box B (assume that B contains v).
-	SE3Box* find(SE3Box* B, VectorXd v)
+	SE3Box* find(SE3Box* B, VectorXd v, bool show = false)
 	{
 		if (B->is_leaf())
+		{
+			if (show)
+			{
+				cout << "Found box: ";
+				B->out();
+				cout << endl;
+			}
 			return B;
+		}
 		for (int i = 0; i < subsize(B); ++i)
 			if (B->child(i)->contains(v))
-				return find(B->child(i), v);
+				return find(B->child(i), v, show);
+		if (show)
+			cout << "(" << v.transpose() << ") not found." << endl;
 		return NULL;
 	}
 	// Root of the tree.
@@ -213,10 +265,11 @@ public:
 	}
 };
 
-// Config is VectorXd, Predicate is the box tree containing member UnionNode* comp, FeatureSet is vector<Feature*>, IniSize is the number of initial boxes.
+// Config is VectorXd, Box is SE3Box, BoxTree is SE3Tree, Predicate is DeltaPredicate, FeatureSet is DeltaFeature.
 template<typename Config, typename Box, typename BoxTree, typename Predicate, typename FeatureSet>
 class SSS
 {
+public:
 	// Tree of boxes.
 	BoxTree* B;
 	// Soft pvalue for robot.
@@ -229,15 +282,27 @@ class SSS
 	priority_queue<Box*> Q;
 
 	// Procedures for mixed boxes.
-	void add_mixed_node(Box* b)
+	void add_mixed_node(Box* b, bool show = false)
 	{
+		if (show)
+		{
+			cout << "Adding MIXED box: ";
+			b->out();
+			cout << endl;
+		}
 		Q.push(b);
 	}
 
 	// Procedures for free boxes.
-	void add_free_node(Box* b)
+	void add_free_node(Box* b, bool show = false)
 	{
-		Gid.insert(b->ID(), G.insert(b)->id);
+		if (show)
+		{
+			cout << "Adding FREE box: ";
+			b->out();
+			cout << endl;
+		}
+		Gid.insert(make_pair(b->ID(), G.insert(b)->id));
 		vector<Box*> target_neighbors = b->all_adj_neighbors();
 		for (int j = 0; j < target_neighbors.size(); ++j)
 		{
@@ -262,30 +327,45 @@ class SSS
 			return NULL;
 		return G.find(G.node(Gid[b->ID()]));
 	}
-
-public:
+ 
 	SSS(BoxTree* b, Predicate* c)
 	{
 		B = b;
 		C = c;
 	}
 	// Expand(B)
-	void Expand(Box* b)
+	void Expand(Box* b, bool show = false)
 	{
+		if (show)
+		{
+			cout << "Expanding box: ";
+			b->out();
+			cout << endl;
+		}
+
+		// Step 0: check if the box is leaf.
+
+		if (!b->is_leaf())
+		{
+			if (show)
+				cout << "This box is already expanded." << endl;
+			return;
+		}
+
 		// Step 1: subdivide the box.
 		b->subdivide();
 
 		// Step 2: classify soft pvalues.
 		for (int i = 0; i < B->subsize(b); ++i)
-			C->classify(b->child(i));
+			C->classify(b->child(i), show);
 
 		// Step 3: maintain Q and G.
 		for (int i = 0; i < B->subsize(b); ++i)
 		{
 			if (C->classify(b->child(i)) == MIXED)
-				add_mixed_node(b->child(i));
+				add_mixed_node(b->child(i), show);
 			if (C->classify(b->child(i)) == FREE)
-				add_free_node(b->child(i));
+				add_free_node(b->child(i), show);
 		}
 	}
 
@@ -300,18 +380,36 @@ public:
 	}
 
 	// SSS framework main process.
-	vector<Config> Find_Path(Config alpha, Config beta, FeatureSet Omega, double varepsilon)
+	vector<Config> Find_Path(Config alpha, Config beta, FeatureSet Omega, double varepsilon, bool show = false)
 	{
 		// Step 0: initializations.
 		vector<Config> Path;
 		Box* BoxAlpha = NULL, * BoxBeta = NULL;
 		C->set_feature(Omega);
+		if (C->classify(B->Root()) == FREE)
+			add_free_node(B->Root());
+		if (C->classify(B->Root()) == STUCK)
+			return Path;
+
+		if (show)
+			cout << "Find path initialization finished." << endl;
 
 		// Step 1: classify initial boxes.
-		BoxAlpha = B->find(alpha);
-		BoxBeta = B->find(beta);
+		if (show)
+			cout << "Finding alpha: (" << alpha.transpose() << ")." << endl;
+		BoxAlpha = B->find(alpha, show);
+		if (show)
+			cout << "Finding beta: (" << beta.transpose() << ")." << endl;
+		BoxBeta = B->find(beta, show);
+		if (show && BoxAlpha == NULL)
+			cout << "Configuration alpha not found." << endl;
+		if (show && BoxBeta == NULL)
+			cout << "Configuration beta not found." << endl;
 		if (BoxAlpha == NULL || BoxBeta == NULL)							// Initial or Target configurations not found.
 			return Path;													// Empty if no-path.
+
+		if (show)
+			cout << "Classify initial boxes finished." << endl;
 
 		// Step 2: find the FREE box containing alpha.
 		while (BoxAlpha->width() > varepsilon)
@@ -320,16 +418,14 @@ public:
 				break;
 			if (C->classify(BoxAlpha) == STUCK)
 				return Path;
-			Expand(BoxAlpha);
-			for (int i = 0; i < B->subsize(BoxAlpha); ++i)
-				if (BoxAlpha->child(i)->contains(alpha))
-				{
-					BoxAlpha = BoxAlpha->child(i);
-					break;
-				}
+			Expand(BoxAlpha,show);
+			BoxAlpha = B->find(BoxAlpha, alpha, show);
 		}
 		if (C->classify(BoxAlpha) != FREE)
 			return Path;
+
+		if (show)
+			cout << "Found the FREE box containing alpha." << endl;
 
 		// Step 3: find the FREE box containing beta.
 		while (BoxBeta->width() > varepsilon)
@@ -338,16 +434,14 @@ public:
 				break;
 			if (C->classify(BoxBeta) == STUCK)
 				return Path;
-			Expand(BoxBeta);
-			for (int i = 0; i < B->subsize(BoxBeta); ++i)
-				if (BoxBeta->child(i)->contains(beta))
-				{
-					BoxBeta = BoxBeta->child(i);
-					break;
-				}
+			Expand(BoxBeta, show);
+			BoxBeta = B->find(BoxBeta, beta, show);
 		}
 		if (C->classify(BoxBeta) != FREE)
 			return Path;
+
+		if (show)
+			cout << "Found the FREE box containing beta." << endl;
 
 		// Step 4: expand Q.GetNext() until Box(alpha) and Box(beta) are in the same component.
 		while (find(BoxAlpha) != find(BoxBeta))
@@ -355,16 +449,31 @@ public:
 			if (Q.empty())
 				return Path;
 			if (Q.top()->width() > varepsilon)
-				Expand(Q.top());
+				Expand(Q.top(), show);
 			Q.pop();
 		}
+
+		if (show)
+			cout << "Alpha and beta have been in the same FREE component." << endl;
 
 		// Step 5: find the canonical path in the component of G.find(BoxAlph).
 		vector<Box*> channel = Find_Channel(BoxAlpha, BoxBeta);
 		for (int i = 0; i < channel.size(); ++i)
 			Path.push_back(B->center(channel[i]));
+		
+		if (show)
+			cout << "Canonical path found." << endl;
 		return Path;														// Empty if no-path.
 	}
 };
+
+void output_path(VectorXd alpha, VectorXd beta, vector<VectorXd> path)
+{
+	cout << "The path is the line segments connecting the following points: " << endl;
+	cout << alpha.transpose() << endl;
+	for (int i = 0; i < path.size(); ++i)
+		cout << path[i].transpose() << endl;
+	cout << beta.transpose() << endl;
+}
 
 #endif
