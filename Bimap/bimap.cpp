@@ -4,7 +4,7 @@
 #ifndef BIMAP_H
 #define BIMAP_H
 
-#include <map>
+#include<map>
 using namespace std;
 
 template<typename key1, typename key2, typename type>

@@ -2,8 +2,6 @@
 
 #include "SSS.cpp"
 
-class DeltaFeature;
-
 class DeltaPredicate;
 
 class SE3Tree;

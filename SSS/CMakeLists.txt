@@ -20,4 +20,10 @@ endif()
 target_link_libraries(SSS PUBLIC Graph)
 target_include_directories(SSS PUBLIC "../Graph")
 
+if (NOT TARGET FeatureSet)
+	add_subdirectory("../FeatureSet" FeatureSet)
+endif()
+target_link_libraries(SSS PUBLIC FeatureSet)
+target_include_directories(SSS PUBLIC "../FeatureSet")
+
 

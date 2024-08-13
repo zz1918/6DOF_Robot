@@ -3,41 +3,14 @@
 #ifndef SSS_H
 #define SSS_H
 
-#include <iostream>
-#include <SE3Box.h>
-#include <WtFp.h>
-#include <Eigen/Dense>
-#include <Graph.h>
+#include<iostream>
+#include<FeatureSet.h>
+#include<SE3Box.h>
+#include<WtFp.h>
+#include<Eigen/Dense>
+#include<Graph.h>
 using namespace Eigen;
 using namespace std;
-
-class DeltaFeature
-{
-public:
-	vector<Point*> Vlist;
-	vector<Edge*> Elist;
-	vector<Triangle*> Tlist;
-	vector<Mesh*> Mlist;
-	bool empty()
-	{
-		return Vlist.empty() && Elist.empty() && Tlist.empty() && Mlist.empty();
-	}
-	void out()
-	{
-		if (empty())
-		{
-			cout << "The feature set is empty." << endl;
-			return;
-		}
-		cout << "The feature set contains: " << endl;
-		for (int i = 0; i < Vlist.size(); ++i)
-			cout << "    Point (" << Vlist[i]->p.transpose() << ")" << endl;
-		for (int i = 0; i < Elist.size(); ++i)
-			cout << "    Edge (" << Elist[i]->P(0)->p.transpose() << ")-(" << Elist[i]->P(1)->p.transpose() << ")" << endl;
-		for (int i = 0; i < Tlist.size(); ++i)
-			cout << "    Triangle (" << Tlist[i]->P(0)->p.transpose() << ")-(" << Tlist[i]->P(1)->p.transpose() << ")-(" << Tlist[i]->P(2)->p.transpose() << ")" << endl;
-	}
-};
 
 class DeltaPredicate
 {
