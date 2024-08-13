@@ -13,4 +13,57 @@ Debug/main.exe
 
 #or
 
-Debug.main
+Debug/main
+
+#or
+
+./main
+
+#After you run the program without argument, the program will automatically run the command line for setting the environment. Use the following possible commands to define your environment.
+
+>> def point A (0,0,0)
+#Define point A as 0 0 0
+
+>> def point B (1,1,1)
+#Define point B as 1 1 1
+
+>> def edge AB A B
+#Define edge AB as the edge connecting point A and point B
+
+>> del point A
+#Delete point A
+
+>> def point C (2,2,2)
+#Define point C as 2 2 2
+
+>> def point D (3,2,1)
+#Define point D as 3 2 1
+
+>> def face BCD B C D
+#Define face BCD as the triangle connecting point B and point C and point D
+
+>> show point
+#The environment contains:
+#point B: 1 1 1
+#point C: 2 2 2
+#point D: 3 2 1
+
+>> show edge
+#The environment contains:
+#edge AB
+#edge B_C
+#edge C_D
+#edge D_B
+
+>> show face
+#The environment contains:
+#face BCD
+
+>> run
+#Simple find path algorithm with epsilon = 0.05
+
+>> run 0.005
+#Simple find path algorithm with epsilon = 0.005
+
+>> exit
+#Find path algorithm terminates.
