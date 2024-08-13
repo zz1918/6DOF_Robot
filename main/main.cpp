@@ -1,7 +1,7 @@
 // main.cpp: This file contains the main function.
 
-#define envrange 256
 #include<iostream>
+#include<sys/stat.h>
 #include<string>
 #include<Eigen/Dense>
 #include<SSS.h>
@@ -10,19 +10,48 @@ using namespace std;
 using namespace Eigen;
 
 EnvironmentFeature env;
+VectorXd alpha(7), beta(7);
+double envrange = 256;
+
+bool exist(const string& filename)
+{
+	struct stat buffer;
+	return (stat(filename.c_str(), &buffer) == 0);
+}
 
 // Decode enviroment command.
 bool decode(string command)
 {
 	vector<string> words = split(command, ' ');
+	if (words.size() < 1)
+	{
+		cout << "bash: not enough argument" << endl;
+		return true;
+	}
 	switch (tofpred(words[0]))
 	{
 	case DEF:
+	{
+		if (words.size() < 2)
+		{
+			cout << "bash: not enough argument" << endl;
+			return true;
+		}
 		switch (toftype(words[1]))
 		{
 		case POINT:
 		{
+			if (words.size() < 4)
+			{
+				cout << "bash: not enough arguments" << endl;
+				return true;
+			}
 			string name = words[2];
+			if (!isv3(words[3]))
+			{
+				cout << "bash: invalid vector type" << endl;
+				return true;
+			}
 			Vector3d coord = stov3(words[3]);
 			env.add_point(coord, name);
 			cout << "Define point " << name << " as " << coord.transpose() << endl;
@@ -30,10 +59,20 @@ bool decode(string command)
 		}
 		case EDGE:
 		{
+			if (words.size() < 5)
+			{
+				cout << "bash: not enough arguments" << endl;
+				return true;
+			}
 			string name = words[2];
 			if (isv3(words[3]))
 			{
 				Vector3d coord1 = stov3(words[3]);
+				if (!isv3(words[4]))
+				{
+					cout << "bash: invalid vector type" << endl;
+					return true;
+				}
 				Vector3d coord2 = stov3(words[4]);
 				env.add_edge(coord1, coord2, name);
 				cout << "Define edge " << name << " as the edge connecting " << coord1.transpose() << " and " << coord2.transpose() << endl;
@@ -42,18 +81,35 @@ bool decode(string command)
 			{
 				string name1 = words[3];
 				string name2 = words[4];
-				env.add_edge(name1, name2, name);
-				cout << "Define edge " << name << " as the edge connecting point " << name1 << " and point " << name2 << endl;
+				if (env.add_edge(name1, name2, name) == NULL)
+					cout << "Some point not found" << endl;
+				else
+					cout << "Define edge " << name << " as the edge connecting point " << name1 << " and point " << name2 << endl;
 			}
 			return true;
 		}
 		case FACE:
 		{
+			if (words.size() < 6)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
 			string name = words[2];
 			if (isv3(words[3]))
 			{
 				Vector3d coord1 = stov3(words[3]);
+				if (!isv3(words[4]))
+				{
+					cout << "bash: invalid vector type" << endl;
+					return true;
+				}
 				Vector3d coord2 = stov3(words[4]);
+				if (!isv3(words[5]))
+				{
+					cout << "bash: invalid vector type" << endl;
+					return true;
+				}
 				Vector3d coord3 = stov3(words[5]);
 				env.add_face(coord1, coord2, coord3, name);
 				cout << "Define face " << name << " as the triangle connecting " << coord1.transpose() << " and " << coord2.transpose() << " and " << coord3.transpose() << endl;
@@ -63,26 +119,50 @@ bool decode(string command)
 				string name1 = words[3];
 				string name2 = words[4];
 				string name3 = words[5];
-				env.add_face(name1, name2, name3, name);
-				cout << "Define face " << name << " as the triangle connecting point " << name1 << " and point " << name2 << " and point " << name3 << endl;
+				if (env.add_face(name1, name2, name3, name) == NULL)
+					cout << "Some point not found" << endl;
+				else
+					cout << "Define face " << name << " as the triangle connecting point " << name1 << " and point " << name2 << " and point " << name3 << endl;
 			}
 			return true;
 		}
 		case MESH:
 		{
+			if (words.size() < 4)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
 			string name = words[2];
 			string filename = words[3];
+			if (!exist(filename))
+			{
+				cout << "bash: file " << filename << " not found" << endl;
+				return true;
+			}
 			env.add_mesh(filename, name);
 			cout << "Define mesh " << name << " from file " << filename << endl;
 			return true;
 		}
 		default:cout << "bash: " << words[1] << ": command not found" << endl; return true;
 		}
+	}
 	case DEL:
+	{
+		if (words.size() < 2)
+		{
+			cout << "bash: not enough argument" << endl;
+			return true;
+		}
 		switch (toftype(words[1]))
 		{
 		case POINT:
 		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
 			string name = words[2];
 			env.remove_point(name);
 			cout << "Delete point " << name << endl;
@@ -90,6 +170,11 @@ bool decode(string command)
 		}
 		case EDGE:
 		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
 			string name = words[2];
 			env.remove_edge(name);
 			cout << "Delete edge " << name << endl;
@@ -97,6 +182,11 @@ bool decode(string command)
 		}
 		case FACE:
 		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
 			string name = words[2];
 			env.remove_face(name);
 			cout << "Delete face " << name << endl;
@@ -104,6 +194,11 @@ bool decode(string command)
 		}
 		case MESH:
 		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
 			string name = words[2];
 			env.remove_mesh(name);
 			cout << "Delete mesh " << name << endl;
@@ -111,7 +206,14 @@ bool decode(string command)
 		}
 		default:cout << "bash: " << words[1] << ": command not found" << endl; return true;
 		}
+	}
 	case SHOW:
+	{
+		if (words.size() < 2)
+		{
+			cout << "bash: not enough argument" << endl;
+			return true;
+		}
 		switch (toftype(words[1]))
 		{
 		case POINT:
@@ -136,18 +238,61 @@ bool decode(string command)
 		}
 		default:cout << "bash: " << words[1] << ": command not found" << endl; return true;
 		}
+	}
+	case SET:
+	{
+		if (words.size() < 2)
+		{
+			cout << "bash: not enough argument" << endl;
+			return true;
+		}
+		switch (toconfig(words[1]))
+		{
+		case ALPHA:
+		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
+			alpha = stov7(words[2]);
+			cout << "Set configuration alpha as " << alpha.transpose() << endl;
+			return true;
+		}
+		case BETA:
+		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
+			beta = stov7(words[2]);
+			cout << "Set configuration beta as " << beta.transpose() << endl;
+			return true;
+		}
+		case RANGE:
+		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
+			envrange = stod(words[2]);
+			cout << "Set the environment range as " << "[-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "]" << endl;
+			return true;
+		}
+		default:cout << "bash: " << words[1] << ": command not found" << endl; return true;
+		}
+	}
 	case RUN:
 	{
-		SE3Tree* T = new SE3Tree(MatrixId(Vector3d(-256, -256, -256), Vector3d(256, 256, 256)));
+		SE3Tree* T = new SE3Tree(MatrixId(Vector3d(-envrange, -envrange, -envrange), Vector3d(envrange, envrange, envrange)));
 		DeltaPredicate* C = new DeltaPredicate();
 		DeltaFeature* Omega = env.make_feature();
 		double varepsilon = 0.05;
 		if (words.size() > 1)
 			varepsilon = stod(words[1]);
 		SSS<VectorXd, SE3Box, SE3Tree, DeltaPredicate, DeltaFeature> SE3SSS(T, C);
-		VectorXd alpha(7), beta(7);
-		alpha << -127, -127, -127, 1, 0, 0, 0;
-		beta << 127, 127, 127, 1, 0, 0, 0;
 		cout << "Simple find path algorithm with epsilon = " << varepsilon << endl;
 		output_path(alpha, beta, SE3SSS.Find_Path(alpha, beta, *Omega, varepsilon, true));
 		return true; 
@@ -169,6 +314,8 @@ void test(int argc, char* argv[])
 	cout << "Default alpha: (-127,-127,-127,1,0,0,0)" << endl;
 	cout << "Default beta: (127,127,127,1,0,0,0)" << endl;
 	cout << "Default epsilon: " << 0.05 << endl;
+	alpha << -127, -127, -127, 1, 0, 0, 0;
+	beta << 127, 127, 127, 1, 0, 0, 0;
 	while (true)
 	{
 		cout << ">> ";

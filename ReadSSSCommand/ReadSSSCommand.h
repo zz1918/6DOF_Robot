@@ -11,3 +11,5 @@ Vector3d stov3(string coord);
 fpred tofpred(string word);
 
 ftype toftype(string word);
+
+config toconfig(string word);
