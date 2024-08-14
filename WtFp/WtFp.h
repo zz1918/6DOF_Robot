@@ -15,4 +15,7 @@ double maxof(double a, double b, double c);
 class Mesh;
 
 // Approximate footprint for Delta robot.
-class WtFp;
+class DeltaWtFp;
+
+// Exact footprint for Delta robot.
+class DeltaExFp;

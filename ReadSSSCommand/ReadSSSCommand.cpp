@@ -79,19 +79,19 @@ fpred tofpred(string word)
 	return ERROR;
 }
 
-enum ftype { POINT, EDGE, FACE, MESH, WRONG };
+enum ftype { TPOINT, TEDGE, TFACE, TMESH, TWRONG };
 
 ftype toftype(string word)
 {
 	if (word == "point")
-		return POINT;
+		return TPOINT;
 	if (word == "edge")
-		return EDGE;
+		return TEDGE;
 	if (word == "face")
-		return FACE;
+		return TFACE;
 	if (word == "mesh")
-		return MESH;
-	return WRONG;
+		return TMESH;
+	return TWRONG;
 }
 
 enum config { ALPHA, BETA, RANGE, OTHER };

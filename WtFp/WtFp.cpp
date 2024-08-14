@@ -135,6 +135,16 @@ public:
 		if (show)
 			cout << "Bounding box constructed." << endl;
 	}
+	// V matrix.
+	MatrixXd Vertices()
+	{
+		return V;
+	}
+	// F matrix.
+	MatrixXi Faces()
+	{
+		return F;
+	}
 	// If a point p is positive to the normals of the triangle mesh.
 	bool inside(Vector3d p)
 	{
@@ -469,4 +479,19 @@ public:
 	}
 };
 
+// Exact footprint for Delta robot.
+class DeltaExFp
+{
+public:
+	// Triangle given by the three vertices written as a matrix.
+	Matrix3d Fp;
+	DeltaExFp(VectorXd v)
+	{
+		Vector3d vt(v(0), v(1), v(2));
+		Vector4d vr(v(3), v(4), v(5), v(6));
+		Fp.row(0) = vt;
+		Fp.row(1) = vt + SO3(vr).act_on(pA);
+		Fp.row(2) = vt + SO3(vr).act_on(pB);
+	}
+};
 #endif

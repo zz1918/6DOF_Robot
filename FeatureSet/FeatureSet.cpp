@@ -51,6 +51,7 @@ public:
 
 class EnvironmentFeature
 {
+public:
 	map<string, Point*> Vlist;
 	map<string, Edge*> Elist;
 	map<string, Triangle*> Tlist;
@@ -87,7 +88,6 @@ class EnvironmentFeature
 		else
 			return it->second;
 	}
-public:
 	// Construct a new point from a 3d point.
 	Point* add_point(Vector3d p, string name)
 	{

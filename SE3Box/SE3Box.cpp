@@ -995,6 +995,7 @@ public:
 				}
 			}
 		}
+		return true;
 	}
 	// Check if a box is containing a box.
 	bool is_containing(SO3Box* B)
