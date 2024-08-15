@@ -3,6 +3,8 @@
 #ifndef SSS_H
 #define SSS_H
 
+#define ExpandShow 200
+
 #include<iostream>
 #include<FeatureSet.h>
 #include<SE3Box.h>
@@ -253,6 +255,12 @@ public:
 	map<int, int> Gid;
 	// The mixed queue.
 	priority_queue<Box*> Q;
+	// The amount of cube that is expanded.
+	int expanded = 0;
+	// The average R^3-width of cubes.
+	double aver3w;
+	// The average SO3-width of cubes.
+	double aveso3w;
 
 	// Procedures for mixed boxes.
 	void add_mixed_node(Box* b, bool show = false)
@@ -309,7 +317,7 @@ public:
 	// Expand(B)
 	void Expand(Box* b, bool show = false)
 	{
-		if (show)
+		if (show && b->is_leaf())
 		{
 			cout << "Expanding box: ";
 			b->out();
@@ -321,7 +329,7 @@ public:
 		if (!b->is_leaf())
 		{
 			if (show)
-				cout << "This box is already expanded." << endl;
+				cout << "Skipping expanding a box that is already expanded." << endl;
 			return;
 		}
 
@@ -340,6 +348,11 @@ public:
 			if (C->classify(b->child(i)) == FREE)
 				add_free_node(b->child(i), show);
 		}
+
+		// Step 4: show how many cubes that are expanded to give an intuition of the process.
+		cout << ((expanded % ExpandShow == 0) ? to_string(expanded) + " cubes have been expanded.\n" : "");
+		expanded++;
+
 	}
 
 	// Find the channel when G.find(BoxAlpha) == G.find(BoxBeta) != NULL.
@@ -420,7 +433,10 @@ public:
 		while (find(BoxAlpha) != find(BoxBeta))
 		{
 			if (Q.empty())
+			{
+				cout << expanded++ << " cube is expanded, no path found." << endl;
 				return Path;
+			}
 			if (Q.top()->width() > varepsilon)
 				Expand(Q.top(), show);
 			Q.pop();
@@ -433,7 +449,8 @@ public:
 		vector<Box*> channel = Find_Channel(BoxAlpha, BoxBeta);
 		for (int i = 0; i < channel.size(); ++i)
 			Path.push_back(B->center(channel[i]));
-		
+
+		cout << expanded++ << " cube is expanded." << endl;
 		if (show)
 			cout << "Canonical path found." << endl;
 		return Path;														// Empty if no-path.

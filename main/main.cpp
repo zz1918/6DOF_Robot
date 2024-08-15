@@ -155,7 +155,7 @@ public:
 		PEC.row(PEC.rows() - 1) = black;
 	}
 	// View environment.
-	void view_env(EnvironmentFeature _env, double _envrange)
+	void view_env(EnvironmentFeature _env, double _envrange, VectorXd _alpha, VectorXd _beta)
 	{
 		igl::opengl::glfw::Viewer _viewer;
 		clear();
@@ -168,9 +168,13 @@ public:
 			add(it->second);
 		for (map<string, Point*>::iterator it = _env.Vlist.begin(); it != _env.Vlist.end(); it++)
 			add(it->second);
+		add(_alpha, 0);
+		add(_beta, 1);
 		_viewer.data().point_size = Point_Size;
 		_viewer.data().line_width = Line_Width;
+		_viewer.data().set_face_based(true);
 		_viewer.data().set_mesh(V, F);
+		_viewer.data().set_colors(C);
 		_viewer.data().add_edges(E1, E2, EC);
 		_viewer.data().add_points(Vs, VC);
 		_viewer.core().align_camera_center(Vector3d(-_envrange - 1, 0, 0));
@@ -204,6 +208,7 @@ public:
 		add(_beta, 1);
 		_viewer.data().point_size = Point_Size;
 		_viewer.data().line_width = Line_Width;
+		_viewer.data().set_face_based(true);
 		_viewer.data().set_mesh(V, F);
 		_viewer.data().set_colors(C);
 		_viewer.data().add_edges(E1, E2, EC);
@@ -216,7 +221,7 @@ public:
 
 EnvironmentFeature env;
 VectorXd SSSalpha(7), SSSbeta(7);
-double envrange = 16;
+double envrange = 4;
 SSSViewer viewer;
 
 bool exist(const string& filename)
@@ -341,6 +346,8 @@ bool decode(string command)
 			}
 			string name = words[2];
 			string filename = words[3];
+			if (filename.find("/") == string::npos && filename.find("\\") == string::npos)
+				filename = "../Model/" + filename;
 			if (!exist(filename))
 			{
 				cout << "bash: file " << filename << " not found" << endl;
@@ -418,7 +425,7 @@ bool decode(string command)
 		if (words.size() < 2)
 		{
 			cout << "Show the environment." << endl;
-			viewer.view_env(env, envrange);
+			viewer.view_env(env, envrange, SSSalpha, SSSbeta);
 			return true;
 		}
 		switch (toftype(words[1]))
@@ -501,7 +508,7 @@ bool decode(string command)
 			varepsilon = stod(words[1]);
 		SSS<VectorXd, SE3Box, SE3Tree, DeltaPredicate, DeltaFeature> SE3SSS(T, C);
 		cout << "Simple find path algorithm with epsilon = " << varepsilon << endl;
-		vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon, true);
+		vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon);
 		if (path.empty())
 			cout << "No Path!" << endl;
 		else
@@ -522,11 +529,11 @@ void test(int argc, char* argv[])
 	cout << "Delta robot find path algorithm by SSS framework." << endl;
 	cout << "Demo -- Version 1.0" << endl;
 	cout << "Default environment range: " << "[-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "]" << endl;
-	cout << "Default alpha: (" << -envrange / 2.0 + 1 << "," << -envrange / 2.0 + 1 << "," << -envrange / 2.0 + 1 << "," << 1 << "," << 0 << "," << 0 << "," << 0 << ")" << endl;
-	cout << "Default beta: (" << envrange / 2.0 - 1 << "," << envrange / 2.0 - 1 << "," << envrange / 2.0 - 1 << "," << 1 << "," << 0 << "," << 0 << "," << 0 << ")" << endl;
+	cout << "Default alpha: (" << -envrange / 2.0 - 0.5 << "," << -envrange / 2.0 - 0.5 << "," << -envrange / 2.0 - 0.5 << "," << 1 << "," << 0 << "," << 0 << "," << 0 << ")" << endl;
+	cout << "Default beta: (" << envrange / 2.0 + 0.5 << "," << envrange / 2.0 + 0.5 << "," << envrange / 2.0 + 0.5 << "," << 1 << "," << 0 << "," << 0 << "," << 0 << ")" << endl;
 	cout << "Default epsilon: " << 0.05 << endl;
-	SSSalpha << -envrange / 2.0 + 1, -envrange / 2.0 + 1, -envrange / 2.0 + 1, 1, 0, 0, 0;
-	SSSbeta << envrange / 2.0 - 1, envrange / 2.0 - 1, envrange / 2.0 - 1, 1, 0, 0, 0;
+	SSSalpha << -envrange / 2.0 - 0.5, -envrange / 2.0 - 0.5, -envrange / 2.0 - 0.5, 1, 0, 0, 0;
+	SSSbeta << envrange / 2.0 + 0.5, envrange / 2.0 + 0.5, envrange / 2.0 + 0.5, 1, 0, 0, 0;
 	while (true)
 	{
 		cout << ">> ";
@@ -612,12 +619,24 @@ void test1(int argc, char* argv[])
 	viewer.launch();
 }
 
-
+// Load OFF test.
 void test2(int argc, char* argv[])
-{}
+{
+	MatrixXd V;
+	MatrixXi F;
+	string filename;
+	cout << "Input filename: " << endl;
+	cin >> filename;
+	read_OFF(filename, V, F);
+	Mesh* new_mesh = new Mesh(V, F, true);
+	cout << "Mesh built successfully!" << endl;
+}
 
+// Other tests.
 void test3(int argc, char* argv[])
-{}
+{
+	cout << ("2" + 1) << endl;
+}
 
 int main(int argc,char* argv[])
 {

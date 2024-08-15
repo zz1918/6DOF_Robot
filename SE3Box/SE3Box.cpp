@@ -3,6 +3,7 @@
 #ifndef SE3BOX_H
 #define SE3BOX_H
 
+#define MAXSHOW 2
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
@@ -466,8 +467,15 @@ public:
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
+		if (l > MAXSHOW)
+			return;
 		for (int i = 0; i < l; ++i)
 			os << "      ";
+		if (l == MAXSHOW)
+		{
+			os << "...";
+			return;
+		}
 		Vector3d m = range.min();
 		Vector3d M = range.max();
 		os << range.transpose();
@@ -503,8 +511,15 @@ public:
 	// cout *codes.
 	void show_code(ostream& os = cout, int l = 0)
 	{
+		if (l > MAXSHOW)
+			return;
 		for (int j = 0; j < l; ++j)
 			os << "      ";
+		if (l == MAXSHOW)
+		{
+			os << "...";
+			return;
+		}
 		os << code(0) << " " << code(1) << " " << code(2);
 	}
 
@@ -1047,8 +1062,15 @@ public:
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
+		if (l > MAXSHOW)
+			return;
 		for (int i = 0; i < l; ++i)
 			os << "      ";
+		if (l == MAXSHOW)
+		{
+			os << "...";
+			return;
+		}
 		Vector3d m = range.min();
 		Vector3d M = range.max();
 		switch (wxyz)
@@ -1093,8 +1115,15 @@ public:
 	// cout *codes.
 	void show_code(ostream& os = cout, int l = 0)
 	{
+		if (l > MAXSHOW)
+			return;
 		for (int j = 0; j < l; ++j)
 			os << "      ";
+		if (l == MAXSHOW)
+		{
+			os << "...";
+			return;
+		}
 		for (int i = 0; i < boxsize; ++i)
 		{
 			if (wxyz < 0 || i == wxyz)
@@ -1605,8 +1634,15 @@ public:
 	// cout *this.
 	void out(ostream& os = cout, int l = 0)
 	{
+		if (l > MAXSHOW)
+			return;
 		for (int i = 0; i < l; ++i)
 			os << "      ";
+		if (l == MAXSHOW)
+		{
+			os << "...";
+			return;
+		}
 		Bt->out(os, 0, false);
 		os << " * ";
 		Br->out(os, 0, false);
@@ -1648,8 +1684,15 @@ public:
 	// cout *codes.
 	void show_code(ostream& os = cout, int l = 0)
 	{
+		if (l > MAXSHOW)
+			return;
 		for (int j = 0; j < l; ++j)
 			os << "      ";
+		if (l == MAXSHOW)
+		{
+			os << "...";
+			return;
+		}
 		Bt->show_code(os, 0);
 		os << " *";
 		Br->show_code(os, 0);
