@@ -2,6 +2,11 @@
 cmake_minimum_required(VERSION 3.24.0)
 project(main)
 add_executable(main main.cpp)
+
+if(MINGW OR CYGWIN)
+	add_definitions(-O3)
+endif()
+
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 target_link_libraries(main PUBLIC Eigen3::Eigen)
 
