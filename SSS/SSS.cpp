@@ -14,6 +14,12 @@
 using namespace Eigen;
 using namespace std;
 
+template<typename content>
+bool operator<(std::pair<double, content> A, std::pair<double, content> B)
+{
+	return A.first < B.first;
+}
+
 class DeltaPredicate
 {
 	// Feature set of the root.
@@ -109,7 +115,7 @@ public:
 			case FREE:break;
 			case MIXED:new_phi.Vlist.push_back(phi.Vlist[i]); break;
 			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:return UNKNOWN;
+			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
 			}
 		for (int i = 0; i < phi.Elist.size(); ++i)
 			switch (Fp->classify(phi.Elist[i]))
@@ -117,7 +123,7 @@ public:
 			case FREE:break;
 			case MIXED:new_phi.Elist.push_back(phi.Elist[i]); break;
 			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:return UNKNOWN;
+			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
 			}
 		for (int i = 0; i < phi.Tlist.size(); ++i)
 			switch (Fp->classify(phi.Tlist[i]))
@@ -125,32 +131,37 @@ public:
 			case FREE:break;
 			case MIXED:new_phi.Tlist.push_back(phi.Tlist[i]); break;
 			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:return UNKNOWN;
+			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
 			}
+
+		map<int, DeltaFeature>::iterator target = box_features.find(b->ID());
+		if (show)
+			new_phi.out();
+		if(!new_phi.empty())
+		{
+			set_pvalue(b, MIXED);
+			if (show)
+				cout << "The box is MIXED." << endl;
+			new_phi.Mlist = phi.Mlist;
+			target->second = new_phi;
+			return MIXED;
+		}
+
+		// After there is no boundary features, let's determine if the box is stuck or not.
 		for (int i = 0; i < phi.Mlist.size(); ++i)
 			switch (Fp->classify(phi.Mlist[i]))
 			{
 			case FREE:break;
 			case MIXED:new_phi.Mlist.push_back(phi.Mlist[i]); break;
 			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:return UNKNOWN;
+			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
 			}
+
+		set_pvalue(b, FREE);
 		if (show)
-			new_phi.out();
-		if (new_phi.empty())
-		{
-			set_pvalue(b, FREE);
-			if (show)
-				cout << "The box is FREE." << endl;
-			return FREE;
-		}
-		else
-		{
-			set_pvalue(b, MIXED);
-			if (show)
-				cout << "The box is MIXED." << endl;
-			return MIXED;
-		}
+			cout << "The box is FREE." << endl;
+		target->second = new_phi;
+		return FREE;
 	}
 };
 
@@ -240,6 +251,8 @@ public:
 	}
 };
 
+enum heutype { RAND, BYID, WIDTH, TARGET, GBF };
+
 // Config is VectorXd, Box is SE3Box, BoxTree is SE3Tree, Predicate is DeltaPredicate, FeatureSet is DeltaFeature.
 template<typename Config, typename Box, typename BoxTree, typename Predicate, typename FeatureSet>
 class SSS
@@ -249,18 +262,56 @@ public:
 	BoxTree* B;
 	// Soft pvalue for robot.
 	Predicate* C;
+	// Initial configuration.
+	Config alpha;
+	// Target configuration.
+	Config beta;
+	// Type of heuristic.
+	heutype heu;
 	// The free graph.
 	Graph<Box> G;
 	// Map from box id to graph id.
 	map<int, int> Gid;
 	// The mixed queue.
-	priority_queue<Box*> Q;
+	priority_queue<pair<double,Box*>> Q;
 	// The amount of cube that is expanded.
-	int expanded = 0;
+	int expanded;
 	// The average R^3-width of cubes.
 	double aver3w;
 	// The average SO3-width of cubes.
 	double aveso3w;
+	// Amount of mixed boxes.
+	int stat_mixed;
+	// Amount of free boxes.
+	int stat_free;
+	// Amount of stuck boxes.
+	int stat_stuck;
+	// Average feature amount for mixed boxes.
+	double avemixedfeature;
+	// Average feature amount for free boxes.
+	double avefreefeature;
+
+	Vector3d config_t(Config gamma)
+	{
+		return Vector3d(gamma(0), gamma(1), gamma(2));
+	}
+
+	double GBF_heu(Box* b)
+	{
+		return (b->BT()->center() - config_t(beta)).norm();
+	}
+
+	// Heuristic function.
+	double heuristic(Box* b)
+	{
+		switch(heu)
+		{
+		case GBF: return GBF_heu(b);
+		case WIDTH: return max(b->BT()->width(), b->BR()->width());
+		case BYID: return double(-b->ID());
+		default: return rand();
+		}
+	}
 
 	// Procedures for mixed boxes.
 	void add_mixed_node(Box* b, bool show = false)
@@ -271,7 +322,9 @@ public:
 			b->out();
 			cout << endl;
 		}
-		Q.push(b);
+		Q.push(make_pair(heuristic(b), b));
+		stat_mixed++;
+		avemixedfeature += (C->feature_of(b).size() - avemixedfeature) / stat_mixed;
 	}
 
 	// Procedures for free boxes.
@@ -291,6 +344,21 @@ public:
 			if (target_neighbor != NULL)
 				G.link(node(b), target_neighbor);
 		}
+		stat_free++;
+		avefreefeature += (C->feature_of(b).size() - avefreefeature) / stat_free;
+	}
+
+	// Procedures for stuck boxes.
+	void add_stuck_node(Box* b, bool show = false)
+	{
+		if (show)
+		{
+			cout << "Adding STUCK box: ";
+			b->out();
+			cout << endl;
+		}
+		Q.push(make_pair(heuristic(b), b));
+		stat_stuck++;
 	}
 
 	// Find the node of a box in the free graph, return NULL if not exists.
@@ -313,7 +381,39 @@ public:
 	{
 		B = b;
 		C = c;
+		heu = RAND;
+		expanded = 0;
+		aver3w = 0;
+		aveso3w = 0;
+		stat_mixed = 0;
+		stat_free = 0;
+		stat_stuck = 0;
+		avemixedfeature = 0;
+		avefreefeature = 0;
 	}
+
+	// Show how many boxes that are expanded with hints.
+	void show_expansion(string hint)
+	{
+		cout << expanded << " cubes have been expanded with average width " << aver3w << " * " << aveso3w << "." << endl;
+		cout << "There are " << stat_mixed << " mixed boxes, " << stat_free << " free boxes and " << stat_stuck << " stuck boxes." << endl;
+		cout << "The average amount of features for mixed boxes are " << avemixedfeature << "." << endl;
+		//cout << "The average amount of features for free boxes are " << avefreefeature << "." << endl;
+		if (hint.length() > 0)
+			cout << hint << endl;
+		for (int i = 0; i < 60; ++i)
+			cout << "-";
+		cout << endl;
+	}
+
+	// Update the statistic of expansion.
+	void update_expansion(Box* b)
+	{
+		expanded++;
+		aver3w += (b->BT()->width() - aver3w) / expanded;
+		aveso3w += (b->BR()->width() - aveso3w) / expanded;
+	}
+
 	// Expand(B)
 	void Expand(Box* b, bool show = false)
 	{
@@ -347,12 +447,14 @@ public:
 				add_mixed_node(b->child(i), show);
 			if (C->classify(b->child(i)) == FREE)
 				add_free_node(b->child(i), show);
+			if (C->classify(b->child(i)) == STUCK)
+				add_stuck_node(b->child(i), show);
 		}
 
 		// Step 4: show how many cubes that are expanded to give an intuition of the process.
-		cout << ((expanded % ExpandShow == 0) ? to_string(expanded) + " cubes have been expanded.\n" : "");
-		expanded++;
-
+		if (expanded % ExpandShow == 0)
+			show_expansion("");
+		update_expansion(b);
 	}
 
 	// Find the channel when G.find(BoxAlpha) == G.find(BoxBeta) != NULL.
@@ -366,16 +468,30 @@ public:
 	}
 
 	// SSS framework main process.
-	vector<Config> Find_Path(Config alpha, Config beta, FeatureSet Omega, double varepsilon, bool show = false)
+	vector<Config> Find_Path(Config _alpha, Config _beta, FeatureSet Omega, double varepsilon, heutype _h = RAND, bool show = false)
 	{
 		// Step 0: initializations.
 		vector<Config> Path;
 		Box* BoxAlpha = NULL, * BoxBeta = NULL;
+		expanded = 0;
+		aver3w = 0;
+		aveso3w = 0;
+		stat_mixed = 0;
+		stat_free = 0;
+		stat_stuck = 0;
+		avemixedfeature = 0;
+		avefreefeature = 0;
+		alpha = _alpha;
+		beta = _beta;
 		C->set_feature(Omega);
+		heu = _h;
 		if (C->classify(B->Root()) == FREE)
 			add_free_node(B->Root());
 		if (C->classify(B->Root()) == STUCK)
+		{
+			show_expansion("The environment is stuck.");
 			return Path;
+		}
 
 		if (show)
 			cout << "Find path initialization finished." << endl;
@@ -387,10 +503,10 @@ public:
 		if (show)
 			cout << "Finding beta: (" << beta.transpose() << ")." << endl;
 		BoxBeta = B->find(beta, show);
-		if (show && BoxAlpha == NULL)
-			cout << "Configuration alpha not found." << endl;
-		if (show && BoxBeta == NULL)
-			cout << "Configuration beta not found." << endl;
+		if (BoxAlpha == NULL)
+			show_expansion("Configuration alpha not in environment.");
+		if (BoxBeta == NULL)
+			show_expansion("Configuration beta not in environment.");
 		if (BoxAlpha == NULL || BoxBeta == NULL)							// Initial or Target configurations not found.
 			return Path;													// Empty if no-path.
 
@@ -403,12 +519,18 @@ public:
 			if (C->classify(BoxAlpha) == FREE)
 				break;
 			if (C->classify(BoxAlpha) == STUCK)
+			{
+				show_expansion("Configuration alpha is stuck.");
 				return Path;
+			}
 			Expand(BoxAlpha,show);
 			BoxAlpha = B->find(BoxAlpha, alpha, show);
 		}
 		if (C->classify(BoxAlpha) != FREE)
+		{
+			show_expansion("Configuration alpha is not free.");
 			return Path;
+		}
 
 		if (show)
 			cout << "Found the FREE box containing alpha." << endl;
@@ -419,12 +541,18 @@ public:
 			if (C->classify(BoxBeta) == FREE)
 				break;
 			if (C->classify(BoxBeta) == STUCK)
+			{
+				show_expansion("Configuration beta is stuck.");
 				return Path;
+			}
 			Expand(BoxBeta, show);
 			BoxBeta = B->find(BoxBeta, beta, show);
 		}
 		if (C->classify(BoxBeta) != FREE)
+		{
+			show_expansion("Configuration beta is not free.");
 			return Path;
+		}
 
 		if (show)
 			cout << "Found the FREE box containing beta." << endl;
@@ -434,11 +562,12 @@ public:
 		{
 			if (Q.empty())
 			{
-				cout << expanded++ << " cube is expanded, no path found." << endl;
+				show_expansion("No path found.");
 				return Path;
 			}
-			if (Q.top()->width() > varepsilon)
-				Expand(Q.top(), show);
+			Box* Q_top = Q.top().second;
+			if (Q_top->width() > varepsilon)
+				Expand(Q_top, show);
 			Q.pop();
 		}
 
@@ -450,9 +579,7 @@ public:
 		for (int i = 0; i < channel.size(); ++i)
 			Path.push_back(B->center(channel[i]));
 
-		cout << expanded++ << " cube is expanded." << endl;
-		if (show)
-			cout << "Canonical path found." << endl;
+		show_expansion("Canonical path found.");
 		return Path;														// Empty if no-path.
 	}
 };

@@ -568,7 +568,7 @@ public:
 	double width()
 	{
 		if (wxyz < 0)
-			return 2.0;
+			return 4.0;
 		return (range.max() - range.min()).minCoeff();
 	}
 	// Construct a root box.
@@ -1554,7 +1554,7 @@ public:
 	// Partial subdivision.
 	void subdivide(bool show = false)
 	{
-		if (Bt->width() >= Br->width())
+		if (2 * Bt->width() >= Br->width())
 			R3_subdivide(show);
 		else
 			SO3_subdivide(show);

@@ -94,7 +94,7 @@ ftype toftype(string word)
 	return TWRONG;
 }
 
-enum config { ALPHA, BETA, RANGE, OTHER };
+enum config { ALPHA, BETA, RANGE, HEURISTIC, OTHER };
 
 config toconfig(string word)
 {
@@ -104,7 +104,11 @@ config toconfig(string word)
 		return BETA;
 	if (word == "range")
 		return RANGE;
+	if (word == "heuristic")
+		return HEURISTIC;
 	return OTHER;
 }
+
+
 
 #endif

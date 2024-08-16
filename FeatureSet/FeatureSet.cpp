@@ -21,6 +21,10 @@ public:
 	vector<Edge*> Elist;
 	vector<Triangle*> Tlist;
 	vector<Mesh*> Mlist;
+	int size()
+	{
+		return Vlist.size() + Elist.size() + Tlist.size() + Mlist.size();
+	}
 	bool empty()
 	{
 		return Vlist.empty() && Elist.empty() && Tlist.empty() && Mlist.empty();
@@ -216,7 +220,15 @@ public:
 		for (map<string, Triangle*>::iterator it = Tlist.begin(); it != Tlist.end(); it++)
 			Phi->Tlist.push_back(it->second);
 		for (map<string, Mesh*>::iterator it = Mlist.begin(); it != Mlist.end(); it++)
+		{
+			for (int i = 0; i < it->second->corners.size(); ++i)
+				Phi->Vlist.push_back(it->second->corners[i]);
+			for (int i = 0; i < it->second->edges.size(); ++i)
+				Phi->Elist.push_back(it->second->edges[i]);
+			for (int i = 0; i < it->second->faces.size(); ++i)
+				Phi->Tlist.push_back(it->second->faces[i]);
 			Phi->Mlist.push_back(it->second);
+		}
 		return Phi;
 	}
 	// Show Vlist.

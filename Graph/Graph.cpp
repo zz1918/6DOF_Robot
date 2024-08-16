@@ -267,7 +267,7 @@ public:
             GraphNode<type>* next = NEXT.front();
             NEXT.pop();
             for (int i = 0; i < next->successor.size(); ++i)
-                if (!mark.find(next->succ(i)->id))
+                if (mark.find(next->succ(i)->id) == mark.end())
                 {
                     mark.insert(next->succ(i)->id);
                     pi.insert(make_pair(next->succ(i)->id, next->id));
@@ -291,7 +291,7 @@ public:
         found = false;
 
         // DFS/BFS
-        DFS(u, v);
+        BFS(u, v);
 
         // Build the path from the pi-table.
         for (GraphNode<type>* w = v; w != u; w = V[pi[w->id]])

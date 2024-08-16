@@ -436,6 +436,7 @@ public:
 	{
 		if (!bbox.intersects(f->BBox()))
 			return FREE;
+		/*
 		for (int i = 0; i < f->corners.size(); ++i)
 			if (!free_from(f->corners[i]))
 				return MIXED;
@@ -444,7 +445,7 @@ public:
 				return MIXED;
 		for (int i = 0; i < f->faces.size(); ++i)
 			if (!free_from(f->faces[i]))
-				return MIXED;
+				return MIXED;*/
 		if (f->inside(mB))
 			return STUCK;
 		else
@@ -478,6 +479,98 @@ public:
 		}
 	}
 };
+
+// Inner approximate footprint for Delta robot.
+// A set InFp(B) such that for each b in B, InFp(B) \cap Fp(b) is none empty.
+// An obvious construction is the circumball of Bt.
+/*class DeltaInFp
+{
+	// Radius of the circumball.
+	double rB;
+	// Center of the circumball.
+	Vector3d mB;
+	// Bounding box of approximate footprint for quick exclusion.
+	MatrixId bbox;
+	// The solid ball for the inner footprint.
+	Ball* SmallO;
+	// Construct the bounding box of the WtFp
+	MatrixId BBox()
+	{
+		// Bounding box of the Small O.
+		Vector3d posdiff = Vector3d(rB, rB, rB);
+		Vector3d posmin = mB - posdiff;
+		Vector3d posmax = mB + posdiff;
+		return MatrixId(posmin, posmax);
+	}
+
+public:
+	// Constructor by a box B in \intbox W.
+	DeltaWtFp(MatrixId Bt, MatrixId Br = MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1)), int wxyz = -1)
+	{
+		mB = (Bt.min() + Bt.max()) / 2;
+		rB = (Bt.max() - Bt.min()).norm() / 2;
+		bbox = BBox();
+		SmallO = new Ball(mB, rB);
+	}
+	// If the InFp does not intersect point feature f.
+	bool free_from(Point* f)
+	{
+		return SmallO->Sep(f);
+	}
+	// If the InFp does not intersect edge feature f.
+	bool free_from(Edge* f)
+	{
+		return SmallO->Sep(f);
+	}
+	// If the InFp does not intersect triangle feature f.
+	bool free_from(Triangle* f)
+	{
+		return SmallO->Sep(f);
+	}
+	// Classify the relation between InFp with a point feature.
+	pvalue classify(Point* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between InFp with a point feature.
+	pvalue classify(Edge* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between InFp with a point feature.
+	pvalue classify(Triangle* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between InFp with a mesh.
+	pvalue classify(Mesh* f, bool show = false)
+	{
+		if (!bbox.intersects(f->BBox()))
+			return FREE;
+		for (int i = 0; i < f->corners.size(); ++i)
+			if (!free_from(f->corners[i]))
+				return MIXED;
+		for (int i = 0; i < f->edges.size(); ++i)
+			if (!free_from(f->edges[i]))
+				return MIXED;
+		for (int i = 0; i < f->faces.size(); ++i)
+			if (!free_from(f->faces[i]))
+				return MIXED;
+		if (f->inside(mB))
+			return STUCK;
+		else
+			return FREE;
+	}
+};*/
 
 // Exact footprint for Delta robot.
 class DeltaExFp

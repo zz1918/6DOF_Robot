@@ -1,6 +1,6 @@
 // main.cpp: This file contains the main function.
 #pragma warning (disable : 4819)
-#define Point_Size 5
+#define Point_Size 15
 #define Line_Width 1
 #include<iostream>
 #include<sys/stat.h>
@@ -13,6 +13,7 @@ using namespace std;
 using namespace Eigen;
 
 Vector3d red(1, 0, 0), green(0, 1, 0), blue(0, 0, 1), yellow(1, 1, 0), purple(1, 0, 1), cyan(0, 1, 1), white(1, 1, 1), black(0, 0, 0);
+Vector4f ared(1, 0, 0, 0), agreen(0, 1, 0, 0), ablue(0, 0, 1, 0), ayellow(1, 1, 0, 0), apurple(1, 0, 1, 0), acyan(0, 1, 1, 0), awhite(1, 1, 1, 0), ablack(0, 0, 0, 0);
 
 class SSSViewer
 {
@@ -173,11 +174,14 @@ public:
 		_viewer.data().point_size = Point_Size;
 		_viewer.data().line_width = Line_Width;
 		_viewer.data().set_face_based(true);
+		_viewer.data().double_sided = true;
+		_viewer.data().show_lines = false;
 		_viewer.data().set_mesh(V, F);
 		_viewer.data().set_colors(C);
 		_viewer.data().add_edges(E1, E2, EC);
 		_viewer.data().add_points(Vs, VC);
 		_viewer.core().align_camera_center(Vector3d(-_envrange - 1, 0, 0));
+		_viewer.core().background_color = agreen;
 		_viewer.launch();
 	}
 	// View path in environment.
@@ -209,12 +213,15 @@ public:
 		_viewer.data().point_size = Point_Size;
 		_viewer.data().line_width = Line_Width;
 		_viewer.data().set_face_based(true);
+		_viewer.data().double_sided = true;
+		_viewer.data().show_lines = false;
 		_viewer.data().set_mesh(V, F);
 		_viewer.data().set_colors(C);
 		_viewer.data().add_edges(E1, E2, EC);
 		_viewer.data().add_edges(PE1, PE2, PEC);
 		_viewer.data().add_points(Vs, VC);
 		_viewer.core().align_camera_center(Vector3d(-_envrange - 1, 0, 0));
+		_viewer.core().background_color = agreen;
 		_viewer.launch();
 	}
 };
@@ -222,7 +229,21 @@ public:
 EnvironmentFeature env;
 VectorXd SSSalpha(7), SSSbeta(7);
 double envrange = 4;
+heutype SSSheu = WIDTH;
 SSSViewer viewer;
+
+heutype toheutype(string word)
+{
+	if (word == "id")
+		return BYID;
+	if (word == "width")
+		return WIDTH;
+	if (word == "target")
+		return TARGET;
+	if (word == "gbf")
+		return GBF;
+	return RAND;
+}
 
 bool exist(const string& filename)
 {
@@ -495,6 +516,23 @@ bool decode(string command)
 			cout << "Set the environment range as " << "[-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "]" << endl;
 			return true;
 		}
+		case HEURISTIC:
+		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
+			switch (toheutype(words[2]))
+			{
+			case RAND:SSSheu = RAND; cout << "Set heuristic by random." << endl; return true;
+			case BYID:SSSheu = BYID; cout << "Set heuristic by the construction time of boxes." << endl; return true;
+			case WIDTH:SSSheu = WIDTH; cout << "Set heuristic by the width of boxes." << endl; return true;
+			case TARGET:SSSheu = TARGET; cout << "Set heuristic by the distance from boxes to target configuration." << endl; return true;
+			case GBF:SSSheu = GBF; cout << "Set heuristic by greedy best first." << endl; return true;
+			default:cout << "bash: " << words[2] << ": command not found" << endl; return true;
+			}
+		}
 		default:cout << "bash: " << words[1] << ": command not found" << endl; return true;
 		}
 	}
@@ -508,7 +546,7 @@ bool decode(string command)
 			varepsilon = stod(words[1]);
 		SSS<VectorXd, SE3Box, SE3Tree, DeltaPredicate, DeltaFeature> SE3SSS(T, C);
 		cout << "Simple find path algorithm with epsilon = " << varepsilon << endl;
-		vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon);
+		vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon, SSSheu);
 		if (path.empty())
 			cout << "No Path!" << endl;
 		else
@@ -582,7 +620,7 @@ void test0(int argc, char* argv[])
 	cout << endl;
 	SE3SSS.C->AppFp(SE3SSS.B->Root()->child(0)->child(7))->out();
 	cout << endl << SE3SSS.C->classify(SE3SSS.B->Root()->child(0)->child(7)) << endl;*/
-	output_path(alpha, beta, SE3SSS.Find_Path(alpha, beta, Omega, varepsilon, true));
+	output_path(alpha, beta, SE3SSS.Find_Path(alpha, beta, Omega, varepsilon));
 }
 
 // Viewer test.
