@@ -53,6 +53,8 @@ public:
 	}
 };
 
+const DeltaFeature eset;
+
 class EnvironmentFeature
 {
 public:

@@ -33,16 +33,6 @@ ostream& operator<<(ostream& os, pvalue p)
 
 // *********************Help functions********************* //
 
-// Min of 3 numbers.
-double minof(double a, double b, double c)
-{
-	return min(min(a, b), c);
-}
-// Max of 3 numbers.
-double maxof(double a, double b, double c)
-{
-	return max(max(a, b), c);
-}
 // Bounding box of an edge.
 MatrixId B_Box(Edge* f)
 {
@@ -145,13 +135,17 @@ public:
 	{
 		return F;
 	}
-	// If a point p is positive to the normals of the triangle mesh.
+	// If a point p inside the mesh.
 	bool inside(Vector3d p)
 	{
+		if (bbox.ncontains(p))
+			return false;
+		Edge* tline = new Edge(p, bbox.min());
+		int tint = 0;
 		for (int i = 0; i < faces.size(); ++i)
-			if (faces[i]->N().dot(faces[i]->P(0)->D(p)) < 0)
-				return false;
-		return true;
+			if (!faces[i]->Sep(tline))
+				tint++;
+		return tint % 2;
 	}
 	// Return the bbox.
 	MatrixId BBox()
@@ -431,11 +425,17 @@ public:
 		else
 			return MIXED;
 	}
-	// Classify the relation between WtFp with a mesh.
-	pvalue classify(Mesh* f, bool show = false)
+	// Quickly classifying the relation between WtFp with a mesh.
+	pvalue quick_classify(Mesh* f, bool show = false)
 	{
 		if (!bbox.intersects(f->BBox()))
 			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between WtFp with a mesh after classifying all its boundary features to be FREE.
+	pvalue classify(Mesh* f, bool show = false)
+	{
 		/*
 		for (int i = 0; i < f->corners.size(); ++i)
 			if (!free_from(f->corners[i]))
@@ -446,36 +446,38 @@ public:
 		for (int i = 0; i < f->faces.size(); ++i)
 			if (!free_from(f->faces[i]))
 				return MIXED;*/
+		if (quick_classify(f, show) == FREE)
+			return FREE;
 		if (f->inside(mB))
 			return STUCK;
 		else
 			return FREE;
 	}
 	// Output the approximate footprint.
-	void out()
+	void out(ostream& os = cout)
 	{
 		if (initial)
 		{
-			cout << "This approximate footprint is a ball with center (";
-			cout << opA.transpose() << ") and radius " << dB << "." << endl;
+			os << "This approximate footprint is a ball with center (";
+			os << opA.transpose() << ") and radius " << dB << "." << endl;
 		}
 		else if (singular)
 		{
-			cout << "This approximate footprint is the convex hull of two balls S_A and S_B." << endl;
-			cout << "S_A with center (";
-			cout << opA.transpose() << ") and radius " << dB << "." << endl;
-			cout << "S_B with center (";
-			cout << opB.transpose() << ") and radius " << dB << "." << endl;
+			os << "This approximate footprint is the convex hull of two balls S_A and S_B." << endl;
+			os << "S_A with center (";
+			os << opA.transpose() << ") and radius " << dB << "." << endl;
+			os << "S_B with center (";
+			os << opB.transpose() << ") and radius " << dB << "." << endl;
 		}
 		else
 		{
-			cout << "This approximate footprint is the convex hull of three balls S_A, S_B and S_O." << endl;
-			cout << "S_A with center (";
-			cout << opA.transpose() << ") and radius " << dB << "." << endl;
-			cout << "S_B with center (";
-			cout << opB.transpose() << ") and radius " << dB << "." << endl;
-			cout << "S_O with center (";
-			cout << mB.transpose() << ") and radius " << rB << "." << endl;
+			os << "This approximate footprint is the convex hull of three balls S_A, S_B and S_O." << endl;
+			os << "S_A with center (";
+			os << opA.transpose() << ") and radius " << dB << "." << endl;
+			os << "S_B with center (";
+			os << opB.transpose() << ") and radius " << dB << "." << endl;
+			os << "S_O with center (";
+			os << mB.transpose() << ") and radius " << rB << "." << endl;
 		}
 	}
 };
@@ -483,7 +485,7 @@ public:
 // Inner approximate footprint for Delta robot.
 // A set InFp(B) such that for each b in B, InFp(B) \cap Fp(b) is none empty.
 // An obvious construction is the circumball of Bt.
-/*class DeltaInFp
+class DeltaInFp
 {
 	// Radius of the circumball.
 	double rB;
@@ -505,7 +507,7 @@ public:
 
 public:
 	// Constructor by a box B in \intbox W.
-	DeltaWtFp(MatrixId Bt, MatrixId Br = MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1)), int wxyz = -1)
+	DeltaInFp(MatrixId Bt, MatrixId Br = MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1)), int wxyz = -1)
 	{
 		mB = (Bt.min() + Bt.max()) / 2;
 		rB = (Bt.max() - Bt.min()).norm() / 2;
@@ -551,26 +553,31 @@ public:
 		else
 			return MIXED;
 	}
-	// Classify the relation between InFp with a mesh.
-	pvalue classify(Mesh* f, bool show = false)
+	// Quickly classifying the relation between InFp with a mesh.
+	pvalue quick_classify(Mesh* f, bool show = false)
 	{
 		if (!bbox.intersects(f->BBox()))
 			return FREE;
-		for (int i = 0; i < f->corners.size(); ++i)
-			if (!free_from(f->corners[i]))
-				return MIXED;
-		for (int i = 0; i < f->edges.size(); ++i)
-			if (!free_from(f->edges[i]))
-				return MIXED;
-		for (int i = 0; i < f->faces.size(); ++i)
-			if (!free_from(f->faces[i]))
-				return MIXED;
+		else
+			return MIXED;
+	}
+	// Classify the relation between InFp with a mesh after classifying all its boundary features to be FREE.
+	pvalue classify(Mesh* f, bool show = false)
+	{
+		if (quick_classify(f, show) == FREE)
+			return FREE;
 		if (f->inside(mB))
 			return STUCK;
 		else
 			return FREE;
 	}
-};*/
+	// Output the inner footprint.
+	void out(ostream& os = cout)
+	{
+		os << "This inner footprint is a ball with center (";
+		os << mB.transpose() << ") and radius " << rB << "." << endl;
+	}
+};
 
 // Exact footprint for Delta robot.
 class DeltaExFp

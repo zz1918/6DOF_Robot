@@ -75,6 +75,17 @@ Vector3d PL_int(Vector3d c, Vector3d n, Vector3d p, Vector3d d)
     return p + (d1 / d2) * d;
 }
 
+// Min of 3 numbers.
+double minof(double a, double b, double c)
+{
+    return min(min(a, b), c);
+}
+// Max of 3 numbers.
+double maxof(double a, double b, double c)
+{
+    return max(max(a, b), c);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Declarations ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -206,6 +217,11 @@ public:
     Vector3d D(Point* f)
     {
         return direction(f);
+    }
+    // Distance from this point to point q.
+    double distance(Vector3d q)
+    {
+        return D(q).norm();
     }
     // Distance from this point to point feature f.
     double distance(Point* f)
@@ -361,6 +377,15 @@ public:
     bool projects_on(Point* f)
     {
         return projects_on(f->p);
+    }
+
+    // Distance from this edge to point p.
+    double distance(Vector3d p)
+    {
+        if (projects_on(p))
+            return line_distance(p);
+        else
+            return min(P(0)->distance(p), P(1)->distance(p));
     }
 
     //************Edge Functions************//
@@ -540,6 +565,15 @@ public:
     }
 
 
+    // Distance from this triangle to point p.
+    double distance(Vector3d p)
+    {
+        if (projects_on(p))
+            return plane_distance(p);
+        else
+            return minof(E(0)->distance(p), E(1)->distance(p), E(2)->distance(p));
+    }
+
     //************Edge Functions************//
 
     // The case edge f cannot reach the plane of this within the range of f.
@@ -590,7 +624,7 @@ public:
             return false;
         return true;
     }
-    bool int_Sep(Edge* f, double t)
+    bool int_Sep(Edge* f, double t = 0)
     {
         if (separate_to(f))
             return true;

@@ -568,7 +568,7 @@ public:
 	double width()
 	{
 		if (wxyz < 0)
-			return 4.0;
+			return 2.0;
 		return (range.max() - range.min()).minCoeff();
 	}
 	// Construct a root box.
@@ -1213,6 +1213,17 @@ public:
 			for (int j = 0; j < 2; ++j)
 				neighbors[i][j] = NULL;
 	}
+	// Deconstruct the box.
+	~SE3Box()
+	{
+		for (int i = 0; i < subsize; ++i)
+			if (child(i) != NULL)
+				delete child(i);
+		if (Bt != NULL)
+			delete Bt;
+		if (Br != NULL)
+			delete Br;
+	}
 	// Root node.
 	SE3Box* root(int i)
 	{
@@ -1554,7 +1565,11 @@ public:
 	// Partial subdivision.
 	void subdivide(bool show = false)
 	{
-		if (2 * Bt->width() >= Br->width())
+		if (Bt->width() > 0.25)
+			R3_subdivide(show);
+		else if (Br->width() > 0.25)
+			SO3_subdivide(show);
+		else if (Bt->width() >= Br->width())
 			R3_subdivide(show);
 		else
 			SO3_subdivide(show);

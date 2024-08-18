@@ -15,6 +15,8 @@ using namespace Eigen;
 Vector3d red(1, 0, 0), green(0, 1, 0), blue(0, 0, 1), yellow(1, 1, 0), purple(1, 0, 1), cyan(0, 1, 1), white(1, 1, 1), black(0, 0, 0);
 Vector4f ared(1, 0, 0, 0), agreen(0, 1, 0, 0), ablue(0, 0, 1, 0), ayellow(1, 1, 0, 0), apurple(1, 0, 1, 0), acyan(0, 1, 1, 0), awhite(1, 1, 1, 0), ablack(0, 0, 0, 0);
 
+string fileplace = "../Model/";
+
 class SSSViewer
 {
 public:
@@ -242,6 +244,12 @@ heutype toheutype(string word)
 		return TARGET;
 	if (word == "gbf")
 		return GBF;
+	if (word == "dis")
+		return DIS;
+	if (word == "gbfdis")
+		return GBFDIS;
+	if (word == "widis" || word == "width_dis" || word == "widthdis")
+		return WIDIS;
 	return RAND;
 }
 
@@ -368,7 +376,7 @@ bool decode(string command)
 			string name = words[2];
 			string filename = words[3];
 			if (filename.find("/") == string::npos && filename.find("\\") == string::npos)
-				filename = "../Model/" + filename;
+				filename = fileplace + filename;
 			if (!exist(filename))
 			{
 				cout << "bash: file " << filename << " not found" << endl;
@@ -530,6 +538,9 @@ bool decode(string command)
 			case WIDTH:SSSheu = WIDTH; cout << "Set heuristic by the width of boxes." << endl; return true;
 			case TARGET:SSSheu = TARGET; cout << "Set heuristic by the distance from boxes to target configuration." << endl; return true;
 			case GBF:SSSheu = GBF; cout << "Set heuristic by greedy best first." << endl; return true;
+			case DIS:SSSheu = DIS; cout << "Set heuristic by distance from features." << endl; return true;
+			case GBFDIS:SSSheu = GBFDIS; cout << "Set heuristic by the product of GBF and DIS." << endl; return true;
+			case WIDIS: SSSheu = WIDIS; cout << "Set heuristic by the mixed of WIDTH and DIS." << endl; return true;
 			default:cout << "bash: " << words[2] << ": command not found" << endl; return true;
 			}
 		}
@@ -552,6 +563,9 @@ bool decode(string command)
 		else
 			output_path(SSSalpha, SSSbeta, path);
 		viewer.view_path(env, envrange, SSSalpha, SSSbeta, path);
+		delete T;
+		delete C;
+		delete Omega;
 		return true; 
 	}
 	case EXIT:
@@ -673,7 +687,30 @@ void test2(int argc, char* argv[])
 // Other tests.
 void test3(int argc, char* argv[])
 {
-	cout << ("2" + 1) << endl;
+	while (true)
+	{
+		cout << "Input .off filename >> " << endl;
+		string filename;
+		cin >> filename;
+		if (filename.find("/") == string::npos && filename.find("\\") == string::npos)
+			filename = fileplace + filename;
+		if (!exist(filename))
+		{
+			cout << "bash: file " << filename << " not found" << endl;
+			break;
+		}
+		MatrixXd V;
+		MatrixXi F;
+		read_OFF(filename, V, F);
+		Mesh* M = new Mesh(V, F);
+		Vector3d p;
+		cout << "Input point coordinate >> " << endl;
+		cin >> p(0) >> p(1) >> p(2);
+		if (M->inside(p))
+			cout << p.transpose() << " is in the mesh " << filename << endl;
+		else
+			cout << p.transpose() << " is not in the mesh " << filename << endl;
+	}
 }
 
 int main(int argc,char* argv[])

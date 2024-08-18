@@ -104,7 +104,7 @@ config toconfig(string word)
 		return BETA;
 	if (word == "range")
 		return RANGE;
-	if (word == "heuristic")
+	if (word == "heuristic" || word == "heu")
 		return HEURISTIC;
 	return OTHER;
 }

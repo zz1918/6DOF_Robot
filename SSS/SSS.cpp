@@ -4,8 +4,11 @@
 #define SSS_H
 
 #define ExpandShow 200
+#define ExpandLimit 20000
+#define AddFringeOnly true
 
 #include<iostream>
+#include<vector>
 #include<FeatureSet.h>
 #include<SE3Box.h>
 #include<WtFp.h>
@@ -15,9 +18,16 @@ using namespace Eigen;
 using namespace std;
 
 template<typename content>
-bool operator<(std::pair<double, content> A, std::pair<double, content> B)
+bool operator<(std::pair<std::vector<double>, content> A, std::pair<std::vector<double>, content> B)
 {
-	return A.first < B.first;
+	for (int i = 0; i < min(A.first.size(), B.first.size()); ++i)
+		if (A.first < B.first)
+			return true;
+		else if (A.first > B.first)
+			return false;
+		else
+			continue;
+	return A.first.size() < B.first.size();
 }
 
 class DeltaPredicate
@@ -31,10 +41,19 @@ class DeltaPredicate
 public:
 	DeltaPredicate() {}
 
-	// Set the feature sets.
+	// Set the root feature sets.
 	void set_feature(DeltaFeature F)
 	{
 		root_feature = F;
+	}
+	// Set the feature set for box with id.
+	void set_feature(SE3Box* b, DeltaFeature new_phi)
+	{
+		map<int, DeltaFeature>::iterator target = box_features.find(b->ID());
+		if (target == box_features.end())
+			box_features.insert(make_pair(b->ID(), new_phi));
+		else
+			target->second = new_phi;
 	}
 	// Feature set of box b.
 	DeltaFeature feature_of(SE3Box* b)
@@ -56,6 +75,34 @@ public:
 		else
 			return target->second;
 	}
+	// Minimum distance from center of b to its feature set.
+	double feature_dis(SE3Box* b)
+	{
+		Vector3d mB = b->BT()->center();
+		DeltaFeature phi = feature_of(b);
+		double min_dis = b->width() + 1.0;
+		double dis = 0;
+
+		for (int i = 0; i < phi.Vlist.size(); ++i)
+		{
+			dis = phi.Vlist[i]->distance(mB);
+			if (min_dis > dis)
+				min_dis = dis;
+		}
+		for (int i = 0; i < phi.Elist.size(); ++i)
+		{
+			dis = phi.Elist[i]->distance(mB);
+			if (min_dis > dis)
+				min_dis = dis;
+		}
+		for (int i = 0; i < phi.Tlist.size(); ++i)
+		{
+			dis = phi.Tlist[i]->distance(mB);
+			if (min_dis > dis)
+				min_dis = dis;
+		}
+		return min_dis;
+	}
 	// Predicate value of box b.
 	pvalue pvalue_of(SE3Box* b)
 	{
@@ -68,7 +115,11 @@ public:
 	// Set the predicate of box b.
 	void set_pvalue(SE3Box* b,pvalue Cb)
 	{
-		box_pvalues.insert(make_pair(b->ID(), Cb));
+		map<int, pvalue>::iterator target = box_pvalues.find(b->ID());
+		if (target == box_pvalues.end())
+			box_pvalues.insert(make_pair(b->ID(), Cb));
+		else
+			target->second = Cb;
 	}
 	// Construct the WtFp of box b.
 	DeltaWtFp* AppFp(SE3Box* b)
@@ -79,6 +130,11 @@ public:
 		else
 			Fp = new DeltaWtFp(b->BT()->range, b->BR()->range, b->BR()->WXYZ());
 		return Fp;
+	}
+	// Construct the InFp of box b.
+	DeltaInFp* AinFp(SE3Box* b)
+	{
+		return new DeltaInFp(b->BT()->range);
 	}
 	// Classification of b by soft pvalue.
 	pvalue classify(SE3Box* b, bool show = false)
@@ -104,64 +160,88 @@ public:
 		}
 
 		DeltaFeature new_phi;
+		DeltaFeature new_in_phi;
 		DeltaWtFp* Fp = AppFp(b);
+		DeltaInFp* Fq = AinFp(b);
 
 		if (show)
-			Fp->out();
-
-		for (int i = 0; i < phi.Vlist.size(); ++i)
-			switch (Fp->classify(phi.Vlist[i]))
-			{
-			case FREE:break;
-			case MIXED:new_phi.Vlist.push_back(phi.Vlist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
-			}
-		for (int i = 0; i < phi.Elist.size(); ++i)
-			switch (Fp->classify(phi.Elist[i]))
-			{
-			case FREE:break;
-			case MIXED:new_phi.Elist.push_back(phi.Elist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
-			}
-		for (int i = 0; i < phi.Tlist.size(); ++i)
-			switch (Fp->classify(phi.Tlist[i]))
-			{
-			case FREE:break;
-			case MIXED:new_phi.Tlist.push_back(phi.Tlist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
-			}
-
-		map<int, DeltaFeature>::iterator target = box_features.find(b->ID());
-		if (show)
-			new_phi.out();
-		if(!new_phi.empty())
 		{
-			set_pvalue(b, MIXED);
-			if (show)
-				cout << "The box is MIXED." << endl;
-			new_phi.Mlist = phi.Mlist;
-			target->second = new_phi;
-			return MIXED;
+			Fp->out();
+			Fq->out();
 		}
 
-		// After there is no boundary features, let's determine if the box is stuck or not.
-		for (int i = 0; i < phi.Mlist.size(); ++i)
-			switch (Fp->classify(phi.Mlist[i]))
+		for (int i = 0; i < phi.Vlist.size(); ++i)
+			if (Fq->classify(phi.Vlist[i]) != FREE)
 			{
-			case FREE:break;
-			case MIXED:new_phi.Mlist.push_back(phi.Mlist[i]); break;
-			case STUCK:set_pvalue(b, STUCK); if (show) cout << "The box is STUCK." << endl; return STUCK;
-			default:cerr << "Error: classified unknown." << endl; return UNKNOWN;
+				new_in_phi.Vlist.push_back(phi.Vlist[i]);
+				new_phi.Vlist.push_back(phi.Vlist[i]);
 			}
+			else if (Fp->classify(phi.Vlist[i]) != FREE)
+				new_phi.Vlist.push_back(phi.Vlist[i]);
+			else
+				continue;
+		for (int i = 0; i < phi.Elist.size(); ++i)
+			if (Fq->classify(phi.Elist[i]) != FREE)
+			{
+				new_in_phi.Elist.push_back(phi.Elist[i]);
+				new_phi.Elist.push_back(phi.Elist[i]);
+			}
+			else if (Fp->classify(phi.Elist[i]) != FREE)
+				new_phi.Elist.push_back(phi.Elist[i]);
+			else
+				continue;
+		for (int i = 0; i < phi.Tlist.size(); ++i)
+			if (Fq->classify(phi.Tlist[i]) != FREE)
+			{
+				new_in_phi.Tlist.push_back(phi.Tlist[i]);
+				new_phi.Tlist.push_back(phi.Tlist[i]);
+			}
+			else if (Fp->classify(phi.Tlist[i]) != FREE)
+				new_phi.Tlist.push_back(phi.Tlist[i]);
+			else
+				continue;
 
-		set_pvalue(b, FREE);
 		if (show)
-			cout << "The box is FREE." << endl;
-		target->second = new_phi;
-		return FREE;
+		{
+			new_phi.out();
+			new_in_phi.out();
+		}
+
+		// Stuck check.
+		if (new_in_phi.empty())
+		{
+			// After there is no boundary features, let's determine if the box is stuck or not.
+			for (int i = 0; i < phi.Mlist.size(); ++i)
+				if (Fq->classify(phi.Mlist[i]) != FREE)
+				{
+					set_pvalue(b, STUCK);
+					set_feature(b, eset);
+					if (show)
+						cout << "The box is STUCK." << endl;
+					return STUCK;
+				}
+		}
+
+		// Free check.
+		if(new_phi.empty())
+		{
+			set_pvalue(b, FREE);
+			set_feature(b, eset);
+			if (show)
+				cout << "The box is FREE." << endl;
+			return FREE;
+		}
+
+		for (int i = 0; i < phi.Mlist.size(); ++i)
+			if (Fp->quick_classify(phi.Mlist[i]) != FREE)
+				new_phi.Mlist.push_back(phi.Mlist[i]);
+
+		set_pvalue(b, MIXED);
+		set_feature(b, new_phi);
+		if (show)
+			cout << "The box is MIXED." << endl;
+		return MIXED;
+
 	}
 };
 
@@ -251,7 +331,7 @@ public:
 	}
 };
 
-enum heutype { RAND, BYID, WIDTH, TARGET, GBF };
+enum heutype { RAND, BYID, WIDTH, TARGET, GBF, DIS, GBFDIS, WIDIS };
 
 // Config is VectorXd, Box is SE3Box, BoxTree is SE3Tree, Predicate is DeltaPredicate, FeatureSet is DeltaFeature.
 template<typename Config, typename Box, typename BoxTree, typename Predicate, typename FeatureSet>
@@ -273,7 +353,7 @@ public:
 	// Map from box id to graph id.
 	map<int, int> Gid;
 	// The mixed queue.
-	priority_queue<pair<double,Box*>> Q;
+	priority_queue<pair<vector<double>, Box*>> Q;
 	// The amount of cube that is expanded.
 	int expanded;
 	// The average R^3-width of cubes.
@@ -296,21 +376,41 @@ public:
 		return Vector3d(gamma(0), gamma(1), gamma(2));
 	}
 
-	double GBF_heu(Box* b)
+	double dis_heu(Box* b)
 	{
-		return (b->BT()->center() - config_t(beta)).norm();
+		return C->feature_dis(b);
 	}
 
-	// Heuristic function.
-	double heuristic(Box* b)
+	double GBF_heu(Box* b)
 	{
-		switch(heu)
+		return max(-log10(min((b->BT()->center() - config_t(alpha)).norm(), (b->BT()->center() - config_t(beta)).norm())), 0.1);
+	}
+
+	double width_heu(Box* b)
+	{
+		return max(b->BT()->width(), b->BR()->width());
+	}
+
+	double id_heu(Box* b)
+	{
+		return 1 / double(b->ID());
+	}
+
+	// Heuristic function. The greater, the higher priority.
+	vector<double> heuristic(Box* b)
+	{
+		vector<double> heus;
+		switch (heu)
 		{
-		case GBF: return GBF_heu(b);
-		case WIDTH: return max(b->BT()->width(), b->BR()->width());
-		case BYID: return double(-b->ID());
-		default: return rand();
+		case GBF: heus.push_back(GBF_heu(b)); break;
+		case DIS: heus.push_back(dis_heu(b)); break;
+		case WIDTH: heus.push_back(width_heu(b)); break;
+		case BYID: heus.push_back(id_heu(b)); break;
+		case GBFDIS: heus.push_back(GBF_heu(b) * dis_heu(b)); break;
+		case WIDIS: heus.push_back(width_heu(b)); heus.push_back(dis_heu(b)); break;
+		default: heus.push_back(rand());
 		}
+		return heus;
 	}
 
 	// Procedures for mixed boxes.
@@ -322,7 +422,8 @@ public:
 			b->out();
 			cout << endl;
 		}
-		Q.push(make_pair(heuristic(b), b));
+		if (!AddFringeOnly)
+			Q.push(make_pair(heuristic(b), b));
 		stat_mixed++;
 		avemixedfeature += (C->feature_of(b).size() - avemixedfeature) / stat_mixed;
 	}
@@ -340,9 +441,25 @@ public:
 		vector<Box*> target_neighbors = b->all_adj_neighbors();
 		for (int j = 0; j < target_neighbors.size(); ++j)
 		{
-			GraphNode<Box>* target_neighbor = node(target_neighbors[j]);
-			if (target_neighbor != NULL)
-				G.link(node(b), target_neighbor);
+			if (!AddFringeOnly)
+			{
+				GraphNode<Box>* target_neighbor = node(target_neighbors[j]);
+				if (target_neighbor != NULL)
+					G.link(node(b), target_neighbor);
+			}
+			else
+			{
+				// This change makes Q maintains purely fringe boxes.
+				Box* tb = target_neighbors[j];
+				switch (C->classify(tb))
+				{
+				case FREE: if (node(tb) != NULL) G.link(node(b), node(tb)); break;
+				case MIXED: Q.push(make_pair(heuristic(tb), tb)); break;
+				case STUCK: cout << "Error! FREE boxes cannot be adjacent to STUCK boxes."; break;
+				case UNKNOWN: cout << "Error! Some boxes are classified as UNKNOWN!"; break;
+				default: break;
+				}
+			}
 		}
 		stat_free++;
 		avefreefeature += (C->feature_of(b).size() - avefreefeature) / stat_free;
@@ -357,7 +474,6 @@ public:
 			b->out();
 			cout << endl;
 		}
-		Q.push(make_pair(heuristic(b), b));
 		stat_stuck++;
 	}
 
@@ -417,13 +533,6 @@ public:
 	// Expand(B)
 	void Expand(Box* b, bool show = false)
 	{
-		if (show && b->is_leaf())
-		{
-			cout << "Expanding box: ";
-			b->out();
-			cout << endl;
-		}
-
 		// Step 0: check if the box is leaf.
 
 		if (!b->is_leaf())
@@ -431,6 +540,13 @@ public:
 			if (show)
 				cout << "Skipping expanding a box that is already expanded." << endl;
 			return;
+		}
+
+		if (show)
+		{
+			cout << "Expanding box: ";
+			b->out();
+			cout << endl;
 		}
 
 		// Step 1: subdivide the box.
@@ -485,35 +601,31 @@ public:
 		beta = _beta;
 		C->set_feature(Omega);
 		heu = _h;
-		if (C->classify(B->Root()) == FREE)
-			add_free_node(B->Root());
-		if (C->classify(B->Root()) == STUCK)
-		{
-			show_expansion("The environment is stuck.");
-			return Path;
-		}
 
 		if (show)
 			cout << "Find path initialization finished." << endl;
 
 		// Step 1: classify initial boxes.
-		if (show)
-			cout << "Finding alpha: (" << alpha.transpose() << ")." << endl;
-		BoxAlpha = B->find(alpha, show);
-		if (show)
-			cout << "Finding beta: (" << beta.transpose() << ")." << endl;
-		BoxBeta = B->find(beta, show);
-		if (BoxAlpha == NULL)
-			show_expansion("Configuration alpha not in environment.");
-		if (BoxBeta == NULL)
-			show_expansion("Configuration beta not in environment.");
-		if (BoxAlpha == NULL || BoxBeta == NULL)							// Initial or Target configurations not found.
+		if (C->classify(B->Root()) == FREE)
+			add_free_node(B->Root());
+		if (C->classify(B->Root()) == STUCK)
+		{
+			show_expansion("The environment is stuck.");
 			return Path;													// Empty if no-path.
+		}
 
 		if (show)
 			cout << "Classify initial boxes finished." << endl;
 
 		// Step 2: find the FREE box containing alpha.
+		if (show)
+			cout << "Finding alpha: (" << alpha.transpose() << ")." << endl;
+		BoxAlpha = B->find(alpha, show);
+		if (BoxAlpha == NULL)
+		{
+			show_expansion("Configuration alpha not in environment.");
+			return Path;
+		}
 		while (BoxAlpha->width() > varepsilon)
 		{
 			if (C->classify(BoxAlpha) == FREE)
@@ -536,6 +648,14 @@ public:
 			cout << "Found the FREE box containing alpha." << endl;
 
 		// Step 3: find the FREE box containing beta.
+		if (show)
+			cout << "Finding beta: (" << beta.transpose() << ")." << endl;
+		BoxBeta = B->find(beta, show);
+		if (BoxBeta == NULL)
+		{
+			show_expansion("Configuration beta not in environment.");
+			return Path;
+		}
 		while (BoxBeta->width() > varepsilon)
 		{
 			if (C->classify(BoxBeta) == FREE)
@@ -569,6 +689,12 @@ public:
 			if (Q_top->width() > varepsilon)
 				Expand(Q_top, show);
 			Q.pop();
+
+			if (expanded > ExpandLimit)
+			{
+				show_expansion("Run over expand limit (temporary setting for experiments).");
+				return Path;
+			}
 		}
 
 		if (show)

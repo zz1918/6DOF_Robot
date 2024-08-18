@@ -6,6 +6,11 @@
 
 #include "Solid.cpp"
 
+// Min of 3 numbers.
+double minof(double a, double b, double c);
+// Max of 3 numbers.
+double maxof(double a, double b, double c);
+
 class Solid;
 class Feature;
 class Point;
