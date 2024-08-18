@@ -6,6 +6,7 @@
 #include<iostream>
 #include<sstream> 
 #include<string>
+#include <fstream>
 #include<vector>
 #include<map>
 #include<ReadWriteOFF.h>
@@ -263,4 +264,9 @@ public:
 	}
 };
 
+void read_ext(const string& filename, EnvironmentFeature& env)
+{
+	ifstream in(filename);
+	return;
+}
 #endif

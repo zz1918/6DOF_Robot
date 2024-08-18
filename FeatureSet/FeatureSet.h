@@ -5,3 +5,5 @@
 class DeltaFeature;
 
 class EnvironmentFeature;
+
+void read_ext(const string& filename, EnvironmentFeature& env);
