@@ -644,8 +644,8 @@ public:
 			return Path;
 		}
 
-		if (show)
-			cout << "Found the FREE box containing alpha." << endl;
+		//if (show)
+		show_expansion("Found the FREE box containing alpha.");
 
 		// Step 3: find the FREE box containing beta.
 		if (show)
@@ -674,8 +674,8 @@ public:
 			return Path;
 		}
 
-		if (show)
-			cout << "Found the FREE box containing beta." << endl;
+		//if (show)
+		show_expansion("Found the FREE box containing beta.");
 
 		// Step 4: expand Q.GetNext() until Box(alpha) and Box(beta) are in the same component.
 		while (find(BoxAlpha) != find(BoxBeta))
