@@ -14,6 +14,7 @@ using namespace std;
 class R3Box;
 class SO3Box;
 class SE3Box;
+double extern r0;
 
 vector<R3Box*> R3list;
 vector<SO3Box*> SO3list;
@@ -1454,7 +1455,7 @@ public:
 			return make_pair(wxyz + subdim, pos);
 	}
 	// Translational partial subdivision.
-	void R3_subdivide(bool show = false)
+	void T_Split(bool show = false)
 	{
 		// Step 0: Only leaves can be subdivided.
 		if (!leaf)
@@ -1508,7 +1509,7 @@ public:
 		}
 	}
 	// Rotational partial subdivision.
-	void SO3_subdivide(bool show = false)
+	void R_Split(bool show = false)
 	{
 		// Step 0: Only leaves can be subdivided.
 		if (!leaf)
@@ -1566,13 +1567,13 @@ public:
 	void subdivide(bool show = false)
 	{
 		if (Bt->width() > 0.25)
-			R3_subdivide(show);
-		else if (Br->width() > 0.25)
-			SO3_subdivide(show);
-		else if (Bt->width() >= Br->width())
-			R3_subdivide(show);
+			T_Split(show);
+		else if (Br->width() * r0 > 0.25)
+			R_Split(show);
+		else if (Bt->width() >= Br->width() * r0)
+			T_Split(show);
 		else
-			SO3_subdivide(show);
+			R_Split(show);
 	}
 	// Check if a box is a neighbor box (not necessarily principle).
 	bool is_neighbor(SE3Box* B)

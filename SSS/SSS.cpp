@@ -4,7 +4,6 @@
 #define SSS_H
 
 #define ExpandShow 200
-#define ExpandLimit 20000
 #define AddFringeOnly true
 
 #include<iostream>
@@ -16,6 +15,8 @@
 #include<Graph.h>
 using namespace Eigen;
 using namespace std;
+
+int extern ExpandLimit;
 
 template<typename content>
 bool operator<(std::pair<std::vector<double>, content> A, std::pair<std::vector<double>, content> B)
@@ -424,6 +425,26 @@ public:
 		}
 		if (!AddFringeOnly)
 			Q.push(make_pair(heuristic(b), b));
+		else
+		{
+			// This change makes Q maintains purely fringe boxes.
+			vector<Box*> target_neighbors = b->all_adj_neighbors();
+			bool is_pushed = false;
+			for (int j = 0; j < target_neighbors.size(); ++j)
+			{
+				Box* tb = target_neighbors[j];
+				switch (C->classify(tb))
+				{
+				case FREE: Q.push(make_pair(heuristic(b), b)); is_pushed = true; break;
+				case MIXED: break;
+				case STUCK: break;
+				case UNKNOWN: cout << "Error! Some boxes are classified as UNKNOWN!"; break;
+				default: break;
+				}
+				if (is_pushed)
+					break;
+			}
+		}
 		stat_mixed++;
 		avemixedfeature += (C->feature_of(b).size() - avemixedfeature) / stat_mixed;
 	}
@@ -693,6 +714,7 @@ public:
 			if (expanded > ExpandLimit)
 			{
 				show_expansion("Run over expand limit (temporary setting for experiments).");
+				cout << "Time Out!" << endl;
 				return Path;
 			}
 		}

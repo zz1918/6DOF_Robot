@@ -2,6 +2,7 @@
 #pragma warning (disable : 4819)
 #define Point_Size 15
 #define Line_Width 1
+#define ArgcSize 19
 #include<iostream>
 #include<sys/stat.h>
 #include<string>
@@ -15,7 +16,9 @@ using namespace Eigen;
 Vector3d red(1, 0, 0), green(0, 1, 0), blue(0, 0, 1), yellow(1, 1, 0), purple(1, 0, 1), cyan(0, 1, 1), white(1, 1, 1), black(0, 0, 0);
 Vector4f ared(1, 0, 0, 0), agreen(0, 1, 0, 0), ablue(0, 0, 1, 0), ayellow(1, 1, 0, 0), apurple(1, 0, 1, 0), acyan(0, 1, 1, 0), awhite(1, 1, 1, 0), ablack(0, 0, 0, 0);
 
-string fileplace = "../Input/";
+string fileplace = "Input/";
+string fileformat = ".off";
+string version = "1.1";
 
 class SSSViewer
 {
@@ -230,7 +233,10 @@ public:
 
 EnvironmentFeature env;
 VectorXd SSSalpha(7), SSSbeta(7);
+double r0 = 2;
 double envrange = 4;
+double varepsilon = 0.05;
+int ExpandLimit = 20000;
 heutype SSSheu = WIDTH;
 SSSViewer viewer;
 
@@ -375,8 +381,8 @@ bool decode(string command)
 			}
 			string name = words[2];
 			string filename = words[3];
-			if (filename.find("/") == string::npos && filename.find("\\") == string::npos)
-				filename = fileplace + filename;
+			if (filename.find("/") == string::npos && filename.find("\\") == string::npos && filename.find(".") == string::npos)
+				filename = fileplace + filename + fileformat;
 			if (!exist(filename))
 			{
 				cout << "bash: file " << filename << " not found" << endl;
@@ -544,6 +550,17 @@ bool decode(string command)
 			default:cout << "bash: " << words[2] << ": command not found" << endl; return true;
 			}
 		}
+		case LIMIT:
+		{
+			if (words.size() < 3)
+			{
+				cout << "bash: not enough argument" << endl;
+				return true;
+			}
+			ExpandLimit = stoi(words[2]);
+			cout << "Set the maximum expand limit to be " << ExpandLimit << "." << endl;
+			return true;
+		}
 		default:cout << "bash: " << words[1] << ": command not found" << endl; return true;
 		}
 	}
@@ -552,15 +569,12 @@ bool decode(string command)
 		SE3Tree* T = new SE3Tree(MatrixId(Vector3d(-envrange, -envrange, -envrange), Vector3d(envrange, envrange, envrange)));
 		DeltaPredicate* C = new DeltaPredicate();
 		DeltaFeature* Omega = env.make_feature();
-		double varepsilon = 0.05;
 		if (words.size() > 1)
 			varepsilon = stod(words[1]);
 		SSS<VectorXd, SE3Box, SE3Tree, DeltaPredicate, DeltaFeature> SE3SSS(T, C);
 		cout << "Simple find path algorithm with epsilon = " << varepsilon << endl;
 		vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon, SSSheu);
-		if (path.empty())
-			cout << "No Path!" << endl;
-		else
+		if (!path.empty())
 			output_path(SSSalpha, SSSbeta, path);
 		viewer.view_path(env, envrange, SSSalpha, SSSbeta, path);
 		delete T;
@@ -577,15 +591,51 @@ bool decode(string command)
 // Command test.
 void test(int argc, char* argv[])
 {
+	double alphaOx = -envrange / 2.0 - 0.5, alphaOy = -envrange / 2.0 - 0.5, alphaOz = -envrange / 2.0 - 0.5;
+	double alphaAphi = 0, alphaAtheta = 0, alphaBtheta = 0;
+	double betaOx = envrange / 2.0 + 0.5, betaOy = envrange / 2.0 + 0.5, betaOz = envrange / 2.0 + 0.5;
+	double betaAphi = 0, betaAtheta = 0, betaBtheta = 0;
+	if (argc > ArgcSize)
+	{
+		for (int i = ArgcSize; i < argc; ++i)
+			env.add_mesh(fileplace + string(argv[i]) + fileformat, string(argv[i]));
+	}
+	switch (argc)
+	{
+	case 19: ExpandLimit = stoi(argv[18]);
+	case 18: betaBtheta = stod(argv[17]);
+	case 17: betaAtheta = stod(argv[16]);
+	case 16: betaAphi = stod(argv[15]);
+	case 15: betaOz = stod(argv[14]);
+	case 14: betaOy = stod(argv[13]);
+	case 13: betaOx = stod(argv[12]);
+	case 12: alphaBtheta = stod(argv[11]);
+	case 11: alphaAtheta = stod(argv[10]);
+	case 10: alphaAphi = stod(argv[9]);
+	case 9: alphaOz = stod(argv[8]);
+	case 8: alphaOy = stod(argv[7]);
+	case 7: alphaOx = stod(argv[6]);
+	case 6: r0 = stod(argv[5]);
+	case 5: envrange = stod(argv[4]);
+	case 4: varepsilon = stod(argv[3]);
+	case 3: SSSheu = toheutype(argv[2]);
+	default:break;
+	}
+	Vector3d alphaO(alphaOx, alphaOy, alphaOz);
+	Vector4d alphaQ = SO3(alphaAphi, alphaAtheta, alphaBtheta).Q();
+	Vector3d betaO(betaOx, betaOy, betaOz);
+	Vector4d betaQ = SO3(betaAphi, betaAtheta, betaBtheta).Q();
 	char command[1000];
 	cout << "Delta robot find path algorithm by SSS framework." << endl;
-	cout << "Demo -- Version 1.0" << endl;
+	cout << "Demo -- Version " << version << endl;
 	cout << "Default environment range: " << "[-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "]" << endl;
-	cout << "Default alpha: (" << -envrange / 2.0 - 0.5 << "," << -envrange / 2.0 - 0.5 << "," << -envrange / 2.0 - 0.5 << "," << 1 << "," << 0 << "," << 0 << "," << 0 << ")" << endl;
-	cout << "Default beta: (" << envrange / 2.0 + 0.5 << "," << envrange / 2.0 + 0.5 << "," << envrange / 2.0 + 0.5 << "," << 1 << "," << 0 << "," << 0 << "," << 0 << ")" << endl;
-	cout << "Default epsilon: " << 0.05 << endl;
-	SSSalpha << -envrange / 2.0 - 0.5, -envrange / 2.0 - 0.5, -envrange / 2.0 - 0.5, 1, 0, 0, 0;
-	SSSbeta << envrange / 2.0 + 0.5, envrange / 2.0 + 0.5, envrange / 2.0 + 0.5, 1, 0, 0, 0;
+	cout << "Default alpha: (" << alphaO(0) << "," << alphaO(1) << "," << alphaO(2) << "," << alphaQ(0) << "," << alphaQ(1) << "," << alphaQ(2) << "," << alphaQ(3) << ")" << endl;
+	cout << "Default beta: (" << betaO(0) << "," << betaO(1) << "," << betaO(2) << "," << betaQ(0) << "," << betaQ(1) << "," << betaQ(2) << "," << betaQ(3) << ")" << endl;
+	cout << "Default epsilon: " << varepsilon << endl;
+	cout << "Type \"exit\" to exit." << endl;
+	SSSalpha << alphaO(0), alphaO(1), alphaO(2), alphaQ(0), alphaQ(1), alphaQ(2), alphaQ(3);
+	SSSbeta << betaO(0), betaO(1), betaO(2), betaQ(0), betaQ(1), betaQ(2), betaQ(3);
+
 	while (true)
 	{
 		cout << ">> ";

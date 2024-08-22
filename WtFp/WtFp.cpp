@@ -28,8 +28,10 @@ ostream& operator<<(ostream& os, pvalue p)
 	return os;
 }
 
-#define pA Vector3d(1, 0, 0)
-#define pB Vector3d(0, 1, 0)
+double extern r0;
+
+#define pA Vector3d(r0, 0, 0)
+#define pB Vector3d(0, r0, 0)
 
 // *********************Help functions********************* //
 

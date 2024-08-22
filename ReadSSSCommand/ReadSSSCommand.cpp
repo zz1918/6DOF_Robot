@@ -94,18 +94,20 @@ ftype toftype(string word)
 	return TWRONG;
 }
 
-enum config { ALPHA, BETA, RANGE, HEURISTIC, OTHER };
+enum config { ALPHA, BETA, RANGE, HEURISTIC, LIMIT, OTHER };
 
 config toconfig(string word)
 {
-	if (word == "alpha")
+	if (word == "alpha" || word == "aph")
 		return ALPHA;
-	if (word == "beta")
+	if (word == "beta" || word == "bet")
 		return BETA;
-	if (word == "range")
+	if (word == "range" || word == "rag")
 		return RANGE;
 	if (word == "heuristic" || word == "heu")
 		return HEURISTIC;
+	if (word == "limit" || word == "lim")
+		return LIMIT;
 	return OTHER;
 }
 
