@@ -1,25 +1,22 @@
-#This is the project for SSS framework on 6DOF robot.
+# This is the project for SSS framework on 6DOF robot.
 
-#To compile this file, please follow these steps:
+# Use Makefile to run this work by typing "make".
 
-mkdir build
-cd build
-cmake ../main
-cmake --build .
+make
 
-#To run the program, type:
+# To make the work initialized, use command
 
-Debug/main.exe
+make i
 
-#or
+# To compile the work, use command
 
-Debug/main
+make c
 
-#or
+# To run the work, use command
 
-./main
+make r
 
-#After you run the program without argument, the program will automatically run the command line for setting the environment. Use the following possible commands to define your environment.
+# After you run the program, the program will automatically run the command line for setting the environment. Use the following possible commands to define your environment. Or type "show" to view the environment.
 
 >> def point A (0,0,0)
 #Define point A as 0 0 0
@@ -41,6 +38,9 @@ Debug/main
 
 >> def face BCD B C D
 #Define face BCD as the triangle connecting point B and point C and point D
+
+>> def mesh wall1 wall1
+#Define a mesh by "wall1.off" in the Input folder
 
 >> show point
 #The environment contains:
