@@ -236,7 +236,7 @@ VectorXd SSSalpha(7), SSSbeta(7);
 double r0 = 2;
 double envrange = 4;
 double varepsilon = 0.05;
-int ExpandLimit = 20000;
+int ExpandLimit = 214748;
 heutype SSSheu = WIDTH;
 SSSViewer viewer;
 
@@ -602,6 +602,7 @@ void test(int argc, char* argv[])
 	}
 	switch (argc)
 	{
+	default:
 	case 19: ExpandLimit = stoi(argv[18]);
 	case 18: betaBtheta = stod(argv[17]);
 	case 17: betaAtheta = stod(argv[16]);
@@ -619,7 +620,7 @@ void test(int argc, char* argv[])
 	case 5: envrange = stod(argv[4]);
 	case 4: varepsilon = stod(argv[3]);
 	case 3: SSSheu = toheutype(argv[2]);
-	default:break;
+	case 2: break;
 	}
 	Vector3d alphaO(alphaOx, alphaOy, alphaOz);
 	Vector4d alphaQ = SO3(alphaAphi, alphaAtheta, alphaBtheta).Q();
@@ -632,6 +633,7 @@ void test(int argc, char* argv[])
 	cout << "Default alpha: (" << alphaO(0) << "," << alphaO(1) << "," << alphaO(2) << "," << alphaQ(0) << "," << alphaQ(1) << "," << alphaQ(2) << "," << alphaQ(3) << ")" << endl;
 	cout << "Default beta: (" << betaO(0) << "," << betaO(1) << "," << betaO(2) << "," << betaQ(0) << "," << betaQ(1) << "," << betaQ(2) << "," << betaQ(3) << ")" << endl;
 	cout << "Default epsilon: " << varepsilon << endl;
+	cout << "Default maximum expansion: " << ExpandLimit << " cubes." << endl;
 	cout << "Type \"exit\" to exit." << endl;
 	SSSalpha << alphaO(0), alphaO(1), alphaO(2), alphaQ(0), alphaQ(1), alphaQ(2), alphaQ(3);
 	SSSbeta << betaO(0), betaO(1), betaO(2), betaQ(0), betaQ(1), betaQ(2), betaQ(3);
@@ -645,6 +647,8 @@ void test(int argc, char* argv[])
 	}
 	cout << "Find path algorithm terminates." << endl;
 }
+
+
 
 // SSS test.
 void test0(int argc, char* argv[])

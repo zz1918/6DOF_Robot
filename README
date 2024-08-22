@@ -1,8 +1,8 @@
 # This is the project for SSS framework on 6DOF robot.
 
-# Use Makefile to run this work by typing "make".
+# Use Makefile to build this work, use command
 
-make
+make b
 
 # To make the work initialized, use command
 

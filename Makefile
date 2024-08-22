@@ -13,7 +13,7 @@
 #
 # 	       > make r	-- runs "main" interactively
 #
-# 	The default search-mode is "random".  We encourage you to just
+# 	The default search-mode is "width".  We encourage you to just
 # 	hit the "Run me" button to see different runs of the program.
 #
 #	This is equivalent to typing:
@@ -79,7 +79,7 @@ envrange = 4		# environment boundary
 edgeL = 1.0		# robot radius
 
 Qtype = "width"
-ExpandLimit = 2147483647
+ExpandLimit = 40000
 
 file1 = "wall1"
 file2 = "wall2"
@@ -89,7 +89,9 @@ file2 = "wall2"
 #=================================================
 
 # Default is to initialize, compile and run the program with default arguments.
-d default:
+d default: r
+# Initial build up the program from cmake.
+b build:
 	mkdir build
 	(cd build; cmake ../main; cmake --build .)
 	./build/Debug/main \
@@ -97,7 +99,8 @@ d default:
 		$(startOx) $(startOy) $(startOz) \
 		$(startAphi) $(startAtheta) $(startBtheta) \
 		$(goalOx) $(goalOy) $(goalOz) \
-		$(goalAphi) $(goalAtheta) $(startBtheta)
+		$(goalAphi) $(goalAtheta) $(startBtheta) \
+		$(ExpandLimit) $(file1) $(file2)
 # Initialize the program from cmake
 i initialize:
 	rm -rf build
@@ -113,11 +116,14 @@ r run:
 		$(startOx) $(startOy) $(startOz) \
 		$(startAphi) $(startAtheta) $(startBtheta) \
 		$(goalOx) $(goalOy) $(goalOz) \
-		$(goalAphi) $(goalAtheta) $(startBtheta) \
+		$(goalAphi) $(goalAtheta) $(goalBtheta) \
 		$(ExpandLimit) $(file1) $(file2)
 # Eliminate the program
 e eliminate:
 	rm -rf build
+# Test 1
+t1 test1:
+	make r startAphi=0.785398 startAtheta=0 startBtheta=1.570796
 # note: this target is the standard target that Core Library uses
 #       to test its subdirectories.   So the program must run in a
 #       non-interactive mode (i.e., the first argument to "main" is "1").
