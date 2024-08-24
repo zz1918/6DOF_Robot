@@ -59,7 +59,7 @@
 #=================================================
 # User variables (you can change them in the command line)
 #=================================================
-interactive = -1		# -1=interactive, >=0 is non-interactive
+interactive = 0		# -1=interactive, >=0 is non-interactive
 
 startOx = -2.5		# start configuration
 startOy = -2.5

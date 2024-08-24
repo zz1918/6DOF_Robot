@@ -588,8 +588,8 @@ bool decode(string command)
 	}
 }
 
-// Command test.
-void test(int argc, char* argv[])
+// Interactive mode.
+void interactive(int argc, char* argv[])
 {
 	double alphaOx = -envrange / 2.0 - 0.5, alphaOy = -envrange / 2.0 - 0.5, alphaOz = -envrange / 2.0 - 0.5;
 	double alphaAphi = 0, alphaAtheta = 0, alphaBtheta = 0;
@@ -598,7 +598,15 @@ void test(int argc, char* argv[])
 	if (argc > ArgcSize)
 	{
 		for (int i = ArgcSize; i < argc; ++i)
-			env.add_mesh(fileplace + string(argv[i]) + fileformat, string(argv[i]));
+		{
+			string filename = fileplace + string(argv[i]) + fileformat;
+			if (!exist(filename))
+			{
+				cout << "bash: file " << filename << " not found" << endl;
+				continue;
+			}
+			env.add_mesh(filename, string(argv[i]));
+		}
 	}
 	switch (argc)
 	{
@@ -648,47 +656,79 @@ void test(int argc, char* argv[])
 	cout << "Find path algorithm terminates." << endl;
 }
 
-
-
-// SSS test.
-void test0(int argc, char* argv[])
+// Non-interactive mode.
+void non_interactive(int argc, char* argv[])
 {
-	SE3Tree* T = new SE3Tree(MatrixId(Vector3d(-envrange, -envrange, -envrange), Vector3d(envrange, envrange, envrange)));
+	double alphaOx = -envrange / 2.0 - 0.5, alphaOy = -envrange / 2.0 - 0.5, alphaOz = -envrange / 2.0 - 0.5;
+	double alphaAphi = 0, alphaAtheta = 0, alphaBtheta = 0;
+	double betaOx = envrange / 2.0 + 0.5, betaOy = envrange / 2.0 + 0.5, betaOz = envrange / 2.0 + 0.5;
+	double betaAphi = 0, betaAtheta = 0, betaBtheta = 0;
+	if (argc > ArgcSize)
+	{
+		for (int i = ArgcSize; i < argc; ++i)
+		{
+			string filename = fileplace + string(argv[i]) + fileformat;
+			if (!exist(filename))
+			{
+				cout << "bash: file " << filename << " not found" << endl;
+				continue;
+			}
+			env.add_mesh(filename, string(argv[i]));
+		}
+	}
+	switch (argc)
+	{
+	default:
+	case 19: ExpandLimit = stoi(argv[18]);
+	case 18: betaBtheta = stod(argv[17]);
+	case 17: betaAtheta = stod(argv[16]);
+	case 16: betaAphi = stod(argv[15]);
+	case 15: betaOz = stod(argv[14]);
+	case 14: betaOy = stod(argv[13]);
+	case 13: betaOx = stod(argv[12]);
+	case 12: alphaBtheta = stod(argv[11]);
+	case 11: alphaAtheta = stod(argv[10]);
+	case 10: alphaAphi = stod(argv[9]);
+	case 9: alphaOz = stod(argv[8]);
+	case 8: alphaOy = stod(argv[7]);
+	case 7: alphaOx = stod(argv[6]);
+	case 6: r0 = stod(argv[5]);
+	case 5: envrange = stod(argv[4]);
+	case 4: varepsilon = stod(argv[3]);
+	case 3: SSSheu = toheutype(argv[2]);
+	case 2: break;
+	}
+	Vector3d alphaO(alphaOx, alphaOy, alphaOz);
+	Vector4d alphaQ = SO3(alphaAphi, alphaAtheta, alphaBtheta).Q();
+	Vector3d betaO(betaOx, betaOy, betaOz);
+	Vector4d betaQ = SO3(betaAphi, betaAtheta, betaBtheta).Q();
+	char command[1000];
+	cout << "Delta robot find path algorithm by SSS framework." << endl;
+	cout << "Demo -- Version " << version << endl;
+	cout << "Default environment range: " << "[-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "] * [-" << envrange << "," << envrange << "]" << endl;
+	cout << "Default alpha: (" << alphaO(0) << "," << alphaO(1) << "," << alphaO(2) << "," << alphaQ(0) << "," << alphaQ(1) << "," << alphaQ(2) << "," << alphaQ(3) << ")" << endl;
+	cout << "Default beta: (" << betaO(0) << "," << betaO(1) << "," << betaO(2) << "," << betaQ(0) << "," << betaQ(1) << "," << betaQ(2) << "," << betaQ(3) << ")" << endl;
+	cout << "Default epsilon: " << varepsilon << endl;
+	cout << "Default maximum expansion: " << ExpandLimit << " cubes." << endl;
+	SSSalpha << alphaO(0), alphaO(1), alphaO(2), alphaQ(0), alphaQ(1), alphaQ(2), alphaQ(3);
+	SSSbeta << betaO(0), betaO(1), betaO(2), betaQ(0), betaQ(1), betaQ(2), betaQ(3);
+	env.show_mesh();
+
+	MatrixId EnvRange(Vector3d(-envrange, -envrange, -envrange), Vector3d(envrange, envrange, envrange));
+	SE3Tree* T = new SE3Tree(EnvRange);
 	DeltaPredicate* C = new DeltaPredicate();
-	DeltaFeature Omega;
-	/*
-	// Do something with Omega.
-	Point* ob1 = new Point(Vector3d(0, 0, 0));
-	Point* ob2 = new Point(Vector3d(1, 0, 0));
-	Point* ob3 = new Point(Vector3d(0, 0, 1));
-	Edge* ob4 = new Edge(ob1, ob2);
-	Edge* ob5 = new Edge(ob2, ob3);
-	Edge* ob6 = new Edge(ob3, ob1);
-	Triangle* ob = new Triangle(ob4, ob5, ob6);
-	Omega.Vlist.push_back(ob1);
-	Omega.Vlist.push_back(ob2);
-	Omega.Vlist.push_back(ob3);
-	Omega.Elist.push_back(ob4);
-	Omega.Elist.push_back(ob5);
-	Omega.Elist.push_back(ob6);
-	Omega.Tlist.push_back(ob);
-	// ******************* //
-	*/
-	double varepsilon = 0.1;
+	DeltaFeature* Omega = env.make_feature();
 	SSS<VectorXd, SE3Box, SE3Tree, DeltaPredicate, DeltaFeature> SE3SSS(T, C);
-	VectorXd alpha(7), beta(7);
-	alpha << -127, -127, -127, 1, 0, 0, 0;
-	beta << 127, 127, 127, 1, 0, 0, 0;
-	/*C->set_feature(Omega);
-	SE3SSS.Expand(SE3SSS.B->Root(), true);
-	SE3SSS.B->Root()->child(1)->out();
-	SE3SSS.Expand(SE3SSS.B->Root()->child(0));
-	cout << endl;
-	SE3SSS.B->Root()->child(0)->child(7)->out();
-	cout << endl;
-	SE3SSS.C->AppFp(SE3SSS.B->Root()->child(0)->child(7))->out();
-	cout << endl << SE3SSS.C->classify(SE3SSS.B->Root()->child(0)->child(7)) << endl;*/
-	output_path(alpha, beta, SE3SSS.Find_Path(alpha, beta, Omega, varepsilon));
+	cout << "Simple find path algorithm with epsilon = " << varepsilon << endl;
+	vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon, SSSheu);
+	if (!path.empty())
+		output_path(SSSalpha, SSSbeta, path);
+	else
+		cout << "Algorithm terminates. Probably no-path, or the maximum expansion limit is too small." << endl;
+	viewer.view_path(env, envrange, SSSalpha, SSSbeta, path);
+	delete T;
+	delete C;
+	delete Omega;
 }
 
 // Viewer test.
@@ -774,11 +814,11 @@ int main(int argc,char* argv[])
 		mode = stoi(argv[1]);
 	switch (mode)
 	{
-	case 0:test0(argc, argv); break;
+	case 0:non_interactive(argc, argv); break;
 	case 1:test1(argc, argv); break;
 	case 2:test2(argc, argv); break;
 	case 3:test3(argc, argv); break;
-	default:test(argc, argv);
+	default:interactive(argc, argv);
 	}
 	return 0;
 }
