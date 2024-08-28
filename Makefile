@@ -19,7 +19,7 @@
 #	This is equivalent to typing:
 #
 #		./build/Debug/main \
-#			$(interactive) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
+#			$(interactive) $(arg) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
 #			$(startOx) $(startOy) $(startOz) \
 #			$(startAphi) $(startAtheta) $(startBtheta) \
 #			$(goalOx) $(goalOy) $(goalOz) \
@@ -59,7 +59,8 @@
 #=================================================
 # User variables (you can change them in the command line)
 #=================================================
-interactive = 0		# -1=interactive, >=0 is non-interactive
+interactive = -1		# -1 = show-only, 0 = non-interactive, 1 = interactive
+arg = 0				# 0 = read-by-arguments, 1 = read-by-json
 
 startOx = -2.5		# start configuration
 startOy = -2.5
@@ -83,24 +84,25 @@ ExpandLimit = 40000
 
 file1 = "wall1"
 file2 = "wall2"
+jsonfile = "example1"
 
 #=================================================
 # Define target folder
 #=================================================
 
 # Default is to initialize, compile and run the program with default arguments.
-d default: r
+default: r
 # Initial build up the program from cmake.
 b build:
 	mkdir build
 	(cd build; cmake ../main; cmake --build .)
 	./build/Debug/main \
-		$(interactive) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
+		$(interactive) $(arg) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
 		$(startOx) $(startOy) $(startOz) \
 		$(startAphi) $(startAtheta) $(startBtheta) \
 		$(goalOx) $(goalOy) $(goalOz) \
 		$(goalAphi) $(goalAtheta) $(startBtheta) \
-		$(ExpandLimit) $(file1) $(file2)
+		$(ExpandLimit) $(file1)
 # Initialize the program from cmake
 i initialize:
 	rm -rf build
@@ -112,14 +114,18 @@ c compile:
 # Run program by default settings
 r run:
 	./build/Debug/main \
-		$(interactive) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
+		$(interactive) $(arg) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
 		$(startOx) $(startOy) $(startOz) \
 		$(startAphi) $(startAtheta) $(startBtheta) \
 		$(goalOx) $(goalOy) $(goalOz) \
 		$(goalAphi) $(goalAtheta) $(goalBtheta) \
 		$(ExpandLimit) $(file1) $(file2)
+# Run program by example json
+e example:
+	./build/Debug/main \
+		$(interactive) 1 $(jsonfile)
 # Eliminate the program
-e eliminate:
+d delete:
 	rm -rf build
 # Test 1
 t1 test1:

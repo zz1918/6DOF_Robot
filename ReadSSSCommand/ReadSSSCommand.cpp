@@ -94,7 +94,7 @@ ftype toftype(string word)
 	return TWRONG;
 }
 
-enum config { ALPHA, BETA, RANGE, HEURISTIC, LIMIT, OTHER };
+enum config { ALPHA, BETA, RANGE, HEURISTIC, LIMIT, EPSILON, OTHER };
 
 config toconfig(string word)
 {
@@ -108,9 +108,46 @@ config toconfig(string word)
 		return HEURISTIC;
 	if (word == "limit" || word == "lim")
 		return LIMIT;
+	if (word == "epsilon" || word == "varepsilon" || word == "eps" || word == "var")
+		return EPSILON;
 	return OTHER;
 }
 
+// Heuristic types.
+enum heutype { RAND, BYID, WIDTH, TARGET, GBF, DIS, GBFDIS, WIDIS };
+heutype toheutype(string word)
+{
+	if (word == "id")
+		return BYID;
+	if (word == "width")
+		return WIDTH;
+	if (word == "target")
+		return TARGET;
+	if (word == "gbf")
+		return GBF;
+	if (word == "dis")
+		return DIS;
+	if (word == "gbfdis")
+		return GBFDIS;
+	if (word == "widis" || word == "width_dis" || word == "widthdis")
+		return WIDIS;
+	return RAND;
+}
 
+ostream& operator<<(ostream& os, heutype heu)
+{
+	switch (heu)
+	{
+	case BYID: os << "id"; break;
+	case WIDTH: os << "width"; break;
+	case TARGET: os << "target"; break;
+	case GBF: os << "greedy"; break;
+	case DIS: os << "distance"; break;
+	case GBFDIS: os << "greedy-distance"; break;
+	case WIDIS:os << "width-distance"; break;
+	default:os << "random";
+	}
+	return os;
+}
 
 #endif

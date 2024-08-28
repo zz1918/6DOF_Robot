@@ -7,12 +7,14 @@
 #define AddFringeOnly true
 
 #include<iostream>
+#include<string>
 #include<vector>
 #include<FeatureSet.h>
 #include<SE3Box.h>
 #include<WtFp.h>
 #include<Eigen/Dense>
 #include<Graph.h>
+#include<ReadSSSCommand.h>
 using namespace Eigen;
 using namespace std;
 
@@ -331,9 +333,6 @@ public:
 		root->out(os, l);
 	}
 };
-
-enum heutype { RAND, BYID, WIDTH, TARGET, GBF, DIS, GBFDIS, WIDIS };
-
 // Config is VectorXd, Box is SE3Box, BoxTree is SE3Tree, Predicate is DeltaPredicate, FeatureSet is DeltaFeature.
 template<typename Config, typename Box, typename BoxTree, typename Predicate, typename FeatureSet>
 class SSS

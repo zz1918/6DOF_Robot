@@ -10,26 +10,44 @@ endif()
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 target_link_libraries(main PUBLIC Eigen3::Eigen)
 
-list(PREPEND CMAKE_MODULE_PATH ../libigl)
-
-# Libigl
-include(libigl)
-
-# Enable the target igl::glfw
-igl_include(glfw)
-
-# Link igl (and the glfw module) to your project
-target_link_libraries(main PUBLIC igl::glfw)
-
-if (NOT TARGET SSS)
-	add_subdirectory("../SSS" SSS)
+if (NOT TARGET FeatureSet)
+	add_subdirectory("../FeatureSet" FeatureSet)
 endif()
-target_link_libraries(main PUBLIC SSS)
-target_include_directories(main PUBLIC "../SSS")
+target_link_libraries(main PUBLIC FeatureSet)
+target_include_directories(main PUBLIC "../FeatureSet")
+
 
 if (NOT TARGET ReadSSSCommand)
 	add_subdirectory("../ReadSSSCommand" ReadSSSCommand)
 endif()
 target_link_libraries(main PUBLIC ReadSSSCommand)
 target_include_directories(main PUBLIC "../ReadSSSCommand")
+
+if (NOT TARGET ReadControl)
+	add_subdirectory("../ReadControl" ReadControl)
+endif()
+target_link_libraries(main PUBLIC ReadControl)
+target_include_directories(main PUBLIC "../ReadControl")
+
+
+if (NOT TARGET ViewerControl)
+	add_subdirectory("../ViewerControl" ViewerControl)
+endif()
+target_link_libraries(main PUBLIC ViewerControl)
+target_include_directories(main PUBLIC "../ViewerControl")
+
+
+if (NOT TARGET RunControl)
+	add_subdirectory("../RunControl" RunControl)
+endif()
+target_link_libraries(main PUBLIC RunControl)
+target_include_directories(main PUBLIC "../RunControl")
+
+
+if (NOT TARGET InteractiveControl)
+	add_subdirectory("../InteractiveControl" InteractiveControl)
+endif()
+target_link_libraries(main PUBLIC InteractiveControl)
+target_include_directories(main PUBLIC "../InteractiveControl")
+
 

@@ -26,4 +26,10 @@ endif()
 target_link_libraries(SSS PUBLIC FeatureSet)
 target_include_directories(SSS PUBLIC "../FeatureSet")
 
+if (NOT TARGET ReadSSSCommand)
+	add_subdirectory("../ReadSSSCommand" ReadSSSCommand)
+endif()
+target_link_libraries(SSS PUBLIC ReadSSSCommand)
+target_include_directories(SSS PUBLIC "../ReadSSSCommand")
+
 

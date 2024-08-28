@@ -1,0 +1,1 @@
+add_library(FileCheck FileCheck.h FileCheck.cpp)

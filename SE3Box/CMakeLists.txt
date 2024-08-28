@@ -8,7 +8,7 @@ endif()
 target_link_libraries(SE3Box PUBLIC Interval)
 target_include_directories(SE3Box PUBLIC "../Interval")
 
-if (NOT TARGET bimap)
+if (NOT TARGET Bimap)
 	add_subdirectory("../Bimap" Bimap)
 endif()
 target_link_libraries(SE3Box PUBLIC Bimap)
