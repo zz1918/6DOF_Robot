@@ -62,42 +62,42 @@ void read_json(string filename)
 	SSSbeta << betaO(0), betaO(1), betaO(2), betaQ(0), betaQ(1), betaQ(2), betaQ(3);
 
 	// Read obstacles.
-	for (const auto& entry : data["obstacle"]["corner"]) {
-		string name = entry["name"];
-		Vector3d coord = read_vec3(entry["position"]);
+	for (const auto& entryc : data["obstacle"]["corner"]) {
+		string name = entryc["name"];
+		Vector3d coord = read_vec3(entryc["position"]);
 		env.add_point(coord, name);
 		cout << "Define point " << name << " as " << coord.transpose() << endl;
 	}
 
-	for (const auto& entry : data["obstacle"]["edge"]) {
-		string name = entry["name"];
-		string name1 = entry["p1"];
-		string name2 = entry["p2"];
+	for (const auto& entrye : data["obstacle"]["edge"]) {
+		string name = entrye["name"];
+		string name1 = entrye["p1"];
+		string name2 = entrye["p2"];
 		if (env.add_edge(name1, name2, name) == NULL)
 			cout << "Some point not found" << endl;
 		else
 			cout << "Define edge " << name << " as the edge connecting point " << name1 << " and point " << name2 << endl;
 	}
 
-	for (const auto& entry : data["obstacle"]["face"]) {
-		string name = entry["name"];
-		string name1 = entry["p1"];
-		string name2 = entry["p2"];
-		string name3 = entry["p3"];
+	for (const auto& entryf : data["obstacle"]["face"]) {
+		string name = entryf["name"];
+		string name1 = entryf["p1"];
+		string name2 = entryf["p2"];
+		string name3 = entryf["p3"];
 		if (env.add_face(name1, name2, name3, name) == NULL)
 			cout << "Some point not found" << endl;
 		else
 			cout << "Define face " << name << " as the triangle connecting point " << name1 << " and point " << name2 << " and point " << name3 << endl;
 	}
 
-	for (const auto& entry : data["obstacle"]["mesh"]) {
-		string offfilename = fileplace + string(entry) + fileformat;
+	for (const auto& entrym : data["obstacle"]["mesh"]) {
+		string offfilename = fileplace + string(entrym) + fileformat;
 		if (!exist(offfilename))
 		{
 			cout << "bash: file " << offfilename << " not found" << endl;
 			continue;
 		}
-		env.add_mesh(offfilename, string(entry));
+		env.add_mesh(offfilename, string(entrym));
 	}
 }
 

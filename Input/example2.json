@@ -1,26 +1,21 @@
 {
-	"interactive" : 0,		// -1:interactive, >:0 is non-interactive
-
-	"startOx" : -2.5,		// start configuration
+	"startOx" : -2.5,
 	"startOy" : -2.5,
 	"startOz" : -2.5,
-	"startAphi" : 0,		// set A to be O + (1,0,0)
+	"startAphi" : 0,
 	"startAtheta" : 0,
-	"startBtheta" : 0,		// set B to be O + (0,1,0)
-	"goalOx" : 2.5,			// goal configuration
+	"startBtheta" : 0,
+	"goalOx" : 2.5,
 	"goalOy" : 2.5,
 	"goalOz" : 2.5,
-	"goalAphi" : 0,			// set A to be O + (1,0,0)
+	"goalAphi" : 0,
 	"goalAtheta" : 0,
-	"goalBtheta" : 0,		// set B to be O + (0,1,0)
-
-	"epsilon" : 0.05,		// resolution parameter
-	"envrange" : 4,			// environment boundary
-	"edgeL" : 1.0,			// robot radius
-
+	"goalBtheta" : 0,
+	"epsilon" : 0.05,
+	"envrange" : 3,
+	"edgeL" : 1.0,
 	"Qtype" : "width",
 	"ExpandLimit" : 40000,
-
 	"obstacle":{
 		"corner":[
 			{
@@ -29,36 +24,61 @@
 			},
 			{
 				"name": "B",
-				"position": [2,2,2]
+				"position": [2,-2,-2]
 			},
 			{
 				"name": "C",
-				"position": [1,0,0]
+				"position": [-2,2,-2]
 			},
 			{
 				"name": "D",
-				"position": [0,1,0]
+				"position": [2,2,-2]
 			},
 			{
 				"name": "E",
-				"position": [0,0,1]
+				"position": [-2,-2,2]
+			},
+			{
+				"name": "F",
+				"position": [2,-2,2]
+			},
+			{
+				"name": "G",
+				"position": [-2,2,2]
+			},
+			{
+				"name": "H",
+				"position": [2,2,2]
 			}
 			],
 		"edge":[
 			{
-				"name": "AB",
-				"p1": "A",
-				"P2": "B"
+				"name":"J",
+				"p1":"D",
+				"p2":"F"
+			},
+			{
+				"name":"K",
+				"p1":"F",
+				"p2":"G"
+			},
+			{
+				"name":"L",
+				"p1":"G",
+				"p2":"D"
 			}
+
 			],
 		"face":[
 			{
-				"name": "CDE",
-				"p1": "C",
-				"P2": "D",
-				"p3": "E"
+				"name":"T",
+				"p1":"B",
+				"p2":"C",
+				"p3":"E"
 			}
 			],
-		"mesh":[]
+		"mesh":["cube"]
 	}
 }
+
+// The nlohmann json cannot read footnotes like this in the middle of json.

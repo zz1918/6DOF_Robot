@@ -92,17 +92,6 @@ jsonfile = "example1"
 
 # Default is to initialize, compile and run the program with default arguments.
 default: r
-# Initial build up the program from cmake.
-b build:
-	mkdir build
-	(cd build; cmake ../main; cmake --build .)
-	./build/Debug/main \
-		$(interactive) $(arg) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
-		$(startOx) $(startOy) $(startOz) \
-		$(startAphi) $(startAtheta) $(startBtheta) \
-		$(goalOx) $(goalOy) $(goalOz) \
-		$(goalAphi) $(goalAtheta) $(startBtheta) \
-		$(ExpandLimit) $(file1)
 # Initialize the program from cmake
 i initialize:
 	rm -rf build
@@ -127,6 +116,11 @@ e example:
 # Eliminate the program
 d delete:
 	rm -rf build
+# Initial build up the program from cmake.
+b build:
+	make i
+	make c
+	make r
 # Test 1
 t1 test1:
 	make r startAphi=0.785398 startAtheta=0 startBtheta=1.570796
