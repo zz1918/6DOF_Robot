@@ -33,19 +33,11 @@ heutype extern SSSheu;
 // Read by json.
 void read_json(string filename)
 {
-	cout << "Reading " << filename << endl;
 	// Load json data from scene file
 	json data;
-	cout << "json data;" << endl;
 	ifstream in(filename);
-	cout << "ifstream in(filename);" << endl;
 
-	// Bug is here!
 	in >> data;
-	cout << "in >> data;" << endl;
-	// Bug is here!
-
-	cout << "File loaded successfully." << endl;
 
 	// Helper function to read a Vector3d from a json array
 	auto read_vec3 = [](const json& x) {
@@ -69,8 +61,6 @@ void read_json(string filename)
 	SSSalpha << alphaO(0), alphaO(1), alphaO(2), alphaQ(0), alphaQ(1), alphaQ(2), alphaQ(3);
 	SSSbeta << betaO(0), betaO(1), betaO(2), betaQ(0), betaQ(1), betaQ(2), betaQ(3);
 
-	cout << "Arguments read successfully." << endl;
-
 	// Read obstacles.
 	for (const auto& entry : data["obstacle"]["corner"]) {
 		string name = entry["name"];
@@ -78,8 +68,6 @@ void read_json(string filename)
 		env.add_point(coord, name);
 		cout << "Define point " << name << " as " << coord.transpose() << endl;
 	}
-
-	cout << "Corners read successfully." << endl;
 
 	for (const auto& entry : data["obstacle"]["edge"]) {
 		string name = entry["name"];
@@ -90,8 +78,6 @@ void read_json(string filename)
 		else
 			cout << "Define edge " << name << " as the edge connecting point " << name1 << " and point " << name2 << endl;
 	}
-
-	cout << "Edges read successfully." << endl;
 
 	for (const auto& entry : data["obstacle"]["face"]) {
 		string name = entry["name"];
@@ -104,9 +90,6 @@ void read_json(string filename)
 			cout << "Define face " << name << " as the triangle connecting point " << name1 << " and point " << name2 << " and point " << name3 << endl;
 	}
 
-
-	cout << "Faces read successfully." << endl;
-	
 	for (const auto& entry : data["obstacle"]["mesh"]) {
 		string offfilename = fileplace + string(entry) + fileformat;
 		if (!exist(offfilename))
@@ -116,8 +99,6 @@ void read_json(string filename)
 		}
 		env.add_mesh(offfilename, string(entry));
 	}
-
-	cout << "Meshes read successfully." << endl;
 }
 
 // Read by arguments.

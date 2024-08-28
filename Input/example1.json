@@ -1,26 +1,21 @@
 {
-	"interactive" : 0,		// -1:interactive, >:0 is non-interactive
-
-	"startOx" : -2.5,		// start configuration
+	"startOx" : -2.5,
 	"startOy" : -2.5,
 	"startOz" : -2.5,
-	"startAphi" : 0,		// set A to be O + (1,0,0)
+	"startAphi" : 0,
 	"startAtheta" : 0,
-	"startBtheta" : 0,		// set B to be O + (0,1,0)
-	"goalOx" : 2.5,			// goal configuration
+	"startBtheta" : 0,
+	"goalOx" : 2.5,
 	"goalOy" : 2.5,
 	"goalOz" : 2.5,
-	"goalAphi" : 0,			// set A to be O + (1,0,0)
+	"goalAphi" : 0,
 	"goalAtheta" : 0,
-	"goalBtheta" : 0,		// set B to be O + (0,1,0)
-
-	"epsilon" : 0.05,		// resolution parameter
-	"envrange" : 4,			// environment boundary
-	"edgeL" : 1.0,			// robot radius
-
+	"goalBtheta" : 0,
+	"epsilon" : 0.05,
+	"envrange" : 4,
+	"edgeL" : 1.0,
 	"Qtype" : "width",
 	"ExpandLimit" : 40000,
-
 	"obstacle":{
 		"corner":[],
 		"edge":[],
@@ -28,3 +23,5 @@
 		"mesh":["wall1","wall2"]
 	}
 }
+
+// The nlohmann json cannot read footnotes like this in the middle of json.
