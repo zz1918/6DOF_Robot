@@ -59,32 +59,44 @@
 #=================================================
 # User variables (you can change them in the command line)
 #=================================================
-interactive = -1		# -1 = show-only, 0 = non-interactive, 1 = interactive
-arg = 0				# 0 = read-by-arguments, 1 = read-by-json
+interactive = 0		# -1 = show-only, 0 = non-interactive, 1 = interactive
+arg = 0					# 0 = read-by-arguments, 1 = read-by-json
 
-startOx = -2.5		# start configuration
+startOx = -2.5			# start configuration
 startOy = -2.5
 startOz = -2.5
-startAphi = 0	# set A to be O + (1,0,0)
+startAphi = 0			# set A to be O + (1,0,0)
 startAtheta = 0
-startBtheta = 0		# set B to be O + (0,1,0)
-goalOx = 2.5		# goal configuration
+startBtheta = 0			# set B to be O + (0,1,0)
+goalOx = 2.5			# goal configuration
 goalOy = 2.5
 goalOz = 2.5
-goalAphi = 0	# set A to be O + (1,0,0)
+goalAphi = 0			# set A to be O + (1,0,0)
 goalAtheta = 0
-goalBtheta = 0		# set B to be O + (0,1,0)
+goalBtheta = 0			# set B to be O + (0,1,0)
 
-epsilon = 0.05		# resolution parameter
-envrange = 4		# environment boundary
-edgeL = 1.0		# robot radius
+epsilon = 0.05			# resolution parameter
+envrange = 4			# environment boundary
+edgeL = 1.0				# robot radius
 
-Qtype = "width"
-ExpandLimit = 40000
+Qtype = "width"			# heuristic type
+ExpandLimit = 40000		# maximum number of boxes
 
-file1 = "wall1"
-file2 = "wall2"
-jsonfile = "example1"
+file1 = "wall1"			# off file
+file2 = "wall2"			# off file
+json = "GBF"	# json file
+
+rotAx = 1				# rotate an off file (by axis (Ax,Ay,Az), angle Theta, center at(Cx,Cy,Cz))
+rotAy = 0
+rotAz = 0
+rotTheta = 0
+rotCx = 0
+rotCy = 0
+rotCz = 0
+transX = 0				# translate an off file (by (X,Y,Z)), always first rotate, then translate
+transY = 0.5
+transZ = 0
+scale = 1				# scale an off file (by scale)
 
 #=================================================
 # Define target folder
@@ -112,7 +124,7 @@ r run:
 # Run program by example json
 e example:
 	./build/Debug/main \
-		$(interactive) 1 $(jsonfile)
+		$(interactive) 1 $(json)
 # Eliminate the program
 d delete:
 	rm -rf build
@@ -121,9 +133,21 @@ b build:
 	make i
 	make c
 	make r
+# Make affine transformation on an off file.
+s set:
+	./build/Debug/main \
+		2 $(file1) $(file2) \
+		$(rotAx) $(rotAy) $(rotAz) \
+		$(rotTheta) \
+		$(rotCx) $(rotCy) $(rotCz) \
+		$(transX) $(transY) $(transZ) \
+		$(scale)
 # Test 1
 t1 test1:
-	make r startAphi=0.785398 startAtheta=0 startBtheta=1.570796
+	make r file1="cube1" file2="cube2" #Qtype="gbf"
+# Test 2
+t2 test2:
+	make s file1="wall2" file2="wall3" transY=1
 # note: this target is the standard target that Core Library uses
 #       to test its subdirectories.   So the program must run in a
 #       non-interactive mode (i.e., the first argument to "main" is "1").

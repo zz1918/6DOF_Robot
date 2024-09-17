@@ -113,8 +113,10 @@ config toconfig(string word)
 	return OTHER;
 }
 
-// Heuristic types.
-enum heutype { RAND, BYID, WIDTH, TARGET, GBF, DIS, GBFDIS, WIDIS };
+//************* Heuristic type functions *************//
+
+enum heutype { RAND, BYID, WIDTH, TARGET, GBF, DIS, GBFDIS, WIDIS, RECUR };
+
 heutype toheutype(string word)
 {
 	if (word == "id")
@@ -131,6 +133,8 @@ heutype toheutype(string word)
 		return GBFDIS;
 	if (word == "widis" || word == "width_dis" || word == "widthdis")
 		return WIDIS;
+	if (word == "recursive" || word == "recur" || word == "rec")
+		return RECUR;
 	return RAND;
 }
 
@@ -145,9 +149,12 @@ ostream& operator<<(ostream& os, heutype heu)
 	case DIS: os << "distance"; break;
 	case GBFDIS: os << "greedy-distance"; break;
 	case WIDIS:os << "width-distance"; break;
+	case RECUR:os << "recursive"; break;
 	default:os << "random";
 	}
 	return os;
 }
+
+//*****************************************************// 
 
 #endif

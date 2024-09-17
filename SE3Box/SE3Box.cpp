@@ -15,6 +15,7 @@ class R3Box;
 class SO3Box;
 class SE3Box;
 double extern r0;
+double extern varepsilon;
 
 vector<R3Box*> R3list;
 vector<SO3Box*> SO3list;
@@ -210,7 +211,7 @@ class R3Box
 	R3Box* children[subsize];
 	// Neighbor node, 0 for neg, 1 for pos.
 	R3Box* neighbors[dim][2];
-	// Bits of the box.
+	// Path indicator of the box.
 	bit codes[dim];
 public:
 	// Numerical range of the box.
@@ -283,7 +284,7 @@ public:
 	{
 		return children[i % subsize];
 	}
-	// Child node by code.
+	// Child node by child indicator.
 	R3Box* child(int t[dim])
 	{
 		int target = 0;
@@ -337,10 +338,23 @@ public:
 	{
 		codes[i % dim] = t;
 	}
-	// Find a target box by bits.
+	// Find a target box by path indicator.
 	R3Box* find(bit t[dim])
 	{
 		R3Box* target = root;
+		while (!target->Leaf() && target->Depth() < t[0].length())
+		{
+			int tcode[dim];
+			for (int i = 0; i < dim; ++i)
+				tcode[i] = t[i][target->Depth() + 1];
+			target = target->child(tcode);
+		}
+		return target;
+	}
+	// Find a target box by child indicator.
+	R3Box* find(bit t[dim], R3Box* b)
+	{
+		R3Box* target = b;
 		while (!target->Leaf() && target->Depth() < t[0].length())
 		{
 			int tcode[dim];
@@ -464,6 +478,11 @@ public:
 	Vector3d center()
 	{
 		return (range.min() + range.max()) / 2;
+	}
+	// The range of the box.
+	MatrixId Range()
+	{
+		return range;
 	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
@@ -764,16 +783,40 @@ public:
 	{
 		codes[i % dim] = t;
 	}
-	// Find a target box by bits.
+	// Find a target box by path indicator.
 	SO3Box* find(bit t[dim], int _wxyz, bool show = false)
 	{
 		if (show)
 		{
-			cout << "Finding code: " << t[0] << " " << t[1] << " " << t[2] << " " << t[3] << endl;
+			cout << "Finding path indicator: " << t[0] << " " << t[1] << " " << t[2] << " " << t[3] << endl;
 			cout << "In box " << _wxyz << endl;
 		}
 		SO3Box* target = roots[_wxyz];
 		while (!target->is_leaf() && target->Depth() < t[(_wxyz + 1) % boxsize].length())
+		{
+			int tcode[dim];
+			for (int i = 0; i < dim; ++i)
+				tcode[i] = t[i][target->Depth() + 1];
+			target = target->child(tcode);
+		}
+		if (show)
+		{
+			cout << "Found ";
+			target->show_code();
+			cout << endl;
+		}
+		return target;
+	}
+	// Find a target box by child indicator.
+	SO3Box* find(bit t[dim], SO3Box* b, bool show = false)
+	{
+		if (show)
+		{
+			cout << "Finding path indicator: " << t[0] << " " << t[1] << " " << t[2] << " " << t[3] << endl;
+			cout << "In box " << b->WXYZ() << endl;
+		}
+		SO3Box* target = b;
+		while (!target->is_leaf() && target->Depth() < t[(target->WXYZ() + 1) % boxsize].length())
 		{
 			int tcode[dim];
 			for (int i = 0; i < dim; ++i)
@@ -1034,9 +1077,7 @@ public:
 	bool contains(Vector4d v)
 	{
 		if (wxyz < 0)
-			return v(0) == 1 || v(1) == 1 || v(2) == 1 || v(3) == 1;
-		else if (v(wxyz) != 1)
-			return false;
+			return true;
 		else
 		{
 			Vector3d w;
@@ -1060,6 +1101,20 @@ public:
 				w(i) = 1;
 		return w;
 	}
+	// The range of the box.
+	MatrixId Range()
+	{
+		Vector3d m = range.min();
+		Vector3d M = range.max();
+		switch (wxyz)
+		{
+		case 0:return MatrixId(Vector4d(1, m(0), m(1), m(2)), Vector4d(1, M(0), M(1), M(2)), false);
+		case 1:return MatrixId(Vector4d(m(0), 1, m(1), m(2)), Vector4d(M(0), 1, M(1), M(2)), false);
+		case 2:return MatrixId(Vector4d(m(0), m(1), 1, m(2)), Vector4d(M(0), M(1), 1, M(2)), false);
+		case 3:return MatrixId(Vector4d(m(0), m(1), m(2), 1), Vector4d(M(0), M(1), M(2), 1), false);
+		default:return MatrixId(Vector4d(-1, -1, -1, -1), Vector4d(1, 1, 1, 1));
+		}
+	}
 	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
@@ -1072,16 +1127,7 @@ public:
 			os << "...";
 			return;
 		}
-		Vector3d m = range.min();
-		Vector3d M = range.max();
-		switch (wxyz)
-		{
-		case 0:os << MatrixId(Vector4d(1, m(0), m(1), m(2)), Vector4d(1, M(0), M(1), M(2)), false).transpose(); break;
-		case 1:os << MatrixId(Vector4d(m(0), 1, m(1), m(2)), Vector4d(M(0), 1, M(1), M(2)), false).transpose(); break;
-		case 2:os << MatrixId(Vector4d(m(0), m(1), 1, m(2)), Vector4d(M(0), M(1), 1, M(2)), false).transpose(); break;
-		case 3:os << MatrixId(Vector4d(m(0), m(1), m(2), 1), Vector4d(M(0), M(1), M(2), 1), false).transpose(); break;
-		default:os << "BASE BOX \\wh{SO(3)}";
-		}
+		os << Range().transpose();
 		if (leaf || !recur)
 			return;
 		for (int i = 0; i < subsize; ++i)
@@ -1299,6 +1345,26 @@ public:
 			else
 				v(i) = w(i - subdim);
 		return v;
+	}
+	// The range of the box.
+	MatrixId Range()
+	{
+		VectorXd m(dim), M(dim);
+		MatrixId Trange = BT()->Range(), Rrange = BR()->Range();
+		for (int i = 0; i < dim; ++i)
+		{
+			if (i < subdim)
+			{
+				m(i) = Trange(i).min();
+				M(i) = Trange(i).max();
+			}
+			else
+			{
+				m(i) = Rrange(i - subdim).min();
+				M(i) = Rrange(i - subdim).max();
+			}
+		}
+		return MatrixId(m, M);
 	}
 	// Child node.
 	SE3Box* child(int i)
@@ -1564,8 +1630,17 @@ public:
 		}
 	}
 	// Partial subdivision.
-	void subdivide(bool show = false)
+	void subdivide(int T = 0, bool show = false)
 	{
+		if (T == 1)
+			T_Split(show);
+		else if (T == -1)
+			R_Split(show);
+		else if (Bt->width() > 2 * varepsilon)
+			T_Split(show);
+		else
+			R_Split(show);
+		/*
 		if (Bt->width() > 0.25)
 			T_Split(show);
 		else if (Br->width() * r0 > 0.25)
@@ -1573,7 +1648,7 @@ public:
 		else if (Bt->width() >= Br->width() * r0)
 			T_Split(show);
 		else
-			R_Split(show);
+			R_Split(show);*/
 	}
 	// Check if a box is a neighbor box (not necessarily principle).
 	bool is_neighbor(SE3Box* B)
@@ -1719,4 +1794,37 @@ public:
 #undef boxsize
 #undef subdim
 };
+
+// Distance between two boxes.
+double Sep(SE3Box* b, SE3Box* p)
+{
+	VectorXd dir = p->BT()->center() - b->BT()->center();
+	double dis = dir.norm() - b->width() - p->width();
+	if (dis > 0)
+		return dis;
+	else
+		return 0.0;
+	/*
+	MatrixId b_range = b->Range(), p_range = p->Range();
+	VectorXd b_rep(7), p_rep(7);
+	for (int i = 0; i < 7; ++i)
+	{
+		if (dir(i) > 0)
+		{
+			b_rep(i) = b_range(i).max();
+			p_rep(i) = p_range(i).min();
+		}
+		else
+		{
+			b_rep(i) = b_range(i).min();
+			p_rep(i) = p_range(i).max();
+		}
+	}
+	return (p_rep - b_rep).norm();*/
+}
+
+SE3Box* to_box(int ID)
+{
+	return SE3list[ID];
+}
 #endif

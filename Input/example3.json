@@ -15,15 +15,15 @@
 	"envrange" : 4,
 	"edgeL" : 1.0,
 	"Qtype" : "width",
-	"ExpandLimit" : 40000,
-	"show" : false,
+	"ExpandLimit" : 20000,
+	"show": false,
 	"ExpandShow" : 200,
 	"DrawBox" : false,
 	"obstacle":{
 		"corner":[],
 		"edge":[],
 		"face":[],
-		"mesh":["wall1","wall2"]
+		"mesh":["cube1","cube2","cube3","cube4","cube5"]
 	}
 }
 

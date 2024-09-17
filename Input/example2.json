@@ -16,6 +16,9 @@
 	"edgeL" : 1.0,
 	"Qtype" : "width",
 	"ExpandLimit" : 40000,
+	"show" : false,
+	"ExpandShow" : 200,
+	"DrawBox" : false,
 	"obstacle":{
 		"corner":[
 			{

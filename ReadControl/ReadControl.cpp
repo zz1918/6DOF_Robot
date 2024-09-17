@@ -29,6 +29,9 @@ double extern envrange;
 double extern varepsilon;
 int extern ExpandLimit;
 heutype extern SSSheu;
+bool extern SSSshow;
+int extern ExpandShow;
+bool extern box_draw_strategy;
 
 // Read by json.
 void read_json(string filename)
@@ -54,6 +57,9 @@ void read_json(string filename)
 	envrange = data["envrange"];
 	varepsilon = data["epsilon"];
 	SSSheu = toheutype(data["Qtype"]);
+	SSSshow = data["show"];
+	ExpandShow = data["ExpandShow"];
+	box_draw_strategy = data["DrawBox"];
 	Vector3d alphaO(alphaOx, alphaOy, alphaOz);
 	Vector4d alphaQ = SO3(alphaAphi, alphaAtheta, alphaBtheta).Q();
 	Vector3d betaO(betaOx, betaOy, betaOz);
@@ -91,6 +97,8 @@ void read_json(string filename)
 	}
 
 	for (const auto& entrym : data["obstacle"]["mesh"]) {
+		if (string(entrym).empty())
+			continue;
 		string offfilename = fileplace + string(entrym) + fileformat;
 		if (!exist(offfilename))
 		{
@@ -110,8 +118,10 @@ void read_argv(int argc, char* argv[])
 	double betaAphi = 0, betaAtheta = 0, betaBtheta = 0;
 	if (argc > ModeSize + ArgcSize)
 	{
-		for (int i = ArgcSize; i < argc; ++i)
+		for (int i = ModeSize + ArgcSize; i < argc; ++i)
 		{
+			if (string(argv[i]).empty())
+				continue;
 			string filename = fileplace + string(argv[i]) + fileformat;
 			if (!exist(filename))
 			{

@@ -1,5 +1,8 @@
 // ReadWriteOFF.cpp: this file defines the read and write from an .off file.
 
+#ifndef READWRITEOFF_H
+#define READWRITEOFF_H
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -44,3 +47,5 @@ void write_OFF(const string& filename, MatrixXd& V, MatrixXi& F) {
 		out << s << " " << F(i, 0) << " " << F(i, 1) << " " << F(i, 2) << endl;
 	}
 }
+
+#endif

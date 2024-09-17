@@ -36,18 +36,22 @@ endif()
 target_link_libraries(main PUBLIC ViewerControl)
 target_include_directories(main PUBLIC "../ViewerControl")
 
-
 if (NOT TARGET RunControl)
 	add_subdirectory("../RunControl" RunControl)
 endif()
 target_link_libraries(main PUBLIC RunControl)
 target_include_directories(main PUBLIC "../RunControl")
 
-
 if (NOT TARGET InteractiveControl)
 	add_subdirectory("../InteractiveControl" InteractiveControl)
 endif()
 target_link_libraries(main PUBLIC InteractiveControl)
 target_include_directories(main PUBLIC "../InteractiveControl")
+
+if (NOT TARGET DefMesh)
+	add_subdirectory("../DefMesh" DefMesh)
+endif()
+target_link_libraries(main PUBLIC DefMesh)
+target_include_directories(main PUBLIC "../DefMesh")
 
 

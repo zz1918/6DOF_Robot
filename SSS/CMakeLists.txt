@@ -32,4 +32,11 @@ endif()
 target_link_libraries(SSS PUBLIC ReadSSSCommand)
 target_include_directories(SSS PUBLIC "../ReadSSSCommand")
 
+if (NOT TARGET ViewerControl)
+	add_subdirectory("../ViewerControl" ViewerControl)
+endif()
+target_link_libraries(SSS PUBLIC ViewerControl)
+target_include_directories(SSS PUBLIC "../ViewerControl")
+
+
 

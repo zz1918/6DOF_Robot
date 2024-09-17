@@ -19,6 +19,18 @@ Matrix3d adv(Vector3d v)
     return Adv;
 }
 
+// Turn angle into arc.
+double angle_to_arc(double theta)
+{
+    return theta * M_PI / 180;
+}
+
+//Turn arc into angle.
+double arc_to_angle(double theta)
+{
+    return theta * 180 / M_PI;
+}
+
 // SO3 point represented by unit quaternion
 class SO3
 {
@@ -86,7 +98,12 @@ public:
     // Construct from Axis and Angle.
     SO3(Vector3d v, double tau)
     {
-        assert(v.norm() > 0 && tau <= M_PI && tau > -M_PI);
+        tau = angle_to_arc(tau);
+        if (v.norm() < doublemin)
+        {
+            V = Vector4d(1, 0, 0, 0);
+            return;
+        }
         v = v.normalized();
         if (abs(sin(tau)) >= doublemin)
             V = Vector4d((1 + cos(tau)) / sin(tau), v(0), v(1), v(2));
@@ -102,6 +119,9 @@ public:
     SO3(double phi, double theta, double xi)
     {
         Matrix3d r;
+        phi = angle_to_arc(phi);
+        theta = angle_to_arc(theta);
+        xi = angle_to_arc(xi);
         double cp = cos(phi), sp = sin(phi);
         double ct = cos(theta), st = sin(theta);
         double cx = cos(xi), sx = sin(xi);
@@ -154,6 +174,7 @@ public:
         theta = 2 * acos(V.normalized()(0));
         if (theta > M_PI)
             theta -= 2 * M_PI;
+        theta = arc_to_angle(theta);
     }
     // Axis of the rotation.
     Vector3d Axis()

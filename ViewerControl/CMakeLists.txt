@@ -26,4 +26,18 @@ endif()
 target_link_libraries(ViewerControl PUBLIC IntroControl)
 target_include_directories(ViewerControl PUBLIC "../IntroControl")
 
+if (NOT TARGET SE3Box)
+	add_subdirectory("../SE3Box" SE3Box)
+endif()
+target_link_libraries(ViewerControl PUBLIC SE3Box)
+target_include_directories(ViewerControl PUBLIC "../SE3Box")
+
+if (NOT TARGET Graph)
+	add_subdirectory("../Graph" Graph)
+endif()
+target_link_libraries(ViewerControl PUBLIC Graph)
+target_include_directories(ViewerControl PUBLIC "../Graph")
+
+
+
 

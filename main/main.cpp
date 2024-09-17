@@ -8,13 +8,14 @@
 #include<ViewerControl.h>
 #include<RunControl.h>
 #include<InteractiveControl.h>
+#include<DefMesh.h>
 using namespace std;
 using namespace Eigen;
 
 string fileplace = "Input/";
 string fileformat = ".off";
 string jsonformat = ".json";
-string version = "1.2";
+string version = "1.3";
 
 double Point_Size = 15.0;
 double Line_Width = 1.0;
@@ -29,6 +30,9 @@ double envrange = 4.0;
 double varepsilon = 0.05;
 int ExpandLimit = 262144;
 heutype SSSheu = WIDTH;
+bool SSSshow = false;
+int ExpandShow = 200;
+bool box_draw_strategy = false;
 
 // Any possible tests.
 void test()
@@ -42,22 +46,35 @@ int main(int argc,char* argv[])
 	string filename;
 	if (argc > 1)
 		mode = stoi(argv[1]);
-	if (argc > 2)
-		arg = stoi(argv[2]);
-	if (arg)
+	// SSS framework main program.
+	if (abs(mode) < 2)
 	{
-		if (!json_argv(argc, argv, filename))
-			return -1;
-		read_json(filename);
+		if (argc > 2)
+			arg = stoi(argv[2]);
+		if (arg)
+		{
+			if (!json_argv(argc, argv, filename))
+				return 1;
+			read_json(filename);
+		}
+		else
+			read_argv(argc, argv);
+		switch (mode)
+		{
+		case 1: interactive(); break;
+		case 0: non_interactive(SSSshow); break;
+		case -1: show_only(); break;
+		default: test(); break;
+		}
 	}
+	// Assistant functions.
 	else
-		read_argv(argc, argv);
-	switch (mode)
 	{
-	case 1: interactive(); break;
-	case 0: non_interactive(); break;
-	case -1: show_only(); break;
-	default: test(); break;
+		switch (mode)
+		{
+		case 2:set_mesh(argc, argv); break;
+		default:test(); break;
+		}
 	}
-	return 1;
+	return 0;
 }
