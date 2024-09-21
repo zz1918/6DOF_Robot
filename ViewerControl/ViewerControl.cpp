@@ -231,6 +231,15 @@ public:
 		_viewer.data().add_points(Vs, VC);
 		_viewer.core().align_camera_center(Vector3d(-envrange - 1, 0, 0));
 		_viewer.core().background_color = bColor;
+		/*
+		_viewer.callback_key_down = [&](decltype(_viewer)&, unsigned int k, int m)
+			{
+				switch (char(k))
+				{
+				case 'c':_viewer.close(); return true;
+				default:return true;
+				}
+			};*/
 		_viewer.launch();
 	}
 	// View environment.

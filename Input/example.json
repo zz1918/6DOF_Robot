@@ -16,14 +16,15 @@
 	"edgeL" : 1.0,
 	"Qtype" : "rec",
 	"ExpandLimit" : 20000,
-	"show" : true,
+	"show" : false,
 	"ExpandShow" : 200,
 	"DrawBox" : false,
+	"AlwaysFullClassify": false,
 	"obstacle":{
 		"corner":[],
 		"edge":[],
 		"face":[],
-		"mesh":["wall1","wall3"]
+		"mesh":["wall1","wall5"]
 	}
 }
 

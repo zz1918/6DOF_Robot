@@ -84,7 +84,7 @@ ExpandLimit = 40000		# maximum number of boxes
 
 file1 = "wall1"			# off file
 file2 = "wall2"			# off file
-json = "GBF"	# json file
+json = "example"	# json file
 
 rotAx = 1				# rotate an off file (by axis (Ax,Ay,Az), angle Theta, center at(Cx,Cy,Cz))
 rotAy = 0
@@ -147,7 +147,7 @@ t1 test1:
 	make r file1="cube1" file2="cube2" #Qtype="gbf"
 # Test 2
 t2 test2:
-	make s file1="wall2" file2="wall3" transY=1
+	make s file1="wall2" file2="wall5" transY=0.7
 # note: this target is the standard target that Core Library uses
 #       to test its subdirectories.   So the program must run in a
 #       non-interactive mode (i.e., the first argument to "main" is "1").

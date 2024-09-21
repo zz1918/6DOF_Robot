@@ -12,9 +12,12 @@
 #include <map>
 #include <queue>
 #include <bimap.h>
+#include <chrono>
 using namespace std;
 
 enum Vcolor { GREEN, YELLOW, RED, GREY, BLACK };
+
+int find_path_time = 0;
 
 // This graph structure also implements the Union-Find structure.
 template<typename type>
@@ -68,6 +71,11 @@ public:
     void make_edge(GraphNode<type>* v)
     {
         successor.insert(v);
+    }
+    // t-color.
+    Vcolor color(int t)
+    {
+        return colors[t];
     }
     // If this is green or yellow for i<t and is green for i>=t.
     bool passable(int t)
@@ -391,6 +399,7 @@ public:
     // Find path from node u to node v, return by sequence of nodes.
     list<GraphNode<type>*> path(GraphNode<type>* u, GraphNode<type>* v)
     {
+        auto start_time = std::chrono::high_resolution_clock::now();
         // Resulted new path.
         list<GraphNode<type>*> new_path;
 
@@ -415,6 +424,8 @@ public:
         for (GraphNode<type>* w = v; w != u; w = V[pi[w->id]])
             new_path.push_front(w);
         new_path.push_front(u);
+        auto end_time = std::chrono::high_resolution_clock::now();
+        find_path_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
         return new_path;
     }
     // If node u and node v are connected by a path.
@@ -438,12 +449,12 @@ public:
     //************** Color-based find path algorithm ****************//
 
     // If v avoiding forbid area or not.
-    bool outbid(GraphNode<type>* v, set<int> forbid)
+    bool outbid(GraphNode<type>* v, set<int>& forbid)
     {
         return forbid.find(v->id) == forbid.end();
     }
     // DFS visit from u to v avoiding forbid area such that it is green or yellow for i<t and it is green for i>=t.
-    void DFS(GraphNode<type>* u, GraphNode<type>* v, set<int> forbid, int t)
+    void DFS(GraphNode<type>* u, GraphNode<type>* v, set<int>& forbid, int t)
     {
         if (u == v)
             found = true;
@@ -458,7 +469,7 @@ public:
             }
     }
     // BFS visit from u to v avoiding forbid area such that it is green or yellow for i<t and it is green for i>=t.
-    void BFS(GraphNode<type>* u, GraphNode<type>* v, set<int> forbid, int t)
+    void BFS(GraphNode<type>* u, GraphNode<type>* v, set<int>& forbid, int t)
     {
         queue<GraphNode<type>*> NEXT;
         NEXT.push(u);
@@ -481,8 +492,9 @@ public:
         }
     }
     // Find path avoiding forbid area from node u to node v such that it is green or yellow for i<t and it is green for i>=t, return by sequence of nodes.
-    list<GraphNode<type>*> path(GraphNode<type>* u, GraphNode<type>* v, set<int> forbid, int t)
+    list<GraphNode<type>*> path(GraphNode<type>* u, GraphNode<type>* v, set<int>& forbid, int t)
     {
+        auto start_time = std::chrono::high_resolution_clock::now();
         // Resulted new path.
         list<GraphNode<type>*> new_path;
 
@@ -507,10 +519,12 @@ public:
         for (GraphNode<type>* w = v; w != u; w = V[pi[w->id]])
             new_path.push_front(w);
         new_path.push_front(u);
+        auto end_time = std::chrono::high_resolution_clock::now();
+        find_path_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
         return new_path;
     }
     // If node u and node v are connected by a path avoiding forbid area such that it is green or yellow for i<t and it is green for i>=t.
-    bool connected(GraphNode<type>* u, GraphNode<type>* v, set<int> forbid, int t)
+    bool connected(GraphNode<type>* u, GraphNode<type>* v, set<int>& forbid, int t)
     {
         return true;
         return !path(u, v, forbid, t).empty();
@@ -558,6 +572,7 @@ public:
     // Find path from node u to node v such that it is green or yellow for i<t and it is green for i>=t, return by sequence of nodes.
     list<GraphNode<type>*> path(GraphNode<type>* u, GraphNode<type>* v, int t)
     {
+        auto start_time = std::chrono::high_resolution_clock::now();
         // Resulted new path.
         list<GraphNode<type>*> new_path;
 
@@ -582,6 +597,8 @@ public:
         for (GraphNode<type>* w = v; w != u; w = V[pi[w->id]])
             new_path.push_front(w);
         new_path.push_front(u);
+        auto end_time = std::chrono::high_resolution_clock::now();
+        find_path_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
         return new_path;
     }
 };

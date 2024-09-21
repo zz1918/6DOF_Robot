@@ -21,6 +21,7 @@
 #include<Graph.h>
 #include<ReadSSSCommand.h>
 #include<ViewerControl.h>
+#include <ctime>
 using namespace Eigen;
 using namespace std;
 
@@ -30,6 +31,12 @@ SSSViewer extern viewer;
 EnvironmentFeature extern env;
 VectorXd extern SSSalpha, SSSbeta;
 double extern envrange;
+
+long long set_fringe_time = 0;
+long long set_box_time = 0;
+long long set_box_preparation_time = 0;
+long long get_color_time = 0;
+long long get_graph_node_time = 0;
 
 //***************** Helper Functions ******************//
 
@@ -427,30 +434,59 @@ class GBFringe
 	set<int> AlphaBox, BetaBox, AlphaFringe, BetaFringe;
 	// Forbidden area.
 	set<int> forbid;
+	// Representative alpha/beta box.
+	int AlphaRepr, BetaRepr;
 
 	// Find the global node of a box in the global graph, return NULL if not exists.
-	GraphNode<Box>* gnode(Box* b, Graph<Box> Global, map<int, int> GlobalId)
+	GraphNode<Box>* gnode(Box* b, Graph<Box>& Global, map<int, int>& GlobalId)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		if (GlobalId.find(b->ID()) == GlobalId.end())
 			return NULL;
-		return Global.node(GlobalId[b->ID()]);
+		GraphNode<Box>* gv = Global.node(GlobalId[b->ID()]);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		get_graph_node_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return gv;
+	}
+	// Get the t-color of a box b in global graph.
+	Vcolor getcolor(Box* b, Graph<Box>& Global, map<int, int>& GlobalId, int t)
+	{
+		auto start_time = std::chrono::high_resolution_clock::now();
+		Vcolor c = gnode(b, Global, GlobalId)->color(t);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		get_color_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return c;
 	}
 	// Node id in global graph.
-	int gid(Box* b, map<int, int>GlobalId)
+	int gid(Box* b, map<int, int>& GlobalId)
 	{
 		if (GlobalId.find(b->ID()) == GlobalId.end())
 			return -1;
 		return GlobalId[b->ID()];
 	}
 public:
-	GBFringe(double r, double ve,set<int> forb)
+	int set_free_num;
+	int old_fringe_num;
+	int new_fringe_num;
+	GBFringe(double r, double ve,set<int>& forb)
 	{
 		range = r;
 		veps = ve;
 		forbid = forb;
 		GBF_ini();
+		set_free_num = 0;
+		old_fringe_num = 0;
+		new_fringe_num = 0;
+		AlphaRepr = -1;
+		BetaRepr = -1;
 	}
-	bool is_forbid(Box* b, map<int, int> GlobalId)
+	void stat_ini()
+	{
+		set_free_num = 0;
+		old_fringe_num = 0;
+		new_fringe_num = 0;
+	}
+	bool is_forbid(Box* b, map<int, int>& GlobalId)
 	{
 		return forbid.find(gid(b, GlobalId)) != forbid.end();
 	}
@@ -488,18 +524,22 @@ public:
 	}
 	void set_AlphaFringe(Box* b)
 	{
+		new_fringe_num++;
 		AlphaFringe.insert(b->ID());
 	}
 	void set_BetaFringe(Box* b)
 	{
+		new_fringe_num++;
 		BetaFringe.insert(b->ID());
 	}
 	void set_AlphaBox(Box* b)
 	{
+		set_free_num++;
 		AlphaBox.insert(b->ID());
 	}
 	void set_BetaBox(Box* b)
 	{
+		set_free_num++;
 		BetaBox.insert(b->ID());
 	}
 
@@ -509,96 +549,210 @@ public:
 		if (AlphaFringe.empty())
 			return 0;
 		double min_dis = 2 * sqrt(6) * range;
-		for (set<int>::iterator it = AlphaFringe.begin(); it != AlphaFringe.end(); ++it)
-			min_dis = min(min_dis, Sep(b, to_box(*it)));
+		if (AlphaRepr < 0)
+		{
+			int PosRepr = -1;
+			for (set<int>::iterator it = AlphaFringe.begin(); it != AlphaFringe.end(); ++it)
+			{
+				int dis = Sep(b, to_box(*it));
+				if (min_dis > dis)
+				{
+					min_dis = dis;
+					PosRepr = *it;
+				}
+			}
+			AlphaRepr = PosRepr;
+		}
+		else
+			min_dis = Sep(b, to_box(AlphaRepr));
 		return exp(-min_dis);
 	}
+
 	// Negative exp distance to beta fringe.
 	double nExpBetaDis(Box* b)
 	{
 		if (BetaFringe.empty())
 			return 0;
 		double min_dis = 2 * sqrt(6) * range;
-		for (set<int>::iterator it = BetaFringe.begin(); it != BetaFringe.end(); ++it)
-			min_dis = min(min_dis, Sep(b, to_box(*it)));
+		if (BetaRepr < 0)
+		{
+			int PosRepr = -1;
+			for (set<int>::iterator it = BetaFringe.begin(); it != BetaFringe.end(); ++it)
+			{
+				int dis = Sep(b, to_box(*it));
+				if (min_dis > dis)
+				{
+					min_dis = dis;
+					PosRepr = *it;
+				}
+			}
+			BetaRepr = PosRepr;
+		}
+		else
+			min_dis = Sep(b, to_box(BetaRepr));
 		return exp(-min_dis);
 	}
 
 	// Update b as alpha fringe.
-	void set_AlphaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int> GlobalId)
+	void set_AlphaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int>& GlobalId, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		if (b->width() <= veps)
 			return;
 		if (is_AlphaBox(b) || is_BetaBox(b))
 			cout << "Warning! Mixed box is alpha/beta box!" << endl;
 		if (is_forbid(b, GlobalId))
 			return;
-		// LQ can update the priority of b in this way.
+		if (show)
+		{
+			cout << "Pushing ";
+			b->out();
+			cout << " into local queue." << endl;
+		}
 		LQ.push(make_pair(key(nExpBetaDis(b)), b));
-		if (!is_AlphaFringe(b))
+		if (show)
+			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
+		if (is_AlphaFringe(b))
+			old_fringe_num++;
+		else
 			set_AlphaFringe(b);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		set_fringe_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 	// Update b as beta fringe.
-	void set_BetaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int> GlobalId)
+	void set_BetaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int>& GlobalId, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		if (b->width() <= veps)
 			return;
 		if (is_AlphaBox(b) || is_BetaBox(b))
 			cout << "Warning! Mixed box is alpha/beta box!" << endl;
 		if (is_forbid(b, GlobalId))
 			return;
-		// LQ can update the priority of b in this way.
+		if (show)
+		{
+			cout << "Pushing ";
+			b->out();
+			cout << " into local queue." << endl;
+		}
 		LQ.push(make_pair(key(nExpAlphaDis(b)), b));
-		if (!is_BetaFringe(b))
+		if (show)
+			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
+		if (is_BetaFringe(b))
+			old_fringe_num++;
+		else
 			set_BetaFringe(b);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		set_fringe_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 	// Update b as alpha box.
-	void set_AlphaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t)
+	void set_AlphaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		if (is_AlphaBox(b) || is_BetaBox(b))
 			return;
+
 		if (is_forbid(b, GlobalId))
 			return;
 
 		set_AlphaBox(b);
 
+		if (show)
+		{
+			cout << "Inserting ";
+			b->out();
+			cout << endl;
+		}
+
 		vector<Box*> b_neighbors = b->all_adj_neighbors();
+		if (show)
+			cout << "There are " << b_neighbors.size() << " neighbors." << endl;
+		auto end_time = std::chrono::high_resolution_clock::now();
+		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		set_box_preparation_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		start_time = std::chrono::high_resolution_clock::now();
 		for (int j = 0; j < b_neighbors.size(); ++j)
 		{
 			Box* b_neighbor = b_neighbors[j];
-			switch (gnode(b_neighbor, Global, GlobalId)->colors[t])
+			switch (getcolor(b_neighbor, Global, GlobalId,t))
 			{
-			case GREEN: set_AlphaFree(b_neighbor, LQ, Global, GlobalId, t); break;
-			case YELLOW: set_AlphaMix(b_neighbor, LQ, GlobalId); break;
+			case GREEN:
+			{
+				end_time = std::chrono::high_resolution_clock::now();
+				set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+				set_AlphaFree(b_neighbor, LQ, Global, GlobalId, t, show);
+				start_time = std::chrono::high_resolution_clock::now();
+			}
+			break;
+			case YELLOW:
+			{
+				end_time = std::chrono::high_resolution_clock::now();
+				set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+				set_AlphaMix(b_neighbor, LQ, GlobalId, show);
+				start_time = std::chrono::high_resolution_clock::now();
+			}
+			break;
 			case RED: cout << "Error! FREE boxes cannot be adjacent to STUCK boxes." << endl << "Hint: "; b_neighbor->out(); cout << endl; break;
 			case BLACK: cout << "Error! Some boxes are classified as UNKNOWN!" << endl << "Hint: "; b_neighbor->out(); cout << endl; break;
 			default: break;
 			}
 		}
+		end_time = std::chrono::high_resolution_clock::now();
+		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 	// Update b as beta box.
-	void set_BetaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t)
+	void set_BetaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		if (is_AlphaBox(b) || is_BetaBox(b))
 			return;
+
 		if (is_forbid(b, GlobalId))
 			return;
 
 		set_BetaBox(b);
 
+		if (show)
+		{
+			cout << "Inserting ";
+			b->out();
+			cout << endl;
+		}
+
 		vector<Box*> b_neighbors = b->all_adj_neighbors();
+		if (show)
+			cout << "There are " << b_neighbors.size() << " neighbors." << endl;
+		auto end_time = std::chrono::high_resolution_clock::now();
+		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		set_box_preparation_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 		for (int j = 0; j < b_neighbors.size(); ++j)
 		{
 			Box* b_neighbor = b_neighbors[j];
-			switch (gnode(b_neighbor, Global, GlobalId)->colors[t])
+			switch (getcolor(b_neighbor, Global, GlobalId,t))
 			{
-			case GREEN: set_BetaFree(b_neighbor, LQ, Global, GlobalId, t); break;
-			case YELLOW: set_BetaMix(b_neighbor, LQ, GlobalId); break;
+			case GREEN:
+			{
+				end_time = std::chrono::high_resolution_clock::now();
+				set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+				set_BetaFree(b_neighbor, LQ, Global, GlobalId, t, show);
+				start_time = std::chrono::high_resolution_clock::now();
+			}
+			break;
+			case YELLOW:
+			{
+				end_time = std::chrono::high_resolution_clock::now();
+				set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+				set_BetaMix(b_neighbor, LQ, GlobalId, show);
+				start_time = std::chrono::high_resolution_clock::now();
+			}
+			break;
 			case RED: cout << "Error! FREE boxes cannot be adjacent to STUCK boxes." << endl << "Hint: "; b_neighbor->out(); cout << endl; break;
 			case BLACK: cout << "Error! Some boxes are classified as UNKNOWN!" << endl << "Hint: "; b_neighbor->out(); cout << endl; break;
 			default: break;
 			}
 		}
+		end_time = std::chrono::high_resolution_clock::now();
+		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 
 	// Initialization of GBF heuristic.
@@ -987,26 +1141,34 @@ public:
 			b->out();
 			cout << endl;
 		}
-		// Always maintain G when classifying some node as FREE!
-		Gid.insert(make_pair(b->ID(), G.insert(b)->id));
-		vector<Box*> b_neighbors = b->all_adj_neighbors();
-		for (int j = 0; j < b_neighbors.size(); ++j)
-		{
-			GraphNode<Box>* b_neighbor_node = node(b_neighbors[j]);
-			if (b_neighbor_node != NULL)
-				G.link(node(b), b_neighbor_node);
-		}
-		viewer.add_box(b);
-		
+
 		if (is_Alpha(b))
-			Fringe.set_AlphaFree(b, LQ, Global, GlobalId, t);
+		{
+			if (show)
+				cout << "This is the BoxAlpha, inserting into alpha continent." << endl;
+			Fringe.set_AlphaFree(b, LQ, Global, GlobalId, t, show);
+		}
 		if (is_Beta(b))
-			Fringe.set_BetaFree(b, LQ, Global, GlobalId, t);
+		{
+			if (show)
+				cout << "This is the BoxBeta, inserting into beta continent." << endl;
+			Fringe.set_BetaFree(b, LQ, Global, GlobalId, t, show);
+		}
 		if (Fringe.is_AlphaNeighbor(b))
-			Fringe.set_AlphaFree(b, LQ, Global, GlobalId, t);
+		{
+			if (show)
+				cout << "This is a neighbor of alpha box, inserting into alpha continent." << endl;
+			Fringe.set_AlphaFree(b, LQ, Global, GlobalId, t, show);
+		}
 		if (Fringe.is_BetaNeighbor(b))
-			Fringe.set_BetaFree(b, LQ, Global, GlobalId, t);
+		{
+			if (show)
+				cout << "This is a neighbor of beta box, inserting into beta continent." << endl;
+			Fringe.set_BetaFree(b, LQ, Global, GlobalId, t, show);
+		}
 		add_free_pure(b);
+		if (show)
+			cout << "Time: " << clock() << endl;
 	}
 		// Procedures for free boxes.
 	void add_free_node(Box* b, bool show = false)
@@ -1083,9 +1245,13 @@ public:
 	// Find the global node of a box in the global graph, return NULL if not exists.
 	GraphNode<Box>* gnode(Box* b)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		if (GlobalId.find(b->ID()) == GlobalId.end())
 			return NULL;
-		return Global.node(GlobalId[b->ID()]);
+		GraphNode<Box>* gv = Global.node(GlobalId[b->ID()]);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		get_graph_node_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return gv;
 	}
 
 	// Find the local node of a box in the local graph, return NULL if not exists.
@@ -1125,7 +1291,11 @@ public:
 	// Get the t-th color of box b in global graph.
 	Vcolor getcolor(Box* b, int t)
 	{
-		return gnode(b)->colors[t];
+		auto start_time = std::chrono::high_resolution_clock::now();
+		Vcolor c = gnode(b)->color(t);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		get_color_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return c;
 	}
 
 	// Insert box b into local graph LG.
@@ -1179,6 +1349,13 @@ public:
 		cout << "The average amount of features for mixed boxes are " << avemixedfeature << "." << endl;
 		cout << "There are " << Global.Vsize() << " boxes in the global graph." << endl;
 		cout << "There are " << Global.Esize() << " edges connecting boxes in the global graph." << endl;
+		cout << "Finding neighbors costs " << (find_neighbor_time / 1000000.0) << "s in total till now." << endl;
+		cout << "Finding paths costs " << (find_path_time / 1000000.0) << "s in total till now." << endl;
+		cout << "Setting fringes costs " << (set_fringe_time / 1000000.0) << "s in total till now." << endl;
+		cout << "Setting continents costs " << (set_box_time / 1000000.0) << "s in total till now." << endl;
+		cout << "Preparing for setting continents costs " << (set_box_preparation_time / 1000000.0) << "s in total till now." << endl;
+		cout << "Getting box colors costs " << (get_color_time / 1000000.0) << "s in total till now." << endl;
+		cout << "Getting graph node costs " << (get_graph_node_time / 1000000.0) << "s in total till now." << endl;
 		//cout << "The average amount of features for free boxes are " << avefreefeature << "." << endl;
 		if (hint.length() > 0)
 			cout << hint << endl;
@@ -1278,19 +1455,8 @@ public:
 		// Step 0: check if the box is leaf avoiding forbidden area.
 		if (!b->is_leaf())
 			return;
-		if (show)
-			cout << "Box is a leaf." << endl;
-		if (show)
-			cout << "Expanding box " << gnode(b)->id << endl << "Forbidden area:";
-		if (show)
-			for (auto it = forbids.top().begin(); it != forbids.top().end(); ++it)
-				cout << " " << (*it);
-		if (show)
-			cout << endl;
 		if (forbids.top().find(gnode(b)->id) != forbids.top().end())
 			return;
-		if (show)
-			cout << "Box is in given area." << endl;
 
 		// Step 1: subdivide the box.
 		if (t == 1)
@@ -1318,9 +1484,6 @@ public:
 					default:gcolor(b->child(i), BLACK);
 					}
 
-		if (show)
-			cout << "Children colors are set." << endl;
-
 		// Step 3: maintain LQ and G.
 		for (int i = 0; i < B->subsize(b); ++i)
 		{
@@ -1332,27 +1495,43 @@ public:
 			case GREY:add_small_node(b->child(i)); break;
 			default:add_unknown_node(b->child(i));
 			}
+		}
+		if (show)
+			cout << "G is set." << endl;
+
+		for (int i = 0; i < B->subsize(b); ++i)
+		{
 			switch (getcolor(b->child(i), t))
 			{
-			case GREEN:add_free_recur(b->child(i), LQ, Fringe, t); break;
-			case YELLOW:add_mixed_recur(b->child(i), LQ, Fringe); break;
+			case GREEN: add_free_recur(b->child(i), LQ, Fringe, t, show); break;
+			case YELLOW: add_mixed_recur(b->child(i), LQ, Fringe); break;
 			default:;
 			}
 		}
 
 		if (show)
-			cout << "Free graph is set." << endl;
+		{
+			cout << "LQ is set, " << Fringe.set_free_num << " boxes are set as alpha/beta box, ";
+			cout << Fringe.old_fringe_num << " boxes are alpha/beta fringe and updated this time, ";
+			cout << Fringe.new_fringe_num << " boxes are newly set as alpha/beta fringe." << endl;
+		}
 
 		// Step 4: show how many cubes that are expanded to give an intuition of the process.
 		if (ExpandShow == 1 || expanded % ExpandShow == 0)
-			show_expansion("", show);
+		{
+			string show_hint = "";
+			show_hint = show_hint + "There are " + to_string(Fringe.set_free_num) + " alpha/beta continent boxes in level t=" + to_string(t) + ".\n";
+			show_hint = show_hint + "There are " + to_string(Fringe.new_fringe_num) + " newly alpha/beta fringe boxes in level t=" + to_string(t) + ".\n";
+			show_hint = show_hint + "There are " + to_string(Fringe.old_fringe_num) + " updated oldly alpha/beta fringe boxes in level t=" + to_string(t) + ".\n";
+			show_expansion(show_hint, show);
+		}
 		update_expansion(b);
 	}
 
 	//************************* General SSS framework ***********************//
 
 	// Turn graph node path into box channel.
-	vector<Box*> make_channel(list<GraphNode<Box>*> free_path)
+	vector<Box*> make_channel(list<GraphNode<Box>*>& free_path)
 	{
 		vector<Box*> channel;
 		for (auto it = free_path.begin(); it != free_path.end(); ++it)
@@ -1523,24 +1702,6 @@ public:
 	// Step 4: expand Q.GetNext() until Box(alpha) and Box(beta) are in the same component.
 	bool SSS_main_loop(bool show = false)
 	{
-		/*if (show)
-		{
-			viewer._viewer.callback_key_down = [&](decltype(viewer._viewer)&, unsigned int k, int m)
-				{
-					switch (char(k))
-					{
-					case 'c':switch (SSS_one_step(show))
-					{
-					case 1:cout << "Path found!" << endl; break;
-					case -1:cout << "No Path under expand limit!" << endl; break;
-					default:cout << "Press 'c' to continue..." << endl;
-					}
-					default:return true;
-					}
-				};
-			viewer.view();
-		}
-		else*/
 		if (heu == RECUR)
 			return true;
 		while (true)
@@ -1611,20 +1772,26 @@ public:
 	pair<vector<Box*>, bool> Recur_one_step(priority_queue<pair<vector<double>, Box*>>& LQ, GBFringe<Box>& Fringe, int t, bool show = false)
 	{
 		if (show)
-			cout << "Attempting to find a yellow-green(<" << t << ") - green(>= " << t << ") - path in graph." << endl;
+			cout << "Attempting to find a path for t=" << t << "." << endl;
 		
+		// This if is currently useless.
 		if (!Global.connected(gnode(BoxAlpha), gnode(BoxBeta), forbids.top(), t + 1))
 		{
 			show_expansion("No possible YG-path for t=" + to_string(t) + ", return to last level of recursion.");
 			return make_pair(vector<Box*>(), false);
 		}
-		list<GraphNode<Box>*> try_path = Global.path(gnode(BoxAlpha), gnode(BoxBeta), forbids.top(), t);
-		if (show)
-			cout << "Attempt find path finished." << endl;
-		if (!try_path.empty())
-			if (t == 0)
-				return make_pair(make_channel(try_path), false);
-			else
+
+		if (t == 0)
+		{
+			if (G.quick_connected(node(BoxAlpha), node(BoxBeta)))
+				return make_pair(make_channel(G.path(node(BoxAlpha), node(BoxBeta))), false);
+		}
+		else
+		{
+			list<GraphNode<Box>*> try_path = Global.path(gnode(BoxAlpha), gnode(BoxBeta), forbids.top(), t);
+			if (show)
+				cout << "Attempt find path finished." << endl;
+			if (!try_path.empty())
 			{
 				vector<Box*> next_boxspace = make_channel(try_path);
 				set<int> new_forbid = Global.Vlist;
@@ -1639,6 +1806,7 @@ public:
 				else
 					show_expansion("Possible path for t=" + to_string(t) + " fails, continue try for new path.");
 			}
+		}
 		if (show)
 			cout << "Checked no current path." << endl;
 		if (LQ.empty())
@@ -1649,7 +1817,7 @@ public:
 		Expand_recur(LQ_top, LQ, Fringe, t, show);
 		LQ.pop();
 		if (show)
-			cout << "Expand finished." << endl;
+			cout << "Expand finished." << endl << "-----------------------------------------------" << endl;
 		if (expanded > ExpandLimit)
 		{
 			show_expansion("Run over expand limit (temporary setting for experiments).");
@@ -1702,6 +1870,7 @@ public:
 	// SSS framework main process.
 	vector<Config> Find_Path(Config _alpha, Config _beta, FeatureSet Omega, double varepsilon, heutype _h = RAND, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		if (!SSS_ini(_alpha, _beta, Omega, varepsilon, _h, show))
 			return Path;
 		if (show)
@@ -1727,6 +1896,8 @@ public:
 		if (show)
 			cout << "SSS_discrete_find finished!" << endl;
 		show_expansion("Find path algorithm finished!");
+		auto end_time = std::chrono::high_resolution_clock::now();
+		cout << "Find path total time: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1000000.0 << "s." << endl;
 		return Path;														// Empty if no-path.
 	}
 };

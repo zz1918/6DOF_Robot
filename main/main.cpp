@@ -15,7 +15,7 @@ using namespace Eigen;
 string fileplace = "Input/";
 string fileformat = ".off";
 string jsonformat = ".json";
-string version = "1.3";
+string version = "1.4";
 
 double Point_Size = 15.0;
 double Line_Width = 1.0;

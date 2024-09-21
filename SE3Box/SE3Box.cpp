@@ -9,6 +9,7 @@
 #include <Eigen/Dense>
 #include <interval.h>
 #include <bimap.h>
+#include <chrono>
 using namespace std;
 
 class R3Box;
@@ -21,6 +22,8 @@ vector<R3Box*> R3list;
 vector<SO3Box*> SO3list;
 vector<SE3Box*> SE3list;
 bimap<int, int, int> SE3table;
+
+long long find_neighbor_time = 0;
 
 // Binary string for the tree code, 0 for \bar{1}, 1 for 1. We add a "1" at the beginning to avoid starting with "0".
 class bit
@@ -1677,6 +1680,7 @@ public:
 	// Collection of all neighbor boxes (not necessarily principle).
 	vector<SE3Box*> all_adj_neighbors(bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		vector<SE3Box*> neighbors;
 		vector<SE3Box*> subneighbors;
 		for (int i = 0; i < dim; ++i)
@@ -1720,6 +1724,8 @@ public:
 				}
 			}
 		}
+		auto end_time = std::chrono::high_resolution_clock::now();
+		find_neighbor_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 		return neighbors;
 	}
 	// cout *this.
