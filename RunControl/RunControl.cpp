@@ -5,12 +5,18 @@
 
 #pragma warning (disable : 4819)
 #include<iostream>
+#include<fstream>
+#include<string>
+#include<vector>
 #include<Eigen/Dense>
 #include<FeatureSet.h>
 #include<ReadSSSCommand.h>
 #include<SSS.h>
 #include<IntroControl.h>
 #include<ViewerControl.h>
+#include <chrono>
+using namespace std;
+using namespace Eigen;
 
 EnvironmentFeature extern env;
 VectorXd extern SSSalpha, SSSbeta;
@@ -21,6 +27,28 @@ int extern ExpandLimit;
 heutype extern SSSheu;
 bool extern SSSshow;
 SSSViewer extern viewer;
+string extern SSSfilename;
+string extern outputplace;
+string extern outputformat;
+
+void write_in_file(string filename, vector<VectorXd>& path, double time_in_second)
+{
+	ofstream os(filename);
+
+	if (path.empty())
+		os << "No-Path!" << endl;
+	else
+	{
+		os << "The path is the line segments connecting the following points: " << endl;
+		os << SSSalpha.transpose() << endl;
+		for (int i = 0; i < path.size(); ++i)
+			os << path[i].transpose() << endl;
+		os << SSSbeta.transpose() << endl;
+	}
+
+	os << endl;
+	os << "Find path total time: " << time_in_second << "s." << endl;
+}
 
 // Run SSS main program.
 void SSS_run(bool show = false)
@@ -32,7 +60,11 @@ void SSS_run(bool show = false)
 	SSS<VectorXd, SE3Box, SE3Tree, DeltaPredicate, DeltaFeature> SE3SSS(T, C);
 	viewer.set_env(env, envrange, SSSalpha, SSSbeta);
 	cout << "Simple find path algorithm with epsilon = " << varepsilon << endl;
+	auto start_time = std::chrono::high_resolution_clock::now();
 	vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon, SSSheu, SSSshow);
+	auto end_time = std::chrono::high_resolution_clock::now();
+	double time_in_second = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1000000.0;
+	cout << "Find path total time: " << time_in_second << "s." << endl;
 	if (SSSshow)
 		viewer.view();
 	if (!path.empty())
@@ -43,6 +75,7 @@ void SSS_run(bool show = false)
 	viewer.set_env(env, envrange, SSSalpha, SSSbeta);
 	viewer.set_path(path);
 	viewer.view();
+	write_in_file(outputplace + SSSfilename + outputformat, path, time_in_second);
 	delete T;
 	delete C;
 	delete Omega;

@@ -15,10 +15,11 @@
 	"envrange" : 4,
 	"edgeL" : 1.0,
 	"Qtype" : "rec",
-	"ExpandLimit" : 20000,
+	"ExpandLimit" : 40000,
 	"show" : false,
 	"ExpandShow" : 200,
 	"DrawBox" : false,
+	"hint": [],
 	"AlwaysFullClassify": false,
 	"obstacle":{
 		"corner":[],

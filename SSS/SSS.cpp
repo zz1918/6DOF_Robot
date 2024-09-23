@@ -21,7 +21,7 @@
 #include<Graph.h>
 #include<ReadSSSCommand.h>
 #include<ViewerControl.h>
-#include <ctime>
+#include <chrono>
 using namespace Eigen;
 using namespace std;
 
@@ -31,6 +31,17 @@ SSSViewer extern viewer;
 EnvironmentFeature extern env;
 VectorXd extern SSSalpha, SSSbeta;
 double extern envrange;
+vector<Vector3d> extern SSShints;
+
+bool is_hinted(SE3Box *b)
+{
+	for (int i = 0; i < SSShints.size(); ++i)
+	{
+		if (b->BT()->contains(SSShints[i]))
+			return true;
+	}
+	return false;
+}
 
 long long set_fringe_time = 0;
 long long set_box_time = 0;
@@ -543,6 +554,15 @@ public:
 		BetaBox.insert(b->ID());
 	}
 
+	// Hint heuristic value.
+	double HintHeu(Box* b)
+	{
+		if (is_hinted(b))
+			return 1.0;
+		else
+			return 0.0;
+	}
+
 	// Negative exp distance to alpha fringe.
 	double nExpAlphaDis(Box* b)
 	{
@@ -609,7 +629,7 @@ public:
 			b->out();
 			cout << " into local queue." << endl;
 		}
-		LQ.push(make_pair(key(nExpBetaDis(b)), b));
+		LQ.push(make_pair(key(nExpBetaDis(b) + HintHeu(b)), b));
 		if (show)
 			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
 		if (is_AlphaFringe(b))
@@ -635,7 +655,7 @@ public:
 			b->out();
 			cout << " into local queue." << endl;
 		}
-		LQ.push(make_pair(key(nExpAlphaDis(b)), b));
+		LQ.push(make_pair(key(nExpAlphaDis(b) + HintHeu(b)), b));
 		if (show)
 			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
 		if (is_BetaFringe(b))
@@ -1870,7 +1890,6 @@ public:
 	// SSS framework main process.
 	vector<Config> Find_Path(Config _alpha, Config _beta, FeatureSet Omega, double varepsilon, heutype _h = RAND, bool show = false)
 	{
-		auto start_time = std::chrono::high_resolution_clock::now();
 		if (!SSS_ini(_alpha, _beta, Omega, varepsilon, _h, show))
 			return Path;
 		if (show)
@@ -1896,8 +1915,6 @@ public:
 		if (show)
 			cout << "SSS_discrete_find finished!" << endl;
 		show_expansion("Find path algorithm finished!");
-		auto end_time = std::chrono::high_resolution_clock::now();
-		cout << "Find path total time: " << std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1000000.0 << "s." << endl;
 		return Path;														// Empty if no-path.
 	}
 };

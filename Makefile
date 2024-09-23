@@ -148,6 +148,21 @@ t1 test1:
 # Test 2
 t2 test2:
 	make s file1="wall2" file2="wall5" transY=0.7
+# Example 1
+e1 example1:
+	make e json="example1"
+# Example 2
+e2 example2:
+	make e json="example2"
+# Example 3
+e3 example3:
+	make e json="example3"
+# Example 4
+e4 example4:
+	make e json="example4"
+# Example 5
+e5 example5:
+	make e json="example5"
 # note: this target is the standard target that Core Library uses
 #       to test its subdirectories.   So the program must run in a
 #       non-interactive mode (i.e., the first argument to "main" is "1").

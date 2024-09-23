@@ -4,7 +4,9 @@
 #define READCONTROL_H
 
 #include<iostream>
+#include<fstream>
 #include<string>
+#include<vector>
 #include<Eigen/Dense>
 #include<FeatureSet.h>
 #include<ReadSSSCommand.h>
@@ -32,6 +34,8 @@ heutype extern SSSheu;
 bool extern SSSshow;
 int extern ExpandShow;
 bool extern box_draw_strategy;
+vector<Vector3d> extern SSShints;
+string extern SSSfilename;
 
 // Read by json.
 void read_json(string filename)
@@ -107,11 +111,18 @@ void read_json(string filename)
 		}
 		env.add_mesh(offfilename, string(entrym));
 	}
+
+	// Read hints.
+	for (const auto& entryc : data["hint"]) {
+		Vector3d coord = read_vec3(entryc);
+		SSShints.push_back(coord);
+	}
 }
 
 // Read by arguments.
 void read_argv(int argc, char* argv[])
 {
+	SSSfilename = "ArgvTest";
 	double alphaOx = -envrange / 2.0 - 0.5, alphaOy = -envrange / 2.0 - 0.5, alphaOz = -envrange / 2.0 - 0.5;
 	double alphaAphi = 0, alphaAtheta = 0, alphaBtheta = 0;
 	double betaOx = envrange / 2.0 + 0.5, betaOy = envrange / 2.0 + 0.5, betaOz = envrange / 2.0 + 0.5;
@@ -170,6 +181,7 @@ bool json_argv(int argc, char* argv[], string& filename)
 		cout << "MISSING: json filename" << endl;
 		return false;
 	}
+	SSSfilename = string(argv[3]);
 	filename = fileplace + string(argv[3]) + jsonformat;
 	if (!exist(filename))
 	{

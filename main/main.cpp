@@ -1,7 +1,9 @@
 // main.cpp: This file contains the main function.
 #pragma warning (disable : 4819)
 #include<iostream>
+#include<string>
 #include<Eigen/Dense>
+#include<vector>
 #include<FeatureSet.h>
 #include<ReadSSSCommand.h>
 #include<ReadControl.h>
@@ -13,9 +15,11 @@ using namespace std;
 using namespace Eigen;
 
 string fileplace = "Input/";
+string outputplace = "Output/";
 string fileformat = ".off";
+string outputformat = ".log";
 string jsonformat = ".json";
-string version = "1.4";
+string version = "1.5";
 
 double Point_Size = 15.0;
 double Line_Width = 1.0;
@@ -33,6 +37,8 @@ heutype SSSheu = WIDTH;
 bool SSSshow = false;
 int ExpandShow = 200;
 bool box_draw_strategy = false;
+vector<Vector3d> SSShints;
+string SSSfilename;
 
 // Any possible tests.
 void test()
