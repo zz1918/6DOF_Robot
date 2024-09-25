@@ -59,7 +59,7 @@
 #=================================================
 # User variables (you can change them in the command line)
 #=================================================
-interactive = 0		# -1 = show-only, 0 = non-interactive, 1 = interactive
+interactive = 0			# -1 = show-only, 0 = non-interactive, 1 = interactive
 arg = 0					# 0 = read-by-arguments, 1 = read-by-json
 
 startOx = -2.5			# start configuration
@@ -82,8 +82,9 @@ edgeL = 1.0				# robot radius
 Qtype = "width"			# heuristic type
 ExpandLimit = 40000		# maximum number of boxes
 
-file1 = "wall1"			# off file
-file2 = "wall2"			# off file
+file1 = "wall6"			# off file
+file2 = "wall7"			# off file
+file3 = "gate2"			# off file
 json = "example"	# json file
 
 rotAx = 1				# rotate an off file (by axis (Ax,Ay,Az), angle Theta, center at(Cx,Cy,Cz))
@@ -94,9 +95,12 @@ rotCx = 0
 rotCy = 0
 rotCz = 0
 transX = 0				# translate an off file (by (X,Y,Z)), always first rotate, then translate
-transY = 0.5
+transY = 0
 transZ = 0
 scale = 1				# scale an off file (by scale)
+scaleX = 1
+scaleY = 1
+scaleZ = 1
 
 #=================================================
 # Define target folder
@@ -125,6 +129,9 @@ r run:
 e example:
 	./build/Debug/main \
 		$(interactive) 1 $(json)
+# View Program by example json
+v view:
+	make e interactive=-1
 # Eliminate the program
 d delete:
 	rm -rf build
@@ -141,13 +148,17 @@ s set:
 		$(rotTheta) \
 		$(rotCx) $(rotCy) $(rotCz) \
 		$(transX) $(transY) $(transZ) \
-		$(scale)
+		$(scale) $(scaleX) $(scaleY) $(scaleZ)
+# Merge two off file into one file.
+me merge:
+	./build/Debug/main \
+		3 $(file1) $(file2) $(file3)\
 # Test 1
 t1 test1:
 	make r file1="cube1" file2="cube2" #Qtype="gbf"
 # Test 2
 t2 test2:
-	make s file1="wall2" file2="wall5" transY=0.7
+	make s file1="gate5" file2="gate5" transY=1
 # Example 1
 e1 example1:
 	make e json="example1"
@@ -163,6 +174,21 @@ e4 example4:
 # Example 5
 e5 example5:
 	make e json="example5"
+# View example 1:
+v1 view1:
+	make e interactive=-1 json="example1"
+# View example 2:
+v2 view2:
+	make e interactive=-1 json="example2"
+# View example 3:
+v3 view3:
+	make e interactive=-1 json="example3"
+# View example 4:
+v4 view4:
+	make e interactive=-1 json="example4"
+# View example 4:
+v5 view5:
+	make e interactive=-1 json="example5"
 # note: this target is the standard target that Core Library uses
 #       to test its subdirectories.   So the program must run in a
 #       non-interactive mode (i.e., the first argument to "main" is "1").

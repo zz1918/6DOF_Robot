@@ -35,6 +35,7 @@ double varepsilon = 0.05;
 int ExpandLimit = 262144;
 heutype SSSheu = WIDTH;
 bool SSSshow = false;
+bool SSSCheckYellow = false;
 int ExpandShow = 200;
 bool box_draw_strategy = false;
 vector<Vector3d> SSShints;
@@ -79,6 +80,7 @@ int main(int argc,char* argv[])
 		switch (mode)
 		{
 		case 2:set_mesh(argc, argv); break;
+		case 3:merge_mesh(argc, argv); break;
 		default:test(); break;
 		}
 	}

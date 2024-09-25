@@ -43,11 +43,35 @@ bool is_hinted(SE3Box *b)
 	return false;
 }
 
+
+
+//*************** Statistic variables ***************//
+
 long long set_fringe_time = 0;
 long long set_box_time = 0;
 long long set_box_preparation_time = 0;
 long long get_color_time = 0;
 long long get_graph_node_time = 0;
+long long waste_time = 0;
+
+// The amount of cube that is expanded.
+int expanded;
+// The average R^3-width of cubes.
+double aver3w;
+// The average SO3-width of cubes.
+double aveso3w;
+// Amount of mixed boxes.
+int stat_mixed;
+// Amount of free boxes.
+int stat_free;
+// Amount of stuck boxes.
+int stat_stuck;
+// Amount of veps-small boxes.
+int stat_small;
+// Average feature amount for mixed boxes.
+double avemixedfeature;
+// Average feature amount for free boxes.
+double avefreefeature;
 
 //***************** Helper Functions ******************//
 
@@ -786,6 +810,321 @@ public:
 
 };
 
+// New Algorithm updating along a path.
+template<typename Box,typename Predicate>
+class GBFPath
+{
+public:
+	// Soft pvalue for robot.
+	Predicate* C;
+	// AlphaBox
+	Box* Alpha;
+	// BetaBox
+	Box* Beta;
+	// We are using t-th predicate.
+	int t;
+	// The free graph.
+	Graph<Box> G;
+	// Map from box id to free graph id.
+	map<int, int> Gid;
+	// Current box space.
+	vector<Box*> BoxSpace;
+	// Forbidden area.
+	set<int> forbid;
+	// Varepsilon.
+	double veps;
+	// The mixed queue.
+	priority_queue<pair<vector<double>, Box*>> Q;
+	// The continent connecting to the last box.
+	set<int> LastCon;
+	// Result channel.
+	vector<Box*> Channel;
+	// Insert box b into free graph.
+	void insert(Box* b)
+	{
+		Gid.insert(make_pair(b->ID(), G.insert(b)->id));
+	}
+	// Find the node of a box in the free graph, return NULL if not exists.
+	GraphNode<Box>* node(Box* b)
+	{
+		if (Gid.find(b->ID()) == Gid.end())
+			return NULL;
+		return G.node(Gid[b->ID()]);
+	}
+	// Turn graph node path into box channel.
+	vector<Box*> make_channel(list<GraphNode<Box>*>& free_path)
+	{
+		vector<Box*> channel;
+		for (auto it = free_path.begin(); it != free_path.end(); ++it)
+			channel.push_back((*it)->content);
+		return channel;
+	}
+	// Expand
+	void Expand(Box* b)
+	{
+		return;
+	}
+	// One step find path in a given box from last box to next box, return with the last box in this step.
+	Box* path(Box* last, Box* current, Box* next)
+	{
+		if (C->classify(current) == FREE)
+		{
+			Channel.push_back(current);
+			return current;
+		}
+		G.clear();
+		Q.clear();
+		LastCon.clear();
+		insert(last);
+		insert(next);
+		Q.push(make_pair(key(1), current));
+		LastCon.insert(node(last));
+		while (!Q.empty())
+		{
+			if (G.quick_connected(node(last), node(next)))
+			{
+				vector<Box*> channel = make_channel(G.path(node(last), node(next)));
+				for (int i = 1; i < channel.size() - 1; ++i)
+					Channel.push_back(channel[i]);
+				return channel[channel.size() - 2];
+			}
+			Box* Q_top = Q.top().second;
+			Expand(Q_top);
+			Q.pop();
+		}
+		return NULL;
+	}
+	// Step by step find path algorithm.
+	bool path()
+	{
+		return true;
+	}
+};
+
+// Quickly updating along a path by heuristics.
+
+template<typename Box>
+class GBFQuickPath
+{
+	double range;
+	double veps;
+	// Alpha/beta boxes/fringes.
+	set<int> BetaBox, BetaFringe;
+	// Forbidden area.
+	set<int> forbid;
+	// List of boxes in the box space.
+	vector<Box*> BoxSpace;
+	// Map boxes to the t-th box in BoxSpace that containing them.
+	map<int, int> BoxParent;
+
+	// Find the global node of a box in the global graph, return NULL if not exists.
+	GraphNode<Box>* gnode(Box* b, Graph<Box>& Global, map<int, int>& GlobalId)
+	{
+		auto start_time = std::chrono::high_resolution_clock::now();
+		if (GlobalId.find(b->ID()) == GlobalId.end())
+			return NULL;
+		GraphNode<Box>* gv = Global.node(GlobalId[b->ID()]);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		get_graph_node_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return gv;
+	}
+	// Get the t-color of a box b in global graph.
+	Vcolor getcolor(Box* b, Graph<Box>& Global, map<int, int>& GlobalId, int t)
+	{
+		auto start_time = std::chrono::high_resolution_clock::now();
+		Vcolor c = gnode(b, Global, GlobalId)->color(t);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		get_color_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return c;
+	}
+	// Node id in global graph.
+	int gid(Box* b, map<int, int>& GlobalId)
+	{
+		if (GlobalId.find(b->ID()) == GlobalId.end())
+			return -1;
+		return GlobalId[b->ID()];
+	}
+public:
+	int set_free_num;
+	int old_fringe_num;
+	int new_fringe_num;
+	GBFQuickPath(double r, double ve, set<int>& forb, vector<Box*>& BSpace)
+	{
+		range = r;
+		veps = ve;
+		forbid = forb;
+		BoxSpace = BSpace;
+		BoxParent.clear();
+		for (int i = 0; i < BoxSpace.size(); ++i)
+			BoxParent.insert(make_pair(BoxSpace[i]->ID(), i));
+		GBF_ini();
+		set_free_num = 0;
+		old_fringe_num = 0;
+		new_fringe_num = 0;
+	}
+	// Find the t-th box in BoxSpace that containing b.
+	int tParent(Box* b)
+	{
+		if (BoxParent.find(b->ID()) == BoxParent.end())
+			return -1;
+		return BoxParent[b->ID()];
+	}
+	// Set that the t-th box in BoxSpace is containing b.
+	void setParent(Box* b, int t)
+	{
+		BoxParent.insert(make_pair(b->ID(), t));
+	}
+	void stat_ini()
+	{
+		set_free_num = 0;
+		old_fringe_num = 0;
+		new_fringe_num = 0;
+	}
+	bool is_forbid(Box* b, map<int, int>& GlobalId)
+	{
+		return forbid.find(gid(b, GlobalId)) != forbid.end();
+	}
+	bool is_BetaFringe(Box* b)
+	{
+		return BetaFringe.find(b->ID()) != BetaFringe.end();
+	}
+	bool is_BetaBox(Box* b)
+	{
+		return BetaBox.find(b->ID()) != BetaBox.end();
+	}
+	bool is_BetaNeighbor(Box* b)
+	{
+		vector<Box*> b_neighbors = b->all_adj_neighbors();
+		for (int j = 0; j < b_neighbors.size(); ++j)
+			if (is_BetaBox(b_neighbors[j]))
+				return true;
+		return false;
+	}
+	void set_BetaFringe(Box* b)
+	{
+		new_fringe_num++;
+		BetaFringe.insert(b->ID());
+	}
+	void set_BetaBox(Box* b)
+	{
+		set_free_num++;
+		BetaBox.insert(b->ID());
+	}
+
+	// Hint heuristic value.
+	double HintHeu(Box* b)
+	{
+		if (is_hinted(b))
+			return 1.0;
+		else
+			return 0.0;
+	}
+
+	// Negative exp distance to alpha fringe.
+	double nExpNextDis(Box* b)
+	{
+		int t = tParent(b);
+		if (t < 0)
+			return 0;
+		else if (t == 0)
+			return 1;
+		else if (t > BoxSpace.size())
+			return 0;
+		else
+			return exp(-Sep(b, BoxSpace[tParent(b) - 1]));
+	}
+
+	// Update b as beta fringe.
+	void set_BetaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int>& GlobalId, bool show = false)
+	{
+		auto start_time = std::chrono::high_resolution_clock::now();
+		if (b->width() <= veps)
+			return;
+		if (is_BetaBox(b))
+			cout << "Warning! Mixed box is alpha/beta box!" << endl;
+		if (is_forbid(b, GlobalId))
+			return;
+		if (show)
+		{
+			cout << "Pushing ";
+			b->out();
+			cout << " into local queue." << endl;
+		}
+		LQ.push(make_pair(key(nExpNextDis(b) + HintHeu(b) + (BoxSpace.size() - tParent(b))), b));
+		if (show)
+			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
+		if (is_BetaFringe(b))
+			old_fringe_num++;
+		else
+			set_BetaFringe(b);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		set_fringe_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+	}
+	// Update b as beta box.
+	void set_BetaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
+	{
+		auto start_time = std::chrono::high_resolution_clock::now();
+		if (is_BetaBox(b))
+			return;
+
+		if (is_forbid(b, GlobalId))
+			return;
+
+		set_BetaBox(b);
+
+		if (show)
+		{
+			cout << "Inserting ";
+			b->out();
+			cout << endl;
+		}
+
+		vector<Box*> b_neighbors = b->all_adj_neighbors();
+		if (show)
+			cout << "There are " << b_neighbors.size() << " neighbors." << endl;
+		auto end_time = std::chrono::high_resolution_clock::now();
+		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		set_box_preparation_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		for (int j = 0; j < b_neighbors.size(); ++j)
+		{
+			Box* b_neighbor = b_neighbors[j];
+			switch (getcolor(b_neighbor, Global, GlobalId, t))
+			{
+			case GREEN:
+			{
+				end_time = std::chrono::high_resolution_clock::now();
+				set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+				set_BetaFree(b_neighbor, LQ, Global, GlobalId, t, show);
+				start_time = std::chrono::high_resolution_clock::now();
+			}
+			break;
+			case YELLOW:
+			{
+				end_time = std::chrono::high_resolution_clock::now();
+				set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+				set_BetaMix(b_neighbor, LQ, GlobalId, show);
+				start_time = std::chrono::high_resolution_clock::now();
+			}
+			break;
+			case RED: cout << "Error! FREE boxes cannot be adjacent to STUCK boxes." << endl << "Hint: "; b_neighbor->out(); cout << endl; break;
+			case BLACK: cout << "Error! Some boxes are classified as UNKNOWN!" << endl << "Hint: "; b_neighbor->out(); cout << endl; break;
+			default: break;
+			}
+		}
+		end_time = std::chrono::high_resolution_clock::now();
+		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+	}
+
+	// Initialization of GBF heuristic.
+	void GBF_ini()
+	{
+		BetaBox.clear();
+		BetaFringe.clear();
+	}
+
+};
+
+
 // Config is VectorXd, Box is SE3Box, BoxTree is SE3Tree, Predicate is DeltaPredicate, FeatureSet is DeltaFeature.
 template<typename Config, typename Box, typename BoxTree, typename Predicate, typename FeatureSet>
 class SSS
@@ -813,24 +1152,6 @@ public:
 	stack<set<int>> forbids;
 	// The mixed queue.
 	priority_queue<pair<vector<double>, Box*>> Q;
-	// The amount of cube that is expanded.
-	int expanded;
-	// The average R^3-width of cubes.
-	double aver3w;
-	// The average SO3-width of cubes.
-	double aveso3w;
-	// Amount of mixed boxes.
-	int stat_mixed;
-	// Amount of free boxes.
-	int stat_free;
-	// Amount of stuck boxes.
-	int stat_stuck;
-	// Amount of veps-small boxes.
-	int stat_small;
-	// Average feature amount for mixed boxes.
-	double avemixedfeature;
-	// Average feature amount for free boxes.
-	double avefreefeature;
 	// Varepsilon.
 	double veps;
 	// Result path.
@@ -1089,10 +1410,8 @@ public:
 			set_BetaMix(b);
 	}
 	// This method makes LQ maintains purely local alpha and beta fringe boxes.
-	void add_mixed_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFringe<Box>& Fringe)
+	void add_mixed_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe)
 	{
-		if (Fringe.is_AlphaNeighbor(b))
-			Fringe.set_AlphaMix(b, LQ, GlobalId);
 		if (Fringe.is_BetaNeighbor(b))
 			Fringe.set_BetaMix(b, LQ, GlobalId);
 	}
@@ -1153,7 +1472,7 @@ public:
 		add_free_pure(b);
 	}
 	// This method maintains local Alpha/Beta Boxes and Alpha/Beta Fringes.
-	void add_free_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFringe<Box>& Fringe, int t, bool show = false)
+	void add_free_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		if (show)
 		{
@@ -1162,23 +1481,11 @@ public:
 			cout << endl;
 		}
 
-		if (is_Alpha(b))
-		{
-			if (show)
-				cout << "This is the BoxAlpha, inserting into alpha continent." << endl;
-			Fringe.set_AlphaFree(b, LQ, Global, GlobalId, t, show);
-		}
 		if (is_Beta(b))
 		{
 			if (show)
 				cout << "This is the BoxBeta, inserting into beta continent." << endl;
 			Fringe.set_BetaFree(b, LQ, Global, GlobalId, t, show);
-		}
-		if (Fringe.is_AlphaNeighbor(b))
-		{
-			if (show)
-				cout << "This is a neighbor of alpha box, inserting into alpha continent." << endl;
-			Fringe.set_AlphaFree(b, LQ, Global, GlobalId, t, show);
 		}
 		if (Fringe.is_BetaNeighbor(b))
 		{
@@ -1369,13 +1676,14 @@ public:
 		cout << "The average amount of features for mixed boxes are " << avemixedfeature << "." << endl;
 		cout << "There are " << Global.Vsize() << " boxes in the global graph." << endl;
 		cout << "There are " << Global.Esize() << " edges connecting boxes in the global graph." << endl;
-		cout << "Finding neighbors costs " << (find_neighbor_time / 1000000.0) << "s in total till now." << endl;
-		cout << "Finding paths costs " << (find_path_time / 1000000.0) << "s in total till now." << endl;
-		cout << "Setting fringes costs " << (set_fringe_time / 1000000.0) << "s in total till now." << endl;
-		cout << "Setting continents costs " << (set_box_time / 1000000.0) << "s in total till now." << endl;
-		cout << "Preparing for setting continents costs " << (set_box_preparation_time / 1000000.0) << "s in total till now." << endl;
-		cout << "Getting box colors costs " << (get_color_time / 1000000.0) << "s in total till now." << endl;
-		cout << "Getting graph node costs " << (get_graph_node_time / 1000000.0) << "s in total till now." << endl;
+		cout << "Finding neighbors costs " << (find_neighbor_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Finding paths costs " << (find_path_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Setting fringes costs " << (set_fringe_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Setting continents costs " << (set_box_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Preparing for setting continents costs " << (set_box_preparation_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Getting box colors costs " << (get_color_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Getting graph node costs " << (get_graph_node_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Repeat expansions wastes " << (waste_time / (long double)(1000000.0)) << "s in total till now." << endl;
 		//cout << "The average amount of features for free boxes are " << avefreefeature << "." << endl;
 		if (hint.length() > 0)
 			cout << hint << endl;
@@ -1406,9 +1714,14 @@ public:
 	// Expand(B)
 	void Expand(Box* b, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		// Step 0: check if the box is leaf.
 		if (!b->is_leaf())
+		{
+			auto end_time = std::chrono::high_resolution_clock::now();
+			waste_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 			return;
+		}
 
 		if (show)
 			cout << "Box is a leaf." << endl;
@@ -1470,13 +1783,22 @@ public:
 	}
 
 	// Expand(B) under a local graph.
-	void Expand_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFringe<Box>& Fringe, int t, bool show = false)
+	void Expand_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
 		// Step 0: check if the box is leaf avoiding forbidden area.
 		if (!b->is_leaf())
+		{
+			auto end_time = std::chrono::high_resolution_clock::now();
+			waste_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 			return;
+		}
 		if (forbids.top().find(gnode(b)->id) != forbids.top().end())
+		{
+			auto end_time = std::chrono::high_resolution_clock::now();
+			waste_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 			return;
+		}
 
 		// Step 1: subdivide the box.
 		if (t == 1)
@@ -1489,6 +1811,8 @@ public:
 			ginsert(b->child(i));
 		for (int i = 0; i < B->subsize(b); ++i)
 			gupdate(b->child(i));
+		for (int i = 0; i < B->subsize(b); ++i)
+			Fringe.setParent(b->child(i), Fringe.tParent(b));
 
 		// Step 2: classify soft pvalues and maintain global graph.
 		for (int i = 0; i < B->subsize(b); ++i)
@@ -1750,7 +2074,7 @@ public:
 	// **************** Recursively updating SSS framework *********************** //
 
 	// Step 1: Recursive method initialization, push C_t-mixed boxes into local queue and build local graph.
-	void Recur_ini(vector<Box*> BoxSpace, priority_queue<pair<vector<double>, Box*>>& LQ, GBFringe<Box>& Fringe, int t, bool show = false)
+	void Recur_ini(vector<Box*> BoxSpace, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		if (show)
 		{
@@ -1780,7 +2104,6 @@ public:
 		viewer.add_box(BoxBeta, Vector3d(0, 0, 1));
 		viewer.view();
 		}
-		Fringe.set_AlphaFree(BoxAlpha, LQ, Global, GlobalId, t);
 		Fringe.set_BetaFree(BoxBeta, LQ, Global, GlobalId, t);
 		if (getcolor(BoxAlpha, t) != GREEN)
 			cout << "Warning! BoxAlpha is not free for t=" << t << "!" << endl;
@@ -1789,7 +2112,7 @@ public:
 	}
 
 	// One step of recursive expansion.
-	pair<vector<Box*>, bool> Recur_one_step(priority_queue<pair<vector<double>, Box*>>& LQ, GBFringe<Box>& Fringe, int t, bool show = false)
+	pair<vector<Box*>, bool> Recur_one_step(priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		if (show)
 			cout << "Attempting to find a path for t=" << t << "." << endl;
@@ -1848,7 +2171,7 @@ public:
 	}
 
 	// Step 2: Recursive method main loop.
-	vector<Box*> Recur_main_loop(priority_queue<pair<vector<double>, Box*>>& LQ, GBFringe<Box>& Fringe, int t, bool show = false)
+	vector<Box*> Recur_main_loop(priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		while (true)
 		{
@@ -1866,7 +2189,7 @@ public:
 		if (show)
 			cout << "Finding channel in " << BoxSpace.size() << " boxes." << endl;
 		priority_queue<pair<vector<double>, Box*>> LocalQ;
-		GBFringe<Box> LocalFringe(B->Range(), veps, forbids.top());
+		GBFQuickPath<Box> LocalFringe(B->Range(), veps, forbids.top(), BoxSpace);
 		Recur_ini(BoxSpace, LocalQ, LocalFringe, t, show);
 		if (show)
 			cout << "There are " << LocalQ.size() << " mixed boxes." << endl;
@@ -1874,11 +2197,21 @@ public:
 		return Recur_main_loop(LocalQ, LocalFringe, t, show);
 	}
 
+	// Method to find an initial channel. This is not good yet!!!!!!
+	vector<Box*> RecurIniChannel()
+	{
+		return make_channel(Global.path(gnode(BoxAlpha), gnode(BoxBeta), set<int>(), C->psize()));
+	}
+
 	// Step 3: return the canonical path in the recursively found channel.
 	bool Recur_discrete_find(bool show = false)
 	{
-		forbids.push(set<int>());
-		vector<Box*> channel = RecurFindChannel(Global.current_obj(), C->psize() - 1, show);
+		vector<Box*> IniChannel = RecurIniChannel();
+		set<int> new_forbid = Global.Vlist;
+		for (int i = 0; i < IniChannel.size(); ++i)
+			new_forbid.erase(gnode(IniChannel[i])->id);
+		forbids.push(new_forbid);
+		vector<Box*> channel = RecurFindChannel(RecurIniChannel(), C->psize() - 1, show);
 		forbids.pop();
 		for (int i = 0; i < channel.size(); ++i)
 			Path.push_back(B->center(channel[i]));

@@ -18,6 +18,7 @@ using namespace std;
 enum Vcolor { GREEN, YELLOW, RED, GREY, BLACK };
 
 int find_path_time = 0;
+bool extern SSSCheckYellow;
 
 // This graph structure also implements the Union-Find structure.
 template<typename type>
@@ -526,7 +527,8 @@ public:
     // If node u and node v are connected by a path avoiding forbid area such that it is green or yellow for i<t and it is green for i>=t.
     bool connected(GraphNode<type>* u, GraphNode<type>* v, set<int>& forbid, int t)
     {
-        return true;
+        if (!SSSCheckYellow)
+            return true;
         return !path(u, v, forbid, t).empty();
     }
 

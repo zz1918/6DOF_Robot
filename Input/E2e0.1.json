@@ -1,21 +1,21 @@
 {
-	"startOx" : -2.5,
-	"startOy" : -2.5,
-	"startOz" : -2.5,
+	"startOx" : -7,
+	"startOy" : -7,
+	"startOz" : -7,
 	"startAphi" : 0,
 	"startAtheta" : 0,
 	"startBtheta" : 0,
-	"goalOx" : 2.5,
-	"goalOy" : 2.5,
-	"goalOz" : 2.5,
+	"goalOx" : 7,
+	"goalOy" : 7,
+	"goalOz" : 7,
 	"goalAphi" : 0,
 	"goalAtheta" : 0,
 	"goalBtheta" : 0,
-	"epsilon" : 0.05,
-	"envrange" : 4,
+	"epsilon" : 0.1,
+	"envrange" : 8,
 	"edgeL" : 1.0,
 	"Qtype" : "rec",
-	"ExpandLimit" : 40000,
+	"ExpandLimit" : 100000,
 	"show" : false,
 	"ExpandShow" : 200,
 	"DrawBox" : false,
@@ -26,7 +26,7 @@
 		"corner":[],
 		"edge":[],
 		"face":[],
-		"mesh":["wall1","wall5"]
+		"mesh":["gate2","gate3","gate4","gate5"]
 	}
 }
 

@@ -36,6 +36,7 @@ int extern ExpandShow;
 bool extern box_draw_strategy;
 vector<Vector3d> extern SSShints;
 string extern SSSfilename;
+bool extern SSSCheckYellow;
 
 // Read by json.
 void read_json(string filename)
@@ -63,6 +64,7 @@ void read_json(string filename)
 	SSSheu = toheutype(data["Qtype"]);
 	SSSshow = data["show"];
 	ExpandShow = data["ExpandShow"];
+	SSSCheckYellow = data["CheckYellow"];
 	box_draw_strategy = data["DrawBox"];
 	Vector3d alphaO(alphaOx, alphaOy, alphaOz);
 	Vector4d alphaQ = SO3(alphaAphi, alphaAtheta, alphaBtheta).Q();

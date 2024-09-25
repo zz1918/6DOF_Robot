@@ -11,7 +11,7 @@
 	"goalAphi" : 0,
 	"goalAtheta" : 0,
 	"goalBtheta" : 0,
-	"epsilon" : 0.05,
+	"epsilon" : 0.1,
 	"envrange" : 4,
 	"edgeL" : 1.0,
 	"Qtype" : "rec",
@@ -21,7 +21,7 @@
 	"DrawBox" : false,
 	"hint": [],
 	"CheckYellow": false,
-	"AlwaysFullClassify": false,
+	"AlwaysFullClassify": true,
 	"obstacle":{
 		"corner":[],
 		"edge":[],

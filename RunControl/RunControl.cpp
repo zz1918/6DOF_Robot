@@ -63,7 +63,7 @@ void SSS_run(bool show = false)
 	auto start_time = std::chrono::high_resolution_clock::now();
 	vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon, SSSheu, SSSshow);
 	auto end_time = std::chrono::high_resolution_clock::now();
-	double time_in_second = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1000000.0;
+	double time_in_second = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / (long double)(1000000.0);
 	cout << "Find path total time: " << time_in_second << "s." << endl;
 	if (SSSshow)
 		viewer.view();
