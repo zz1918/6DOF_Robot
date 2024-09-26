@@ -59,6 +59,9 @@
 #=================================================
 # User variables (you can change them in the command line)
 #=================================================
+
+-include make-include
+
 interactive = 0			# -1 = show-only, 0 = non-interactive, 1 = interactive
 arg = 0					# 0 = read-by-arguments, 1 = read-by-json
 
@@ -118,7 +121,7 @@ c compile:
 	(cd build; cmake --build .)
 # Run program by default settings
 r run:
-	./build/Debug/main \
+	$(main) \
 		$(interactive) $(arg) $(Qtype) $(epsilon) $(envrange) $(edgeL) \
 		$(startOx) $(startOy) $(startOz) \
 		$(startAphi) $(startAtheta) $(startBtheta) \
@@ -127,7 +130,7 @@ r run:
 		$(ExpandLimit) $(file1) $(file2)
 # Run program by example json
 e example:
-	./build/Debug/main \
+	$(main) \
 		$(interactive) 1 $(json)
 # View Program by example json
 v view:
@@ -142,7 +145,7 @@ b build:
 	make r
 # Make affine transformation on an off file.
 s set:
-	./build/Debug/main \
+	$(main) \
 		2 $(file1) $(file2) \
 		$(rotAx) $(rotAy) $(rotAz) \
 		$(rotTheta) \
@@ -151,7 +154,7 @@ s set:
 		$(scale) $(scaleX) $(scaleY) $(scaleZ)
 # Merge two off file into one file.
 me merge:
-	./build/Debug/main \
+	$(main) \
 		3 $(file1) $(file2) $(file3)\
 # Test 1
 t1 test1:
