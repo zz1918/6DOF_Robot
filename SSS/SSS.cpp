@@ -884,7 +884,8 @@ public:
 		{
 			if (G.quick_connected(node(last), node(next)))
 			{
-				vector<Box*> channel = make_channel(G.path(node(last), node(next)));
+				auto lpath = G.path(node(last), node(next));
+				vector<Box*> channel = make_channel(lpath);
 				for (int i = 1; i < channel.size() - 1; ++i)
 					Channel.push_back(channel[i]);
 				return channel[channel.size() - 2];
@@ -1897,7 +1898,8 @@ public:
 	// Find the channel when G.find(BoxAlpha) == G.find(BoxBeta) != NULL.
 	vector<Box*> Find_Channel()
 	{
-		return make_channel(G.path(node(BoxAlpha), node(BoxBeta)));
+		auto lpath = G.path(node(BoxAlpha), node(BoxBeta));
+		return make_channel(lpath);
 	}
 
 	// Step 0: initializations.
@@ -2138,7 +2140,10 @@ public:
 		if (t == 0)
 		{
 			if (G.quick_connected(node(BoxAlpha), node(BoxBeta)))
-				return make_pair(make_channel(G.path(node(BoxAlpha), node(BoxBeta))), false);
+			{
+				auto lpath = G.path(node(BoxAlpha), node(BoxBeta));
+				return make_pair(make_channel(lpath), false);
+			}
 		}
 		else
 		{
@@ -2239,7 +2244,8 @@ public:
 				}
 		if (show)
 			viewer.view();
-		return make_channel(Global.path(gnode(BoxAlpha), gnode(BoxBeta), new_forbid, C->psize()));
+		auto lpath = Global.path(gnode(BoxAlpha), gnode(BoxBeta), new_forbid, C->psize());
+		return make_channel(lpath);
 	}
 
 	// Step 3: return the canonical path in the recursively found channel.
