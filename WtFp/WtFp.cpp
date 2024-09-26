@@ -7,7 +7,7 @@
 #include<iostream>
 #include<vector>
 #include<Eigen/Dense>
-#include<Interval.h>
+#include<interval.h>
 #include<SO3.h>
 #include<Solid.h>
 #include<bimap.h>
