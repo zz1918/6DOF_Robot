@@ -19,7 +19,7 @@ string outputplace = "Output/";
 string fileformat = ".off";
 string outputformat = ".log";
 string jsonformat = ".json";
-string version = "1.5";
+string version = "1.6";
 
 double Point_Size = 15.0;
 double Line_Width = 1.0;

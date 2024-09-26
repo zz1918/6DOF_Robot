@@ -1804,29 +1804,14 @@ public:
 // Distance between two boxes.
 double Sep(SE3Box* b, SE3Box* p)
 {
-	VectorXd dir = p->BT()->center() - b->BT()->center();
-	double dis = dir.norm() - b->width() - p->width();
-	if (dis > 0)
-		return dis;
-	else
-		return 0.0;
+	return Sep(b->Range(), p->Range()).norm();
 	/*
-	MatrixId b_range = b->Range(), p_range = p->Range();
-	VectorXd b_rep(7), p_rep(7);
-	for (int i = 0; i < 7; ++i)
-	{
-		if (dir(i) > 0)
-		{
-			b_rep(i) = b_range(i).max();
-			p_rep(i) = p_range(i).min();
-		}
-		else
-		{
-			b_rep(i) = b_range(i).min();
-			p_rep(i) = p_range(i).max();
-		}
-	}
-	return (p_rep - b_rep).norm();*/
+	double BTSep = Sep(b->BT()->Range(), p->BT()->Range()).norm();
+	if (BTSep > 0)
+		return BTSep;
+	else
+		return Sep(b->BR()->Range(), p->BR()->Range()).norm();*/
+	//return 10 * Sep(b->BT()->Range(), p->BT()->Range()).norm() + Sep(b->BR()->Range(), p->BR()->Range()).norm();
 }
 
 SE3Box* to_box(int ID)

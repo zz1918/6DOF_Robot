@@ -65,7 +65,7 @@ public:
     }
     bool is_intersect(interval<Scarlar> i)
     {
-        return (i.max() >= inf) || (i.min() <= sup);
+        return (i.max() >= inf) && (i.min() <= sup);
     }
     bool is_number()
     {
@@ -211,6 +211,26 @@ interval<Scarlar> pow(interval<Scarlar> i, interval<Scarlar> j)
 {
     assert(j.is_number());
     return pow(i, j.min());
+}
+template<typename Scarlar>
+Scarlar Sep(interval<Scarlar> i, interval<Scarlar> j)
+{
+    if (i.is_intersect(j))
+        return Scarlar(0);
+    else if (i.min() > j.max())
+        return i.min() - j.max();
+    else
+        return j.min() - i.max();
+}
+template<typename Scarlar>
+Scarlar Sep(interval<Scarlar> i, Scarlar x)
+{
+    return Sep(i, interval<Scarlar>(x));
+}
+template<typename Scarlar>
+Scarlar Sep(Scarlar x, interval<Scarlar> i)
+{
+    return Sep(interval<Scarlar>(x), i);
 }
 #define intervali interval<int>
 #define intervalf interval<float>
@@ -402,7 +422,7 @@ public:
         assert(rows() == M.rows());
         assert(cols() == M.cols());
         Matrix<Scarlar, -1, -1> sum_inf(rows(), cols());
-        Matrix<Scarlar, -1, -1> sum_sup(rows(),cols());
+        Matrix<Scarlar, -1, -1> sum_sup(rows(), cols());
         for (Index i = 0; i < rows(); ++i)
             for (Index j = 0; j < cols(); ++j)
             {
@@ -573,6 +593,17 @@ public:
         operator()(rows() - 1, cols() - 1).out(os);
     }
 };
+template<typename Scarlar>
+Matrix<Scarlar, -1, -1> Sep(MatrixInterval<Scarlar> I, MatrixInterval<Scarlar> J)
+{
+    assert(I.rows() == J.rows());
+    assert(I.cols() == J.cols());
+    Matrix<Scarlar, -1, -1> sep(I.rows(), J.cols());
+    for (int i = 0; i < sep.rows(); ++i)
+        for (int j = 0; j < sep.cols(); ++j)
+            sep(i, j) = Sep(I(i, j), J(i, j));
+    return sep;
+}
 template<typename Scarlar>
 ostream& operator<<(ostream& os, MatrixInterval<Scarlar> m)
 {

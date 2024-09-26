@@ -53,6 +53,7 @@ long long set_box_preparation_time = 0;
 long long get_color_time = 0;
 long long get_graph_node_time = 0;
 long long waste_time = 0;
+long long classification_time = 0;
 
 // The amount of cube that is expanded.
 int expanded;
@@ -1415,7 +1416,7 @@ public:
 		if (Fringe.is_BetaNeighbor(b))
 			Fringe.set_BetaMix(b, LQ, GlobalId);
 	}
-		// Procedures for mixed boxes.
+	// Procedures for mixed boxes.
 	void add_mixed_node(Box* b, bool show = false)
 	{
 		if (show)
@@ -1435,7 +1436,7 @@ public:
 		default: add_mixed_fringe(b);
 		}
 	}
-		// Update mixed node under local priority queue LQ.
+	// Update mixed node under local priority queue LQ.
 	void add_local_mixed_node(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, bool show = false)
 	{
 		LQ.push(make_pair(heuristic(b), b));
@@ -1684,6 +1685,7 @@ public:
 		cout << "Getting box colors costs " << (get_color_time / (long double)(1000000.0)) << "s in total till now." << endl;
 		cout << "Getting graph node costs " << (get_graph_node_time / (long double)(1000000.0)) << "s in total till now." << endl;
 		cout << "Repeat expansions wastes " << (waste_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Classifying boxes costs " << (classification_time / (long double)(1000000.0)) << "s in total till now." << endl;
 		//cout << "The average amount of features for free boxes are " << avefreefeature << "." << endl;
 		if (hint.length() > 0)
 			cout << hint << endl;
@@ -1814,6 +1816,7 @@ public:
 		for (int i = 0; i < B->subsize(b); ++i)
 			Fringe.setParent(b->child(i), Fringe.tParent(b));
 
+		start_time = std::chrono::high_resolution_clock::now();
 		// Step 2: classify soft pvalues and maintain global graph.
 		for (int i = 0; i < B->subsize(b); ++i)
 			for (int j = 0; j < C->psize(); ++j)
@@ -1827,6 +1830,8 @@ public:
 					case STUCK:gcolor(b->child(i), RED); break;
 					default:gcolor(b->child(i), BLACK);
 					}
+		auto end_time = std::chrono::high_resolution_clock::now();
+		classification_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 
 		// Step 3: maintain LQ and G.
 		for (int i = 0; i < B->subsize(b); ++i)
@@ -1881,6 +1886,12 @@ public:
 		for (auto it = free_path.begin(); it != free_path.end(); ++it)
 			channel.push_back((*it)->content);
 		return channel;
+	}
+
+	// Current leaves.
+	vector<Box*> current_leaves()
+	{
+		return Global.current_obj();
 	}
 
 	// Find the channel when G.find(BoxAlpha) == G.find(BoxBeta) != NULL.
@@ -2197,22 +2208,58 @@ public:
 		return Recur_main_loop(LocalQ, LocalFringe, t, show);
 	}
 
-	// Method to find an initial channel. This is not good yet!!!!!!
-	vector<Box*> RecurIniChannel()
+	// If a box is a Voronoid box.
+	bool isVor(Box* b)
 	{
-		return make_channel(Global.path(gnode(BoxAlpha), gnode(BoxBeta), set<int>(), C->psize()));
+		return true;
+		if (b == B->Root())
+			return true;
+		return C->feature_of(b).size() < C->feature_of(b->Parent()).size();
+	}
+
+	// Method to find an initial channel. This is not good yet!!!!!!
+	vector<Box*> RecurIniChannel(bool show = false)
+	{
+		set<int> new_forbid;
+		vector<Box*> leaves = current_leaves();
+		if (show)
+			reset_viewer();
+		for (int i = 0; i < leaves.size(); ++i)
+			if (!isVor(leaves[i]))
+				new_forbid.insert(leaves[i]->ID());
+			else if (show)
+				switch (getcolor(leaves[i], C->psize() - 1))
+				{
+				case GREEN: viewer.add_box(leaves[i], Vector3d(0, 1, 0)); break;
+				case YELLOW: viewer.add_box(leaves[i], Vector3d(1, 1, 0)); break;
+				case RED:viewer.add_box(leaves[i], Vector3d(1, 0, 0)); break;
+				case BLACK: viewer.add_box(leaves[i], Vector3d(0, 0, 0)); break;
+				case GREY: viewer.add_box(leaves[i], Vector3d(0.5, 0.5, 0.5)); break;
+				default:continue;
+				}
+		if (show)
+			viewer.view();
+		return make_channel(Global.path(gnode(BoxAlpha), gnode(BoxBeta), new_forbid, C->psize()));
 	}
 
 	// Step 3: return the canonical path in the recursively found channel.
 	bool Recur_discrete_find(bool show = false)
 	{
-		vector<Box*> IniChannel = RecurIniChannel();
-		set<int> new_forbid = Global.Vlist;
-		for (int i = 0; i < IniChannel.size(); ++i)
-			new_forbid.erase(gnode(IniChannel[i])->id);
-		forbids.push(new_forbid);
-		vector<Box*> channel = RecurFindChannel(RecurIniChannel(), C->psize() - 1, show);
-		forbids.pop();
+		vector<Box*> channel;
+		while (expanded <= ExpandLimit)
+		{
+			vector<Box*> IniChannel = RecurIniChannel(show);
+			if (IniChannel.empty())
+				break;
+			set<int> new_forbid = Global.Vlist;
+			for (int i = 0; i < IniChannel.size(); ++i)
+				new_forbid.erase(gnode(IniChannel[i])->id);
+			forbids.push(new_forbid);
+			channel = RecurFindChannel(IniChannel, C->psize() - 1, show);
+			forbids.pop();
+			if (!channel.empty())
+				break;
+		}
 		for (int i = 0; i < channel.size(); ++i)
 			Path.push_back(B->center(channel[i]));
 		return true;

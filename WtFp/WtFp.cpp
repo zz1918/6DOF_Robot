@@ -487,6 +487,7 @@ public:
 // Inner approximate footprint for Delta robot.
 // A set InFp(B) such that for each b in B, InFp(B) \cap Fp(b) is none empty.
 // An obvious construction is the circumball of Bt.
+// This is the approximate footprint of point O.
 class DeltaInFp
 {
 	// Radius of the circumball.
