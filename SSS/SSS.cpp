@@ -2172,6 +2172,8 @@ public:
 			return make_pair(vector<Box*>(), false);
 		if (show)
 			cout << "Continue expansions." << endl;
+		while (!LQ.top().second->is_leaf())
+			LQ.pop();
 		Box* LQ_top = LQ.top().second;
 		Expand_recur(LQ_top, LQ, Fringe, t, show);
 		LQ.pop();
