@@ -109,6 +109,8 @@ scaleZ = 1
 # Define target folder
 #=================================================
 
+CXXFLAGS += -std=c++17
+
 # Default is to initialize, compile and run the program with default arguments.
 default: r
 # Initialize the program from cmake
