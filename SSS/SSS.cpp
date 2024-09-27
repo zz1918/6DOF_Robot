@@ -2122,12 +2122,12 @@ public:
 		}
 		if (show)
 			cout << "Checked no current path." << endl;
+		while (!LQ.empty() && !LQ.top().second->is_leaf())
+			LQ.pop();
 		if (LQ.empty())
 			return make_pair(vector<Box*>(), false);
 		if (show)
-			cout << "Continue expansions." << endl;
-		while (!LQ.top().second->is_leaf())
-			LQ.pop();
+			cout << "Continue expansions." << endl;		
 		Box* LQ_top = LQ.top().second;
 		Expand_recur(LQ_top, LQ, Fringe, t, show);
 		LQ.pop();
