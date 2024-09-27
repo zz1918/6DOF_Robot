@@ -9,7 +9,7 @@ using namespace std;
 
 template<typename key1, typename key2, typename type>
 class bimap {
-    map<key1, map<key2, type>> bim;
+    map<key1, map<key2, type> > bim;
 public:
     bimap() {}
     bool find(key1 k, key2 l)

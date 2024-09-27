@@ -639,7 +639,7 @@ public:
 	}
 
 	// Update b as alpha fringe.
-	void set_AlphaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int>& GlobalId, bool show = false)
+	void set_AlphaMix(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, map<int, int>& GlobalId, bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
 		if (b->width() <= veps)
@@ -665,7 +665,7 @@ public:
 		set_fringe_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 	// Update b as beta fringe.
-	void set_BetaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int>& GlobalId, bool show = false)
+	void set_BetaMix(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, map<int, int>& GlobalId, bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
 		if (b->width() <= veps)
@@ -691,7 +691,7 @@ public:
 		set_fringe_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 	// Update b as alpha box.
-	void set_AlphaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
+	void set_AlphaFree(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
 		if (is_AlphaBox(b) || is_BetaBox(b))
@@ -746,7 +746,7 @@ public:
 		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 	// Update b as beta box.
-	void set_BetaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
+	void set_BetaFree(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
 		if (is_AlphaBox(b) || is_BetaBox(b))
@@ -835,7 +835,7 @@ public:
 	// Varepsilon.
 	double veps;
 	// The mixed queue.
-	priority_queue<pair<vector<double>, Box*>> Q;
+	priority_queue<pair<vector<double>, Box*> > Q;
 	// The continent connecting to the last box.
 	set<int> LastCon;
 	// Result channel.
@@ -1037,7 +1037,7 @@ public:
 	}
 
 	// Update b as beta fringe.
-	void set_BetaMix(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, map<int, int>& GlobalId, bool show = false)
+	void set_BetaMix(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, map<int, int>& GlobalId, bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
 		if (b->width() <= veps)
@@ -1063,7 +1063,7 @@ public:
 		set_fringe_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 	}
 	// Update b as beta box.
-	void set_BetaFree(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
+	void set_BetaFree(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, Graph<Box>& Global, map<int, int>& GlobalId, int t, bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
 		if (is_BetaBox(b))
@@ -1151,9 +1151,9 @@ public:
 	// Map from box id to global graph id.
 	map<int, int> GlobalId;
 	// List of forbid area under different recursion level.
-	stack<set<int>> forbids;
+	stack<set<int> > forbids;
 	// The mixed queue.
-	priority_queue<pair<vector<double>, Box*>> Q;
+	priority_queue<pair<vector<double>, Box*> > Q;
 	// Varepsilon.
 	double veps;
 	// Result path.
@@ -1412,7 +1412,7 @@ public:
 			set_BetaMix(b);
 	}
 	// This method makes LQ maintains purely local alpha and beta fringe boxes.
-	void add_mixed_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe)
+	void add_mixed_recur(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe)
 	{
 		if (Fringe.is_BetaNeighbor(b))
 			Fringe.set_BetaMix(b, LQ, GlobalId);
@@ -1438,7 +1438,7 @@ public:
 		}
 	}
 	// Update mixed node under local priority queue LQ.
-	void add_local_mixed_node(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, bool show = false)
+	void add_local_mixed_node(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, bool show = false)
 	{
 		LQ.push(make_pair(heuristic(b), b));
 	}
@@ -1474,7 +1474,7 @@ public:
 		add_free_pure(b);
 	}
 	// This method maintains local Alpha/Beta Boxes and Alpha/Beta Fringes.
-	void add_free_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
+	void add_free_recur(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		if (show)
 		{
@@ -1786,7 +1786,7 @@ public:
 	}
 
 	// Expand(B) under a local graph.
-	void Expand_recur(Box* b, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
+	void Expand_recur(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
 		// Step 0: check if the box is leaf avoiding forbidden area.
@@ -1921,7 +1921,7 @@ public:
 		Global.clear();
 		Gid.clear();
 		GlobalId.clear();
-		Q = priority_queue<pair<vector<double>, Box*>>();
+		Q = priority_queue<pair<vector<double>, Box*> >();
 		alpha = _alpha;
 		beta = _beta;
 		C->set_feature(Omega);
@@ -2087,7 +2087,7 @@ public:
 	// **************** Recursively updating SSS framework *********************** //
 
 	// Step 1: Recursive method initialization, push C_t-mixed boxes into local queue and build local graph.
-	void Recur_ini(vector<Box*> BoxSpace, priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
+	void Recur_ini(vector<Box*> BoxSpace, priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		if (show)
 		{
@@ -2125,7 +2125,7 @@ public:
 	}
 
 	// One step of recursive expansion.
-	pair<vector<Box*>, bool> Recur_one_step(priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
+	pair<vector<Box*>, bool> Recur_one_step(priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		if (show)
 			cout << "Attempting to find a path for t=" << t << "." << endl;
@@ -2189,7 +2189,7 @@ public:
 	}
 
 	// Step 2: Recursive method main loop.
-	vector<Box*> Recur_main_loop(priority_queue<pair<vector<double>, Box*>>& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
+	vector<Box*> Recur_main_loop(priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
 		while (true)
 		{
@@ -2206,7 +2206,7 @@ public:
 	{
 		if (show)
 			cout << "Finding channel in " << BoxSpace.size() << " boxes." << endl;
-		priority_queue<pair<vector<double>, Box*>> LocalQ;
+		priority_queue<pair<vector<double>, Box*> > LocalQ;
 		GBFQuickPath<Box> LocalFringe(B->Range(), veps, forbids.top(), BoxSpace);
 		Recur_ini(BoxSpace, LocalQ, LocalFringe, t, show);
 		if (show)
