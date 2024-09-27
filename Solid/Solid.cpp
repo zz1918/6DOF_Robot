@@ -9,6 +9,7 @@
 
 //#include <iostream>
 #include <tuple>
+#include <string>
 #include <vector>
 #include <map>
 #include <Eigen/Dense>
