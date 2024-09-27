@@ -1191,20 +1191,20 @@ public:
         return inside(Local(f));
     }
     // Local closest pairs between a local point Lp and the algebraic span of this traffic cone.
-    vector<pair<Vector3d, Vector3d>> Lcp(Vector3d Lp)
+    vector<pair<Vector3d, Vector3d> > Lcp(Vector3d Lp)
     {
         double a = Lp(0), b = Lp(1), c = Lp(2);
         double r = sqrt(a * a + b * b);
         double t1 = (r - k * c) / (k2 * r + k * c), t2 = (r + k * c) / (k2 * r - k * c);
         Vector3d Lq1 = Vector3d(a / (1 + t1), b / (1 + t1), c / (1 - k2 * t1));
         Vector3d Lq2 = Vector3d(a / (1 + t2), b / (1 + t2), c / (1 - k2 * t2));
-        vector<pair<Vector3d, Vector3d>> Lcps;
+        vector<pair<Vector3d, Vector3d> > Lcps;
         Lcps.push_back(make_pair(Lq1, Lp));
         Lcps.push_back(make_pair(Lq2, Lp));
         return Lcps;
     }
     // Local closest pairs between a point feature and this traffic cone.
-    vector<pair<Vector3d, Vector3d>> Lcp(Point* f)
+    vector<pair<Vector3d, Vector3d> > Lcp(Point* f)
     {
         return Lcp(Local(f));
     }
@@ -1230,9 +1230,9 @@ public:
         return Lints;
     }
     // Local closest pairs between the line of Lp1-Lp2 and the algebraic span of this traffic cone.
-    vector<pair<Vector3d, Vector3d>> Lcp(pair<Vector3d, Vector3d> Le)
+    vector<pair<Vector3d, Vector3d> > Lcp(pair<Vector3d, Vector3d> Le)
     {
-        vector<pair<Vector3d, Vector3d>> Lcps;
+        vector<pair<Vector3d, Vector3d> > Lcps;
         Vector3d v = Le.first, d = Le.second - Le.first;
         double a = d(0), b = d(1), c = d(2), a2 = a * a, b2 = b * b, c2 = c * c;
         double kappa = k * c, kappa2 = kappa * kappa;
@@ -1251,7 +1251,7 @@ public:
         if (!possible_parallels(Vector3d::Zero(), n1, v, d))
         {
             Vector3d q = PL_int(Vector3d::Zero(), n1, v, d);
-            vector<pair<Vector3d, Vector3d>> q_pair = Lcp(q);
+            vector<pair<Vector3d, Vector3d> > q_pair = Lcp(q);
             for (int i = 0; i < q_pair.size(); ++i)
                 Lcps.push_back(q_pair[i]);
         }
@@ -1259,17 +1259,17 @@ public:
         if (!possible_parallels(Vector3d::Zero(), n2, v, d))
         {
             Vector3d q = PL_int(Vector3d::Zero(), n2, v, d);
-            vector<pair<Vector3d, Vector3d>> q_pair = Lcp(q);
+            vector<pair<Vector3d, Vector3d> > q_pair = Lcp(q);
             for (int i = 0; i < q_pair.size(); ++i)
                 Lcps.push_back(q_pair[i]);
         }
         return Lcps;
     }
     // Local closest pairs between an edge feature and this traffic cone.
-    vector<pair<Vector3d, Vector3d>> Lcp(Edge* f)
+    vector<pair<Vector3d, Vector3d> > Lcp(Edge* f)
     {
         pair<Vector3d, Vector3d> Le = Local(f);
-        vector<pair<Vector3d, Vector3d>> CP = Lcp(Le);
+        vector<pair<Vector3d, Vector3d> > CP = Lcp(Le);
         vector<Vector3d> LINT = Lint(Le);
         for (int i = 0; i < LINT.size(); ++i)
             CP.push_back(make_pair(LINT[i], LINT[i]));
@@ -1299,7 +1299,7 @@ public:
             return true;
         if (inside(f))
             return false_update(f, t);
-        vector<pair<Vector3d, Vector3d>> Lcps = Lcp(f);
+        vector<pair<Vector3d, Vector3d> > Lcps = Lcp(f);
         for (int i = 0; i < Lcps.size(); ++i)
             if (projects_on(Lcps[i].first) && (Lcps[i].first - Lcps[i].second).norm() <= t)
                 return false_update(f, t);
@@ -1316,7 +1316,7 @@ public:
         for (int i = 0; i < 2; ++i)
             if (!Sep(f->P(i), t))
                 return false_update(f, t);
-        vector<pair<Vector3d, Vector3d>> Lcps = Lcp(f);
+        vector<pair<Vector3d, Vector3d> > Lcps = Lcp(f);
         for (int i = 0; i < Lcps.size(); ++i)
             if (projects_on(Lcps[i].first) && f->projects_on(Lcps[i].second) && (Lcps[i].first - Lcps[i].second).norm() <= t)
                 return false_update(f, t);
