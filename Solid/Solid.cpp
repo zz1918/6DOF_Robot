@@ -8,6 +8,7 @@
 #define SOLID_H
 
 //#include <iostream>
+#include <tuple>
 #include <vector>
 #include <map>
 #include <Eigen/Dense>
