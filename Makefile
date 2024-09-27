@@ -118,6 +118,7 @@ i initialize:
 	rm -rf build
 	mkdir build
 	(cd build; cmake ../main)
+	mkdir Output
 # Compile the program from cmake
 c compile: 
 	(cd build; cmake --build .)

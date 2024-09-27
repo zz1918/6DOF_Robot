@@ -217,6 +217,12 @@ public:
 	{
 		return new DeltaInFp(b->BT()->range);
 	}
+	// Construct the CnFp of two boxes b and p.
+	/*
+	DeltaCnFp* ACnFp(SE3Box* b, SE3Box* p)
+	{
+		return new DeltaCnFp(b->BT()->range, p->BT()->range);
+	}*/
 	// Predicate size.
 	int psize()
 	{
@@ -365,6 +371,47 @@ public:
 			cout << "The box is MIXED." << endl;
 		return MIXED;
 	}
+	// Classification of the connection of two boxes (if it's not stuck, then it is good).
+	/*
+	pvalue Cconnect(SE3Box* b, SE3Box* p, bool show = false)
+	{
+		DeltaFeature phi1 = feature_of(b);
+		DeltaFeature phi2 = feature_of(p);
+		DeltaFeature new_phi;
+		DeltaCnFp* Fp = ACnFp(b, p);
+		for (int i = 0; i < phi1.Vlist.size(); ++i)
+			if (Fp->classify(phi1.Vlist[i]) != FREE)
+				new_phi.Vlist.push_back(phi1.Vlist[i]);
+		for (int i = 0; i < phi1.Elist.size(); ++i)
+			if (Fp->classify(phi1.Elist[i]) != FREE)
+				new_phi.Elist.push_back(phi1.Elist[i]);
+		for (int i = 0; i < phi1.Tlist.size(); ++i)
+			if (Fp->classify(phi1.Tlist[i]) != FREE)
+				new_phi.Tlist.push_back(phi1.Tlist[i]);
+		for (int i = 0; i < phi2.Vlist.size(); ++i)
+			if (Fp->classify(phi2.Vlist[i]) != FREE)
+				new_phi.Vlist.push_back(phi2.Vlist[i]);
+		for (int i = 0; i < phi2.Elist.size(); ++i)
+			if (Fp->classify(phi2.Elist[i]) != FREE)
+				new_phi.Elist.push_back(phi2.Elist[i]);
+		for (int i = 0; i < phi2.Tlist.size(); ++i)
+			if (Fp->classify(phi2.Tlist[i]) != FREE)
+				new_phi.Tlist.push_back(phi2.Tlist[i]);
+		// Stuck check.
+		if (new_phi.empty())
+		{
+			// After there is no boundary features, let's determine if the box is stuck or not.
+			for (int i = 0; i < phi1.Mlist.size(); ++i)
+				if (Fp->classify(phi1.Mlist[i]) != FREE)
+					return STUCK;
+			for (int i = 0; i < phi2.Mlist.size(); ++i)
+				if (Fp->classify(phi2.Mlist[i]) != FREE)
+					return STUCK;
+			return FREE;
+		}
+		else
+			return MIXED;
+	}*/
 };
 
 class SE3Tree
@@ -811,100 +858,7 @@ public:
 
 };
 
-// New Algorithm updating along a path.
-template<typename Box,typename Predicate>
-class GBFPath
-{
-public:
-	// Soft pvalue for robot.
-	Predicate* C;
-	// AlphaBox
-	Box* Alpha;
-	// BetaBox
-	Box* Beta;
-	// We are using t-th predicate.
-	int t;
-	// The free graph.
-	Graph<Box> G;
-	// Map from box id to free graph id.
-	map<int, int> Gid;
-	// Current box space.
-	vector<Box*> BoxSpace;
-	// Forbidden area.
-	set<int> forbid;
-	// Varepsilon.
-	double veps;
-	// The mixed queue.
-	priority_queue<pair<vector<double>, Box*> > Q;
-	// The continent connecting to the last box.
-	set<int> LastCon;
-	// Result channel.
-	vector<Box*> Channel;
-	// Insert box b into free graph.
-	void insert(Box* b)
-	{
-		Gid.insert(make_pair(b->ID(), G.insert(b)->id));
-	}
-	// Find the node of a box in the free graph, return NULL if not exists.
-	GraphNode<Box>* node(Box* b)
-	{
-		if (Gid.find(b->ID()) == Gid.end())
-			return NULL;
-		return G.node(Gid[b->ID()]);
-	}
-	// Turn graph node path into box channel.
-	vector<Box*> make_channel(list<GraphNode<Box>*>& free_path)
-	{
-		vector<Box*> channel;
-		for (auto it = free_path.begin(); it != free_path.end(); ++it)
-			channel.push_back((*it)->content);
-		return channel;
-	}
-	// Expand
-	void Expand(Box* b)
-	{
-		return;
-	}
-	// One step find path in a given box from last box to next box, return with the last box in this step.
-	Box* path(Box* last, Box* current, Box* next)
-	{
-		if (C->classify(current) == FREE)
-		{
-			Channel.push_back(current);
-			return current;
-		}
-		G.clear();
-		Q.clear();
-		LastCon.clear();
-		insert(last);
-		insert(next);
-		Q.push(make_pair(key(1), current));
-		LastCon.insert(node(last));
-		while (!Q.empty())
-		{
-			if (G.quick_connected(node(last), node(next)))
-			{
-				auto lpath = G.path(node(last), node(next));
-				vector<Box*> channel = make_channel(lpath);
-				for (int i = 1; i < channel.size() - 1; ++i)
-					Channel.push_back(channel[i]);
-				return channel[channel.size() - 2];
-			}
-			Box* Q_top = Q.top().second;
-			Expand(Q_top);
-			Q.pop();
-		}
-		return NULL;
-	}
-	// Step by step find path algorithm.
-	bool path()
-	{
-		return true;
-	}
-};
-
 // Quickly updating along a path by heuristics.
-
 template<typename Box>
 class GBFQuickPath
 {
