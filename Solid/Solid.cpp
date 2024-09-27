@@ -1162,9 +1162,9 @@ public:
         return make_pair(Local(f->P(0)), Local(f->P(1)));
     }
     // Local coordinates of a triangle feature f.
-    tuple<Vector3d, Vector3d, Vector3d> Local(Triangle* f)
+    std::tuple<Vector3d, Vector3d, Vector3d> Local(Triangle* f)
     {
-        return make_tuple(Local(f->P(0)), Local(f->P(1)), Local(f->P(2)));
+        return std::make_tuple(Local(f->P(0)), Local(f->P(1)), Local(f->P(2)));
     }
 
     // If a point p on the algebraic span of this traffic cone is in the interior of this traffic cone or not.
