@@ -90,6 +90,56 @@ public:
 	}
 };
 
+class OffSplitTool
+{
+	MatrixXd V, V1, V2;
+	MatrixXi F, F1, F2;
+public:
+	OffSplitTool()
+	{
+		V.resize(0, 3);
+		V1.resize(0, 3);
+		V2.resize(0, 3);
+		F.resize(0, 3);
+		F1.resize(0, 3);
+		F2.resize(0, 3);
+	}
+	void def_mesh(string input)
+	{
+		read_OFF(input, V, F);
+	}
+	void split(int V1size)
+	{
+		V1.resize(V1size, 3);
+		V2.resize(V.rows() - V1size, 3);
+		for (int i = 0; i < V1size; ++i)
+			V1.row(i) = V.row(i);
+		for (int i = V1size; i < V.rows(); ++i)
+			V2.row(i - V1size) = V.row(i);
+		int F1size = 0;
+		for (int i = 0; i < F.rows(); ++i)
+			if (F(i, 0) < V1size)
+				F1size++;
+		F1.resize(F1size, 3);
+		F2.resize(F.rows() - F1size, 3);
+		int i1 = 0, i2 = 0;
+		for (int i = 0; i < F.rows(); ++i)
+			if (F(i, 0) < V1size)
+				F1.row(i1++) = F.row(i);
+			else
+			{
+				for (int j = 0; j < F.cols(); ++j)
+					F2(i2, j) = F(i, j) - V1size;
+				i2++;
+			}
+	}
+	void make_OFF(string output1, string output2)
+	{
+		write_OFF(output1, V1, F1);
+		write_OFF(output2, V2, F2);
+	}
+};
+
 extern string fileplace;
 extern string fileformat;
 
@@ -128,6 +178,19 @@ void merge_mesh(int argc, char* argv[])
 	OMT.add_mesh(input1);
 	OMT.add_mesh(input2);
 	OMT.make_OFF(output);
+}
+
+// Split a mesh into two parts by the number of vertices in the first mesh.
+void split_mesh(int argc, char* argv[])
+{
+	string input = fileplace + string(argv[2]) + fileformat;
+	string output1 = fileplace + string(argv[3]) + fileformat;
+	string output2 = fileplace + string(argv[4]) + fileformat;
+	int V1size = stoi(argv[5]);
+	OffSplitTool OST;
+	OST.def_mesh(input);
+	OST.split(V1size);
+	OST.make_OFF(output1, output2);
 }
 
 #endif

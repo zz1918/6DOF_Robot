@@ -89,6 +89,7 @@ file1 = "wall6"			# off file
 file2 = "wall7"			# off file
 file3 = "gate2"			# off file
 json = "example"	# json file
+V1size = 0
 
 rotAx = 1				# rotate an off file (by axis (Ax,Ay,Az), angle Theta, center at(Cx,Cy,Cz))
 rotAy = 0
@@ -159,12 +160,19 @@ s set:
 me merge:
 	$(main) \
 		3 $(file1) $(file2) $(file3)\
+# Split an off file into two files.
+sp split:
+	$(main) \
+		4 $(file1) $(file2) $(file3) $(V1size)\
 # Test 1
 t1 test1:
 	make r file1="cube1" file2="cube2" #Qtype="gbf"
 # Test 2
 t2 test2:
-	make s file1="gate5" file2="gate5" transY=1
+	make s file1="wall13" file2="wall13" transX=0 transY=0.5 transZ=0
+# Test 3
+t3 test3:
+	make sp file1="gate3" file2="wall10" file3="wall11" V1size=8
 # Example 1
 e1 example1:
 	make e json="example1"

@@ -81,6 +81,7 @@ int main(int argc,char* argv[])
 		{
 		case 2:set_mesh(argc, argv); break;
 		case 3:merge_mesh(argc, argv); break;
+		case 4:split_mesh(argc, argv); break;
 		default:test(); break;
 		}
 	}
