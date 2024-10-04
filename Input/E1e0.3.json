@@ -17,7 +17,7 @@
 	"Qtype" : "rec",
 	"ExpandLimit" : 100000,
 	"show" : false,
-	"ExpandShow" : 1000,
+	"ExpandShow" : 4000,
 	"DrawBox" : false,
 	"hint": [],
 	"CheckYellow": false,
