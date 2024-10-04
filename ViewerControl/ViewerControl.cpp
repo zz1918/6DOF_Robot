@@ -89,7 +89,7 @@ public:
 		PEC.resize(0, 3);
 	}
 	// Set the range box.
-	void set_range(double range, Vector3d bColor = blue)
+	void set_range(double range, Vector3d bColor = cyan)
 	{
 		MatrixXd Corner(8, 3);
 		for (int i = 0; i < 8; ++i)
@@ -97,15 +97,15 @@ public:
 				Corner(i, j) = ((i >> j & 1) ? range : -range);
 		for (int i = 0; i < 8; ++i)
 			add(new Point(Corner.row(i)), red);
-		add(new Edge(Corner.row(0), Corner.row(1)), bColor);
+		add(new Edge(Corner.row(0), Corner.row(1)), red);
 		add(new Edge(Corner.row(1), Corner.row(3)), bColor);
 		add(new Edge(Corner.row(3), Corner.row(2)), bColor);
-		add(new Edge(Corner.row(2), Corner.row(0)), bColor);
+		add(new Edge(Corner.row(2), Corner.row(0)), green);
 		add(new Edge(Corner.row(4), Corner.row(5)), bColor);
 		add(new Edge(Corner.row(5), Corner.row(7)), bColor);
 		add(new Edge(Corner.row(7), Corner.row(6)), bColor);
 		add(new Edge(Corner.row(6), Corner.row(4)), bColor);
-		add(new Edge(Corner.row(0), Corner.row(4)), bColor);
+		add(new Edge(Corner.row(0), Corner.row(4)), blue);
 		add(new Edge(Corner.row(5), Corner.row(1)), bColor);
 		add(new Edge(Corner.row(2), Corner.row(6)), bColor);
 		add(new Edge(Corner.row(7), Corner.row(3)), bColor);
