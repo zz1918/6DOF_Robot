@@ -21,6 +21,8 @@ int extern ArgcSize;
 int extern ModeSize;
 
 string extern fileplace;
+string extern modelplace;
+string extern envplace;
 string extern fileformat;
 string extern jsonformat;
 
@@ -73,15 +75,37 @@ void read_json(string filename)
 	SSSalpha << alphaO(0), alphaO(1), alphaO(2), alphaQ(0), alphaQ(1), alphaQ(2), alphaQ(3);
 	SSSbeta << betaO(0), betaO(1), betaO(2), betaQ(0), betaQ(1), betaQ(2), betaQ(3);
 
+	// Read hints.
+	for (const auto& entryc : data["hint"]) {
+		Vector3d coord = read_vec3(entryc);
+		SSShints.push_back(coord);
+	}
+
+	json obstacle;
+
+	if (string(data["obstacle"].type_name()) == "string")
+	{
+		string obsfilename = envplace + string(data["obstacle"]) + jsonformat;
+		if (!exist(obsfilename))
+		{
+			cout << "bash: file " << obsfilename << " not found" << endl;
+			return;
+		}
+		ifstream inobstacle(obsfilename);
+		inobstacle >> obstacle;
+	}
+	else
+		obstacle = data["obstacle"];
+
 	// Read obstacles.
-	for (const auto& entryc : data["obstacle"]["corner"]) {
+	for (const auto& entryc : obstacle["corner"]) {
 		string name = entryc["name"];
 		Vector3d coord = read_vec3(entryc["position"]);
 		env.add_point(coord, name);
 		cout << "Define point " << name << " as " << coord.transpose() << endl;
 	}
 
-	for (const auto& entrye : data["obstacle"]["edge"]) {
+	for (const auto& entrye : obstacle["edge"]) {
 		string name = entrye["name"];
 		string name1 = entrye["p1"];
 		string name2 = entrye["p2"];
@@ -91,7 +115,7 @@ void read_json(string filename)
 			cout << "Define edge " << name << " as the edge connecting point " << name1 << " and point " << name2 << endl;
 	}
 
-	for (const auto& entryf : data["obstacle"]["face"]) {
+	for (const auto& entryf : obstacle["face"]) {
 		string name = entryf["name"];
 		string name1 = entryf["p1"];
 		string name2 = entryf["p2"];
@@ -102,10 +126,10 @@ void read_json(string filename)
 			cout << "Define face " << name << " as the triangle connecting point " << name1 << " and point " << name2 << " and point " << name3 << endl;
 	}
 
-	for (const auto& entrym : data["obstacle"]["mesh"]) {
+	for (const auto& entrym : obstacle["mesh"]) {
 		if (string(entrym).empty())
 			continue;
-		string offfilename = fileplace + string(entrym) + fileformat;
+		string offfilename = modelplace + string(entrym) + fileformat;
 		if (!exist(offfilename))
 		{
 			cout << "bash: file " << offfilename << " not found" << endl;
@@ -114,11 +138,6 @@ void read_json(string filename)
 		env.add_mesh(offfilename, string(entrym));
 	}
 
-	// Read hints.
-	for (const auto& entryc : data["hint"]) {
-		Vector3d coord = read_vec3(entryc);
-		SSShints.push_back(coord);
-	}
 }
 
 // Read by arguments.

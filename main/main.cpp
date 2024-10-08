@@ -16,6 +16,8 @@ using namespace Eigen;
 
 string fileplace = "Input/";
 string outputplace = "Output/";
+string modelplace = "Input/Model/";
+string envplace = "Input/Environment/";
 string fileformat = ".off";
 string outputformat = ".log";
 string jsonformat = ".json";
