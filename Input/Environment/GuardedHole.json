@@ -2,5 +2,5 @@
 	"corner":[],
 	"edge":[],
 	"face":[],
-	"mesh":["wall1","wall5","cube1","cube2","cube3","cube4"]
+	"mesh":["GateUp","GateDown","GateLeft","GateRight","GuardFront","GuardBack"]
 }
