@@ -38,7 +38,9 @@ int extern ExpandShow;
 bool extern box_draw_strategy;
 vector<Vector3d> extern SSShints;
 string extern SSSfilename;
+string extern EnvName;
 bool extern SSSCheckYellow;
+Vector3d extern ViewPoint;
 
 // Read by json.
 void read_json(string filename)
@@ -85,7 +87,8 @@ void read_json(string filename)
 
 	if (string(data["obstacle"].type_name()) == "string")
 	{
-		string obsfilename = envplace + string(data["obstacle"]) + jsonformat;
+		EnvName = data["obstacle"];
+		string obsfilename = envplace + EnvName + jsonformat;
 		if (!exist(obsfilename))
 		{
 			cout << "bash: file " << obsfilename << " not found" << endl;
@@ -95,7 +98,10 @@ void read_json(string filename)
 		inobstacle >> obstacle;
 	}
 	else
+	{
+		EnvName = "Undefined";
 		obstacle = data["obstacle"];
+	}
 
 	// Read obstacles.
 	for (const auto& entryc : obstacle["corner"]) {
@@ -138,6 +144,7 @@ void read_json(string filename)
 		env.add_mesh(offfilename, string(entrym));
 	}
 
+	ViewPoint = read_vec3(obstacle["ViewPoint"]);
 }
 
 // Read by arguments.

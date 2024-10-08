@@ -56,23 +56,27 @@ long long waste_time = 0;
 long long classification_time = 0;
 
 // The amount of cube that is expanded.
-int expanded;
+int expanded = 0;
 // The average R^3-width of cubes.
 double aver3w;
 // The average SO3-width of cubes.
 double aveso3w;
 // Amount of mixed boxes.
-int stat_mixed;
+int stat_mixed = 0;
 // Amount of free boxes.
-int stat_free;
+int stat_free = 0;
 // Amount of stuck boxes.
-int stat_stuck;
+int stat_stuck = 0;
 // Amount of veps-small boxes.
-int stat_small;
+int stat_small = 0;
 // Average feature amount for mixed boxes.
 double avemixedfeature;
 // Average feature amount for free boxes.
 double avefreefeature;
+// Maximum size among all leaves.
+double MaxSize;
+// Minimum size among all leaves.
+double MinSize;
 
 //***************** Helper Functions ******************//
 
@@ -1620,6 +1624,8 @@ public:
 		avemixedfeature = 0;
 		avefreefeature = 0;
 		veps = 1.0 / 18;
+		MaxSize = B->Range();
+		MinSize = B->Range();
 	}
 
 	//********************** Observer functions *********************//
@@ -1871,6 +1877,8 @@ public:
 		stat_small = 0;
 		avemixedfeature = 0;
 		avefreefeature = 0;
+		MaxSize = B->Range();
+		MinSize = B->Range();
 		G.clear();
 		Global.clear();
 		Gid.clear();
@@ -2227,6 +2235,21 @@ public:
 		return true;
 	}
 
+	// Counting box size after find path.
+	void BoxSizeCount()
+	{
+		MaxSize = 0;
+		MinSize = B->Range();
+		for (auto it = Global.Vlist.begin(); it != Global.Vlist.end(); ++it)
+		{
+			double Size = Global.node(*it)->content->width();
+			if (MaxSize < Size)
+				MaxSize = Size;
+			if (MinSize > Size)
+				MinSize = Size;
+		}
+	}
+
 	// ******************************** Main function ****************************** //
 
 	// SSS framework main process.
@@ -2257,6 +2280,7 @@ public:
 		if (show)
 			cout << "SSS_discrete_find finished!" << endl;
 		show_expansion("Find path algorithm finished!");
+		BoxSizeCount();
 		return Path;														// Empty if no-path.
 	}
 };

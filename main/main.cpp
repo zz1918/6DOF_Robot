@@ -42,6 +42,8 @@ int ExpandShow = 200;
 bool box_draw_strategy = false;
 vector<Vector3d> SSShints;
 string SSSfilename;
+string EnvName;
+Vector3d ViewPoint;
 
 // Any possible tests.
 void test()

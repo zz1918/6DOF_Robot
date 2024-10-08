@@ -21,6 +21,7 @@ Vector4f ared(1, 0, 0, 0), agreen(0, 1, 0, 0), ablue(0, 0, 1, 0), ayellow(1, 1, 
 double extern Point_Size;
 double extern Line_Width;
 bool extern box_draw_strategy;
+Vector3d extern ViewPoint;
 
 Vector3d to_color(Vcolor c)
 {
@@ -248,7 +249,8 @@ public:
 		_viewer.data().set_colors(C);
 		_viewer.data().add_edges(E1, E2, EC);
 		_viewer.data().add_points(Vs, VC);
-		_viewer.core().align_camera_center(Vector3d(-envrange - 1, 0, 0));
+		_viewer.core().set_rotation_type(igl::opengl::ViewerCore::ROTATION_TYPE_TRACKBALL);
+		_viewer.core().align_camera_center(ViewPoint);
 		_viewer.core().background_color = bColor;
 		/*
 		_viewer.callback_key_down = [&](decltype(_viewer)&, unsigned int k, int m)
