@@ -1,0 +1,7 @@
+{
+	"corner":[],
+	"edge":[],
+	"face":[],
+	"mesh":["Ceil","Ground","PreCornerWall","SufCornerWall","GaragePillar"],
+	"ViewPoint":[5,5,5]
+}

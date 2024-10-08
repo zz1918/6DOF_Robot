@@ -26,7 +26,8 @@
 		"corner":[],
 		"edge":[],
 		"face":[],
-		"mesh":["wall1","wall5"]
+		"mesh":["wall1","wall5"],
+		"ViewPoint":[5,5,5]
 	}
 }
 
