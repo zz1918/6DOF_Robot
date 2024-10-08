@@ -26,7 +26,7 @@
 		"corner":[],
 		"edge":[],
 		"face":[],
-		"mesh":["wall12","wall13","wall14"],
+		"mesh":["GarageCeil"],
 		"ViewPoint":[5,5,5]
 	}
 }

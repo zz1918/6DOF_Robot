@@ -142,12 +142,13 @@ public:
 
 extern string fileplace;
 extern string fileformat;
+extern string modelplace;
 
 // Translate, rotate or scale meshes.
 void set_mesh(int argc, char* argv[])
 {
-	string input = fileplace + string(argv[2]) + fileformat;
-	string output = fileplace + string(argv[3]) + fileformat;
+	string input = modelplace + string(argv[2]) + fileformat;
+	string output = modelplace + string(argv[3]) + fileformat;
 	Vector3d rotA(stod(argv[4]), stod(argv[5]), stod(argv[6]));
 	double rotT(stod(argv[7]));
 	Vector3d rotC(stod(argv[8]), stod(argv[9]), stod(argv[10]));
@@ -171,9 +172,9 @@ void set_mesh(int argc, char* argv[])
 // Merge two meshes.
 void merge_mesh(int argc, char* argv[])
 {
-	string input1 = fileplace + string(argv[2]) + fileformat;
-	string input2 = fileplace + string(argv[3]) + fileformat;
-	string output = fileplace + string(argv[4]) + fileformat;
+	string input1 = modelplace + string(argv[2]) + fileformat;
+	string input2 = modelplace + string(argv[3]) + fileformat;
+	string output = modelplace + string(argv[4]) + fileformat;
 	OffMergeTool OMT;
 	OMT.add_mesh(input1);
 	OMT.add_mesh(input2);
@@ -183,9 +184,9 @@ void merge_mesh(int argc, char* argv[])
 // Split a mesh into two parts by the number of vertices in the first mesh.
 void split_mesh(int argc, char* argv[])
 {
-	string input = fileplace + string(argv[2]) + fileformat;
-	string output1 = fileplace + string(argv[3]) + fileformat;
-	string output2 = fileplace + string(argv[4]) + fileformat;
+	string input = modelplace + string(argv[2]) + fileformat;
+	string output1 = modelplace + string(argv[3]) + fileformat;
+	string output2 = modelplace + string(argv[4]) + fileformat;
 	int V1size = stoi(argv[5]);
 	OffSplitTool OST;
 	OST.def_mesh(input);
