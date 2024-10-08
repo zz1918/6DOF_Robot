@@ -1,13 +1,13 @@
 {
 	"startOx" : -3.5,
 	"startOy" : -3.5,
-	"startOz" : -3.5,
+	"startOz" : -0.5,
 	"startAphi" : 0,
 	"startAtheta" : 0,
 	"startBtheta" : 0,
 	"goalOx" : 3.5,
 	"goalOy" : 3.5,
-	"goalOz" : 3.5,
+	"goalOz" : -0.5,
 	"goalAphi" : 180,
 	"goalAtheta" : 0,
 	"goalBtheta" : 0,
@@ -26,7 +26,7 @@
 		"corner":[],
 		"edge":[],
 		"face":[],
-		"mesh":["GarageCeil"],
+		"mesh":["GarageCeil","GarageGround"],
 		"ViewPoint":[5,5,5]
 	}
 }
