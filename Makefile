@@ -170,15 +170,6 @@ me merge:
 sp split:
 	$(main) \
 		4 $(file1) $(file2) $(file3) $(Vt)\
-# Test 1
-t1 test1:
-	make r file1="cube1" file2="cube2" #Qtype="gbf"
-# Test 2
-t2 test2:
-	make s file1="GarageCeil" file2="GarageGround" transZ=-3
-# Test 3
-t3 test3:
-	make sp file1="gate3" file2="wall10" file3="wall11" V1size=8
 # Example 1
 e1 example1:
 	make e json="example1"
