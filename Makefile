@@ -106,6 +106,8 @@ scaleX = 1
 scaleY = 1
 scaleZ = 1
 
+setjson = "set"
+
 #=================================================
 # Define target folder
 #=================================================
@@ -156,6 +158,10 @@ s set:
 		$(rotCx) $(rotCy) $(rotCz) \
 		$(transX) $(transY) $(transZ) \
 		$(scale) $(scaleX) $(scaleY) $(scaleZ)
+# Make affine transformation on an off file by json.
+sj:
+	$(main) \
+		5 $(setjson)
 # Merge two off file into one file.
 me merge:
 	$(main) \

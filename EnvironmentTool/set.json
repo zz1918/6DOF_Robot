@@ -1,0 +1,12 @@
+{
+	"source_file": "cube",
+	"target_file": "cube+",
+	"rotA": [1,0,0],
+	"rotTheta": 0,
+	"rotC": [0,0,0],
+	"trans": [0,0,0],
+	"scale": 2,
+	"scaleX": 1,
+	"scaleY": 1,
+	"scaleZ": 1
+}

@@ -18,6 +18,7 @@ string fileplace = "Input/";
 string outputplace = "Output/";
 string modelplace = "Input/Model/";
 string envplace = "Input/Environment/";
+string toolplace = "EnvironmentTool/";
 string fileformat = ".off";
 string outputformat = ".log";
 string jsonformat = ".json";
@@ -86,6 +87,7 @@ int main(int argc,char* argv[])
 		case 2:set_mesh(argc, argv); break;
 		case 3:merge_mesh(argc, argv); break;
 		case 4:split_mesh(argc, argv); break;
+		case 5:set_mesh_by_json(argc, argv); break;
 		default:test(); break;
 		}
 	}

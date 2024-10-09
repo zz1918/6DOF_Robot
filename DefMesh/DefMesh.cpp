@@ -6,6 +6,7 @@
 #include<string>
 #include<Eigen/Dense>
 #include<SO3.h>
+#include<ReadControl.h>
 #include<ReadWriteOFF.h>
 using namespace std;
 using namespace Eigen;
@@ -143,6 +144,7 @@ public:
 extern string fileplace;
 extern string fileformat;
 extern string modelplace;
+extern string toolplace;
 
 // Translate, rotate or scale meshes.
 void set_mesh(int argc, char* argv[])
@@ -163,6 +165,27 @@ void set_mesh(int argc, char* argv[])
 	OLT.add_scale(scaleX, 0);
 	OLT.add_scale(scaleY, 1);
 	OLT.add_scale(scaleZ, 2);
+	OLT.add_rotation(rotA, rotT);
+	OLT.add_translation(rotC);
+	OLT.add_translation(trans);
+	OLT.make_OFF(input, output);
+}
+
+// Translate, rotate or scale meshes.
+void set_mesh_by_json(int argc, char* argv[])
+{
+	string filename = toolplace + string(argv[2]) + jsonformat;
+	string input, output;
+	Vector3d rotA, rotC, trans;
+	double rotT;
+	Vector4d scales;
+	read_set_mesh_by_json(filename, input, output, rotA, rotT, rotC, trans, scales);
+	OffLinearTool OLT;
+	OLT.add_translation(-rotC);
+	OLT.add_scale(scales(0));
+	OLT.add_scale(scales(1), 0);
+	OLT.add_scale(scales(2), 1);
+	OLT.add_scale(scales(3), 2);
 	OLT.add_rotation(rotA, rotT);
 	OLT.add_translation(rotC);
 	OLT.add_translation(trans);

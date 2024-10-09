@@ -147,6 +147,34 @@ void read_json(string filename)
 	ViewPoint = read_vec3(obstacle["ViewPoint"]);
 }
 
+// Read set mesh by json
+void read_set_mesh_by_json(string filename, string& input, string& output, Vector3d& rotA, double& rotT, Vector3d& rotC, Vector3d& trans, Vector4d& scales)
+{
+	// Load json data from scene file
+	json data;
+	ifstream in(filename);
+
+	in >> data;
+
+	// Helper function to read a Vector3d from a json array
+	auto read_vec3 = [](const json& x) {
+		return Vector3d(x[0], x[1], x[2]);
+		};
+
+	input = modelplace + string(data["source_file"]) + fileformat;
+	if (!exist(input))
+	{
+		cout << "bash: file " << input << " not found" << endl;
+		input = modelplace + "cube" + fileformat;
+	}
+	output = modelplace + string(data["target_file"]) + fileformat;
+	rotA = read_vec3(data["rotA"]);
+	rotT = data["rotTheta"];
+	rotC = read_vec3(data["rotC"]);
+	trans = read_vec3(data["trans"]);
+	scales = Vector4d(data["scale"], data["scaleX"], data["scaleY"], data["scaleZ"]);
+}
+
 // Read by arguments.
 void read_argv(int argc, char* argv[])
 {
