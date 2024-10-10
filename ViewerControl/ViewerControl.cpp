@@ -15,13 +15,27 @@
 #include<igl/opengl/glfw/Viewer.h>
 using namespace Eigen;
 
-Vector3d red(1, 0, 0), green(0, 1, 0), blue(0, 0, 1), yellow(1, 1, 0), purple(1, 0, 1), cyan(0, 1, 1), white(1, 1, 1), black(0, 0, 0), grey(0.5, 0.5, 0.5);
-Vector4f ared(1, 0, 0, 0), agreen(0, 1, 0, 0), ablue(0, 0, 1, 0), ayellow(1, 1, 0, 0), apurple(1, 0, 1, 0), acyan(0, 1, 1, 0), awhite(1, 1, 1, 0), ablack(0, 0, 0, 0), agrey(0.5, 0.5, 0.5, 0);
-
 double extern Point_Size;
 double extern Line_Width;
 bool extern box_draw_strategy;
 Vector3d extern ViewPoint;
+double extern EnvAmbiency;
+double extern FpAmbiency;
+
+Vector3d red(1, 0, 0), green(0, 1, 0), blue(0, 0, 1), yellow(1, 1, 0), purple(1, 0, 1), cyan(0, 1, 1), white(1, 1, 1), black(0, 0, 0), grey(0.5, 0.5, 0.5);
+Vector4f ared(1, 0, 0, 0), agreen(0, 1, 0, 0), ablue(0, 0, 1, 0), ayellow(1, 1, 0, 0), apurple(1, 0, 1, 0), acyan(0, 1, 1, 0), awhite(1, 1, 1, 0), ablack(0, 0, 0, 0), agrey(0.5, 0.5, 0.5, 0);
+Vector4f hred(1, 0, 0, 0.5), hgreen(0, 1, 0, 0.5), hblue(0, 0, 1, 0.5), hyellow(1, 1, 0, 0.5), hpurple(1, 0, 1, 0.5), hcyan(0, 1, 1, 0.5), hwhite(1, 1, 1, 0.5), hblack(0, 0, 0, 0.5), hgrey(0.5, 0.5, 0.5, 0.5);
+
+Vector4d amb(Vector3d C)
+{
+	return Vector4d(C(0), C(1), C(2), FpAmbiency);
+}
+
+Vector4d hamb(Vector3d C)
+{
+	return Vector4d(C(0), C(1), C(2), EnvAmbiency);
+}
+
 
 Vector3d to_color(Vcolor c)
 {
@@ -84,7 +98,7 @@ public:
 		VC.resize(0, 3);
 		V.resize(0, 3);
 		F.resize(0, 3);
-		C.resize(0, 3);
+		C.resize(0, 4);
 		PE1.resize(0, 3);
 		PE2.resize(0, 3);
 		PEC.resize(0, 3);
@@ -110,29 +124,6 @@ public:
 		add(new Edge(Corner.row(5), Corner.row(1)), bColor);
 		add(new Edge(Corner.row(2), Corner.row(6)), bColor);
 		add(new Edge(Corner.row(7), Corner.row(3)), bColor);
-		/*
-		Vs.resize(8, 3);
-		VC.resize(8, 3);
-		for (int i = 0; i < 8; ++i)
-			for (int j = 0; j < 3; ++j)
-				Vs(i, j) = ((i >> j & 1) ? range : -range);
-		for (int i = 0; i < 8; ++i)
-			VC.row(i) = red;
-		E1.resize(24, 3);
-		E2.resize(24, 3);
-		EC.resize(24, 3);
-		for (int i = 0; i < 8; ++i)
-		{
-			E1.row(3 * i + 0) = Vs.row(i);
-			E1.row(3 * i + 1) = Vs.row(i);
-			E1.row(3 * i + 2) = Vs.row(i);
-			E2.row(3 * i + 0) = Vs.row(i) - RowVector3d(Vs(i, 0) / range, 0, 0);
-			E2.row(3 * i + 1) = Vs.row(i) - RowVector3d(0, Vs(i, 1) / range, 0);
-			E2.row(3 * i + 2) = Vs.row(i) - RowVector3d(0, 0, Vs(i, 2) / range);
-			EC.row(3 * i + 0) = blue;
-			EC.row(3 * i + 1) = blue;
-			EC.row(3 * i + 2) = blue;
-		}*/
 	}
 	// Merge a mesh from V-F matrix.
 	void merge(MatrixXd _V, MatrixXi _F, Vector3d _C = white)
@@ -146,7 +137,7 @@ public:
 				F(F.rows() - _F.rows() + i, j) = _F(i, j) + V.rows() - _V.rows();
 		C.conservativeResize(C.rows() + _F.rows(), C.cols());
 		for (int i = 0; i < _F.rows(); ++i)
-			C.row(C.rows() - _F.rows() + i) = _C;
+			C.row(C.rows() - _F.rows() + i) = hamb(_C);
 	}
 	// Add a mesh.
 	void add(Mesh* M, Vector3d _C = white)
@@ -191,7 +182,7 @@ public:
 		F.conservativeResize(F.rows() + 1, F.cols());
 		F.row(F.rows() - 1) = RowVector3i(V.rows() - 3, V.rows() - 2, V.rows() - 1);
 		C.conservativeResize(C.rows() + 1, C.cols());
-		C.row(C.rows() - 1) = _C;
+		C.row(C.rows() - 1) = amb(_C);
 	}
 	// Add a footprint for time t.
 	void add(VectorXd gamma, double time)
@@ -203,7 +194,7 @@ public:
 		F.conservativeResize(F.rows() + 1, F.cols());
 		F.row(F.rows() - 1) = RowVector3i(V.rows() - 3, V.rows() - 2, V.rows() - 1);
 		C.conservativeResize(C.rows() + 1, C.cols());
-		C.row(C.rows() - 1) = (1 - time) * red + time * blue;
+		C.row(C.rows() - 1) = (1 - time) * amb(red) + time * amb(blue);
 	}
 	// Add the connection edge for consecutive footprints.
 	void add(VectorXd gamma1, VectorXd gamma2)

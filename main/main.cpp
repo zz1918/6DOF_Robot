@@ -22,7 +22,7 @@ string toolplace = "EnvironmentTool/";
 string fileformat = ".off";
 string outputformat = ".log";
 string jsonformat = ".json";
-string version = "1.6";
+string version = "1.7";
 
 double Point_Size = 15.0;
 double Line_Width = 1.0;
@@ -46,6 +46,8 @@ string SSSfilename;
 string EnvName;
 Vector3d ViewPoint;
 int Noisity = 0;
+double EnvAmbiency = 0.5;
+double FpAmbiency = 1;
 
 // Any possible tests.
 void test()

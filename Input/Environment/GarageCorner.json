@@ -3,5 +3,7 @@
 	"edge":[],
 	"face":[],
 	"mesh":["GarageCeil","GarageGround","PreCornerWall","SufCornerWall","GaragePillar","GarageGate"],
-	"ViewPoint":[5,5,5]
+	"ViewPoint":[5,5,5],
+	"EnvAmbiency": 0.5,
+	"FpAmbiency": 1
 }

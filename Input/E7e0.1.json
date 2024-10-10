@@ -28,7 +28,9 @@
 		"edge":[],
 		"face":[],
 		"mesh":["gate10","gate11","gate12","gate13"],
-		"ViewPoint":[5,5,5]
+		"ViewPoint":[5,5,5],
+		"EnvAmbiency": 0.5,
+		"FpAmbiency": 1
 	}
 }
 

@@ -28,7 +28,9 @@
 		"edge":[],
 		"face":[],
 		"mesh":["GarageCeil","GarageGround","GaragePillar","GarageGate","PreCornerWall","SufCornerWall"],
-		"ViewPoint":[0,0,0]
+		"ViewPoint":[0,0,0],
+		"EnvAmbiency": 0.5,
+		"FpAmbiency": 1
 	}
 }
 

@@ -42,6 +42,8 @@ string extern EnvName;
 bool extern SSSCheckYellow;
 Vector3d extern ViewPoint;
 int extern Noisity;
+double extern EnvAmbiency;
+double extern FpAmbiency;
 
 // Read by json.
 void read_json(string filename)
@@ -147,6 +149,8 @@ void read_json(string filename)
 	}
 
 	ViewPoint = read_vec3(obstacle["ViewPoint"]);
+	EnvAmbiency = obstacle["EnvAmbiency"];
+	FpAmbiency = obstacle["FpAmbiency"];
 }
 
 // Read set mesh by json
