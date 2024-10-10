@@ -4,7 +4,7 @@
 #define SO3_H
 
 #define M_PI           3.14159265358979323846       /* pi */
-#define doublemin 1e-9
+#define doublemin 1e-8
 #include<cmath>
 #include<Eigen/Dense>
 using namespace Eigen;
@@ -61,15 +61,15 @@ public:
         a = sqrt(r.trace() + 1) / 2;
         if (abs(a) < doublemin)
         {
-            b = sqrt((r(0, 0) + 1) / 2 - a * a);
-            c = sqrt((r(1, 1) + 1) / 2 - a * a);
-            d = sqrt((r(2, 2) + 1) / 2 - a * a);
+            b = sqrt(abs((r(0, 0) + 1) / 2 - a * a));
+            c = sqrt(abs((r(1, 1) + 1) / 2 - a * a));
+            d = sqrt(abs((r(2, 2) + 1) / 2 - a * a));
             if (r(1, 0) + r(0, 1) < 0)
                 c = -c;
             if (r(2, 0) + r(0, 2) < 0)
                 d = -d;
             if (r(2, 1) - r(1, 2) < 0)
-                a = -a;
+                b = -b;
         }
         else
         {

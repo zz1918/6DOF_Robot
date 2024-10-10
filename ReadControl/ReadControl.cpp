@@ -41,6 +41,7 @@ string extern SSSfilename;
 string extern EnvName;
 bool extern SSSCheckYellow;
 Vector3d extern ViewPoint;
+int extern Noisity;
 
 // Read by json.
 void read_json(string filename)
@@ -70,6 +71,7 @@ void read_json(string filename)
 	ExpandShow = data["ExpandShow"];
 	SSSCheckYellow = data["CheckYellow"];
 	box_draw_strategy = data["DrawBox"];
+	Noisity = data["Noisity"];
 	Vector3d alphaO(alphaOx, alphaOy, alphaOz);
 	Vector4d alphaQ = SO3(alphaAphi, alphaAtheta, alphaBtheta).Q();
 	Vector3d betaO(betaOx, betaOy, betaOz);

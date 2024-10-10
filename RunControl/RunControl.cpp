@@ -39,6 +39,7 @@ int extern stat_stuck;
 int extern stat_small;
 double extern MaxSize;
 double extern MinSize;
+int extern Noisity;
 
 string VecXd(VectorXd v)
 {
@@ -80,7 +81,7 @@ void output_summarize(ostream &os, vector<VectorXd>& path, double time_in_second
 
 	os << "###############################################################" << endl;*/
 
-	if (!path.empty())
+	if (!path.empty() && Noisity >= 1)
 	{
 		os << "The path is the line segments connecting the following points: " << endl;
 		os << SSSalpha.transpose() << endl;
@@ -142,21 +143,24 @@ void SSS_run(bool show = false)
 	vector<VectorXd> path = SE3SSS.Find_Path(SSSalpha, SSSbeta, *Omega, varepsilon, SSSheu, SSSshow);
 	auto end_time = std::chrono::high_resolution_clock::now();
 	double time_in_second = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / (long double)(1000000.0);
-	if (SSSshow)
+	if (Noisity >= 5)
 		viewer.view();
 	output_summarize(cout, path, time_in_second);
 	write_in_file(outputplace + SSSfilename + outputformat, path, time_in_second);
-	viewer.clear();
-	viewer.set_env(env, envrange, SSSalpha, SSSbeta);
-	viewer.set_path(path);
-	viewer.view();
+	if (Noisity >= 0)
+	{
+		viewer.clear();
+		viewer.set_env(env, envrange, SSSalpha, SSSbeta);
+		viewer.set_path(path);
+		viewer.view();
+	}
 	delete T;
 	delete C;
 	delete Omega;
 }
 
 // Non-interactive mode.
-void non_interactive(bool show=false)
+void non_interactive(bool show = false)
 {
 	SSS_intro();
 	SSS_run(show);

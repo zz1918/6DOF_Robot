@@ -14,6 +14,8 @@
 using namespace std;
 using namespace Eigen;
 
+int extern Noisity;
+
 enum pvalue { MIXED, FREE, STUCK, UNKNOWN };
 
 ostream& operator<<(ostream& os, pvalue p)
@@ -97,7 +99,7 @@ public:
 			Point* P = new Point(V.row(i));
 			corners.push_back(P);
 		}
-		if (show)
+		if (Noisity >= 10)
 			cout << "Points constructed." << endl;
 		// Construct edge and triangle features.
 		for (int i = 0; i < F.rows(); ++i)
@@ -112,19 +114,19 @@ public:
 
 			faces.push_back(T);
 		}
-		if (show)
+		if (Noisity >= 10)
 			cout << "Faces constructed." << endl;
 		// Set edge and inv-edge relations.
 		edge_topology(F);
-		if (show)
+		if (Noisity >= 10)
 			cout << "Topology built." << endl;
 		for (int i = 0; i < edges.size(); ++i)
 			if (Eid(EV(i, 1), EV(i, 0)))
 				edges[i]->set_inv(edges[Eid(EV(i, 1), EV(i, 0))]);
-		if (show)
+		if (Noisity >= 10)
 			cout << "Topology constructed." << endl;
 		bbox = MatrixId(Vector3d(V.col(0).minCoeff(), V.col(1).minCoeff(), V.col(2).minCoeff()), Vector3d(V.col(0).maxCoeff(), V.col(1).maxCoeff(), V.col(2).maxCoeff()));
-		if (show)
+		if (Noisity >= 10)
 			cout << "Bounding box constructed." << endl;
 	}
 	// V matrix.

@@ -238,6 +238,7 @@ public:
 	// View everyting.
 	void view(Vector4f bColor = agrey)
 	{
+		cout << "---------------------- Drawing Scenes ----------------------" << endl;
 		// The viewer.
 		igl::opengl::glfw::Viewer _viewer;
 		_viewer.data().point_size = Point_Size;

@@ -45,6 +45,7 @@ vector<Vector3d> SSShints;
 string SSSfilename;
 string EnvName;
 Vector3d ViewPoint;
+int Noisity = 0;
 
 // Any possible tests.
 void test()

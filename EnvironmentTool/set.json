@@ -1,11 +1,11 @@
 {
-	"source_file": "cube",
-	"target_file": "cube+",
-	"rotA": [1,0,0],
-	"rotTheta": 0,
+	"source_file": "PreCornerWall",
+	"target_file": "SufCornerWall",
+	"rotA": [0,0,1],
+	"rotTheta": 90,
 	"rotC": [0,0,0],
 	"trans": [0,0,0],
-	"scale": 2,
+	"scale": 1,
 	"scaleX": 1,
 	"scaleY": 1,
 	"scaleZ": 1

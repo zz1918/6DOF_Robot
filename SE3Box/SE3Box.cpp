@@ -1,4 +1,5 @@
-// SE3Box.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// SE3Box.cpp : This file implements the oct-tree structure for R^3 and SO(3)
+// and implements the product tree structure for SE(3).
 
 #ifndef SE3BOX_H
 #define SE3BOX_H
@@ -17,6 +18,7 @@ class SO3Box;
 class SE3Box;
 double extern r0;
 double extern varepsilon;
+int extern Noisity;
 
 vector<R3Box*> R3list;
 vector<SO3Box*> SO3list;
@@ -789,7 +791,7 @@ public:
 	// Find a target box by path indicator.
 	SO3Box* find(bit t[dim], int _wxyz, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << "Finding path indicator: " << t[0] << " " << t[1] << " " << t[2] << " " << t[3] << endl;
 			cout << "In box " << _wxyz << endl;
@@ -802,7 +804,7 @@ public:
 				tcode[i] = t[i][target->Depth() + 1];
 			target = target->child(tcode);
 		}
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << "Found ";
 			target->show_code();
@@ -813,7 +815,7 @@ public:
 	// Find a target box by child indicator.
 	SO3Box* find(bit t[dim], SO3Box* b, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << "Finding path indicator: " << t[0] << " " << t[1] << " " << t[2] << " " << t[3] << endl;
 			cout << "In box " << b->WXYZ() << endl;
@@ -826,7 +828,7 @@ public:
 				tcode[i] = t[i][target->Depth() + 1];
 			target = target->child(tcode);
 		}
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << "Found ";
 			target->show_code();
@@ -894,7 +896,7 @@ public:
 			SO3Box* new_child = children[i];
 			SO3Box* target = NULL;
 			bit tcode[dim];
-			if (show)
+			if (Noisity >= 14)
 			{
 				cout << "Assigning ";
 				new_child->show_code();
@@ -902,7 +904,7 @@ public:
 			}
 			for (int j = 0; j < dim; ++j)
 			{
-				if (show)
+				if (Noisity >= 14)
 					cout << "direction " << j << ":" << endl;
 				if (j == wxyz)
 					continue;
@@ -1439,7 +1441,7 @@ public:
 			return NULL;
 		if (Tneighbor->Depth() != BT()->Depth())
 			return parent->T_neighbor(i, pos);
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << endl << "Finding: ";
 			Tneighbor->show_code();
@@ -1447,7 +1449,7 @@ public:
 			BR()->show_code();
 		}
 		SE3Box* target = find(Tneighbor->ID(), BR()->ID());
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << endl << "Found: ";
 			if (target == NULL)
@@ -1473,7 +1475,7 @@ public:
 			return NULL;
 		if (Rneighbor->Depth() != BR()->Depth())
 			return parent->R_neighbor(i, pos);
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << endl << "Finding: ";
 			BT()->show_code();
@@ -1481,7 +1483,7 @@ public:
 			Rneighbor->show_code();
 		}
 		SE3Box* target = find(BT()->ID(), Rneighbor->ID());
-		if (show)
+		if (Noisity >= 12)
 		{
 			cout << endl << "Found: ";
 			if (target == NULL)
@@ -1553,14 +1555,14 @@ public:
 			SE3Box* new_child = children[i];
 			// The box that is going to be assigned as the neighbor.
 			SE3Box* target = NULL;
-			if (show)
+			if (Noisity >= 14)
 			{
 				cout << endl << "Assigning ";
 				new_child->show_code();
 			}
 			for (int j = 0; j < dim; ++j)
 			{
-				if (show)
+				if (Noisity >= 14)
 					cout << endl << "direction " << j << ":";
 				// Principle negative j-neighbor.
 				for (int k = 0; k < 2; ++k)
@@ -1606,16 +1608,16 @@ public:
 		{
 			SE3Box* new_child = children[i];
 			SE3Box* target = NULL;
-			if (show)
+			if (Noisity >= 14)
 			{
 				cout << endl << "Assigning ";
 				new_child->show_code();
 			}
 			for (int j = 0; j < dim; ++j)
 			{
-				if (show)
+				if (Noisity >= 14)
 					cout << endl << "direction " << j << ":";
-				if (show)
+				if (Noisity >= 14)
 					cout << endl << "direction " << j << ":";
 				// Principle negative j-neighbor.
 				for (int k = 0; k < 2; ++k)
@@ -1685,10 +1687,10 @@ public:
 		vector<SE3Box*> subneighbors;
 		for (int i = 0; i < dim; ++i)
 		{
-			if (show)
+			if (Noisity >= 14)
 				cout << endl << i;
 			subneighbors = adj_neighbors(neg_neighbor(i));
-			if (show)
+			if (Noisity >= 14)
 			{
 				cout << endl;
 				if (neg_neighbor(i) != NULL)
@@ -1699,14 +1701,14 @@ public:
 			for (int j = 0; j < subneighbors.size(); ++j)
 			{
 				neighbors.push_back(subneighbors[j]);
-				if (show)
+				if (Noisity >= 14)
 				{
 					cout << endl;
 					subneighbors[j]->show_code();
 				}
 			}
 			subneighbors = adj_neighbors(pos_neighbor(i));
-			if (show)
+			if (Noisity >= 14)
 			{
 				cout << endl;
 				if (pos_neighbor(i) != NULL)
@@ -1717,7 +1719,7 @@ public:
 			for (int j = 0; j < subneighbors.size(); ++j)
 			{
 				neighbors.push_back(subneighbors[j]);
-				if (show)
+				if (Noisity >= 14)
 				{
 					cout << endl;
 					subneighbors[j]->show_code();

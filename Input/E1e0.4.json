@@ -22,6 +22,7 @@
 	"hint": [],
 	"CheckYellow": true,
 	"AlwaysFullClassify": true,
+	"Noisity": 0,
 	"obstacle":{
 		"corner":[],
 		"edge":[],

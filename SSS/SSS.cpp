@@ -27,6 +27,7 @@ using namespace std;
 
 int extern ExpandLimit;
 int extern ExpandShow;
+int extern Noisity;
 SSSViewer extern viewer;
 EnvironmentFeature extern env;
 VectorXd extern SSSalpha, SSSbeta;
@@ -285,7 +286,7 @@ public:
 
 		// Unknown case.
 
-		if (show)
+		if (Noisity >= 10)
 		{
 			cout << "New classifying box: ";
 			b->out();
@@ -349,7 +350,7 @@ public:
 				{
 					set_pvalue(b, STUCK);
 					set_feature(b, eset);
-					if (show)
+					if (Noisity >= 10)
 						cout << "The box is STUCK." << endl;
 					return STUCK;
 				}
@@ -360,7 +361,7 @@ public:
 		{
 			set_pvalue(b, FREE);
 			set_feature(b, eset);
-			if (show)
+			if (Noisity >= 10)
 				cout << "The box is FREE." << endl;
 			return FREE;
 		}
@@ -371,7 +372,7 @@ public:
 
 		set_pvalue(b, MIXED);
 		set_feature(b, new_phi);
-		if (show)
+		if (Noisity >= 10)
 			cout << "The box is MIXED." << endl;
 		return MIXED;
 	}
@@ -440,7 +441,7 @@ public:
 			return find(root, v, show);
 		else
 		{
-			if (show)
+			if (Noisity >= 10)
 				cout << "(" << v.transpose() << ") not found." << endl;
 			return NULL;
 		}
@@ -450,7 +451,7 @@ public:
 	{
 		if (B->is_leaf())
 		{
-			if (show)
+			if (Noisity >= 10)
 			{
 				cout << "Found box: ";
 				B->out();
@@ -461,7 +462,7 @@ public:
 		for (int i = 0; i < subsize(B); ++i)
 			if (B->child(i)->contains(v))
 				return find(B->child(i), v, show);
-		if (show)
+		if (Noisity >= 10)
 			cout << "(" << v.transpose() << ") not found." << endl;
 		return NULL;
 	}
@@ -699,14 +700,14 @@ public:
 			cout << "Warning! Mixed box is alpha/beta box!" << endl;
 		if (is_forbid(b, GlobalId))
 			return;
-		if (show)
+		if (Noisity >= 9)
 		{
 			cout << "Pushing ";
 			b->out();
 			cout << " into local queue." << endl;
 		}
 		LQ.push(make_pair(key(nExpBetaDis(b) + HintHeu(b)), b));
-		if (show)
+		if (Noisity >= 10)
 			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
 		if (is_AlphaFringe(b))
 			old_fringe_num++;
@@ -725,14 +726,14 @@ public:
 			cout << "Warning! Mixed box is alpha/beta box!" << endl;
 		if (is_forbid(b, GlobalId))
 			return;
-		if (show)
+		if (Noisity >= 9)
 		{
 			cout << "Pushing ";
 			b->out();
 			cout << " into local queue." << endl;
 		}
 		LQ.push(make_pair(key(nExpAlphaDis(b) + HintHeu(b)), b));
-		if (show)
+		if (Noisity >= 10)
 			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
 		if (is_BetaFringe(b))
 			old_fringe_num++;
@@ -753,7 +754,7 @@ public:
 
 		set_AlphaBox(b);
 
-		if (show)
+		if (Noisity >= 9)
 		{
 			cout << "Inserting ";
 			b->out();
@@ -761,7 +762,7 @@ public:
 		}
 
 		vector<Box*> b_neighbors = b->all_adj_neighbors();
-		if (show)
+		if (Noisity >= 10)
 			cout << "There are " << b_neighbors.size() << " neighbors." << endl;
 		auto end_time = std::chrono::high_resolution_clock::now();
 		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
@@ -808,7 +809,7 @@ public:
 
 		set_BetaBox(b);
 
-		if (show)
+		if (Noisity >= 9)
 		{
 			cout << "Inserting ";
 			b->out();
@@ -816,7 +817,7 @@ public:
 		}
 
 		vector<Box*> b_neighbors = b->all_adj_neighbors();
-		if (show)
+		if (Noisity >= 10)
 			cout << "There are " << b_neighbors.size() << " neighbors." << endl;
 		auto end_time = std::chrono::high_resolution_clock::now();
 		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
@@ -1004,14 +1005,14 @@ public:
 			cout << "Warning! Mixed box is alpha/beta box!" << endl;
 		if (is_forbid(b, GlobalId))
 			return;
-		if (show)
+		if (Noisity >= 9)
 		{
 			cout << "Pushing ";
 			b->out();
 			cout << " into local queue." << endl;
 		}
 		LQ.push(make_pair(key(nExpNextDis(b) + HintHeu(b) + (BoxSpace.size() - tParent(b))), b));
-		if (show)
+		if (Noisity >= 10)
 			cout << "There are " << LQ.size() << " heuristic values in queue." << endl;
 		if (is_BetaFringe(b))
 			old_fringe_num++;
@@ -1032,7 +1033,7 @@ public:
 
 		set_BetaBox(b);
 
-		if (show)
+		if (Noisity >= 9)
 		{
 			cout << "Inserting ";
 			b->out();
@@ -1040,7 +1041,7 @@ public:
 		}
 
 		vector<Box*> b_neighbors = b->all_adj_neighbors();
-		if (show)
+		if (Noisity >= 10)
 			cout << "There are " << b_neighbors.size() << " neighbors." << endl;
 		auto end_time = std::chrono::high_resolution_clock::now();
 		set_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
@@ -1378,7 +1379,7 @@ public:
 	// Procedures for mixed boxes.
 	void add_mixed_node(Box* b, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 8)
 		{
 			cout << "Adding MIXED box: ";
 			b->out();
@@ -1434,7 +1435,7 @@ public:
 	// This method maintains local Alpha/Beta Boxes and Alpha/Beta Fringes.
 	void add_free_recur(Box* b, priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 8)
 		{
 			cout << "Adding FREE box: ";
 			b->out();
@@ -1443,24 +1444,24 @@ public:
 
 		if (is_Beta(b))
 		{
-			if (show)
+			if (Noisity >= 9)
 				cout << "This is the BoxBeta, inserting into beta continent." << endl;
 			Fringe.set_BetaFree(b, LQ, Global, GlobalId, t, show);
 		}
 		if (Fringe.is_BetaNeighbor(b))
 		{
-			if (show)
+			if (Noisity >= 9)
 				cout << "This is a neighbor of beta box, inserting into beta continent." << endl;
 			Fringe.set_BetaFree(b, LQ, Global, GlobalId, t, show);
 		}
 		add_free_pure(b);
-		if (show)
+		if (Noisity >= 9)
 			cout << "Time: " << clock() << endl;
 	}
 		// Procedures for free boxes.
 	void add_free_node(Box* b, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 8)
 		{
 			cout << "Adding FREE box: ";
 			b->out();
@@ -1490,7 +1491,7 @@ public:
 	// Procedures for stuck boxes.
 	void add_stuck_node(Box* b, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 8)
 		{
 			cout << "Adding STUCK box: ";
 			b->out();
@@ -1502,7 +1503,7 @@ public:
 	// Procedures for veps-small boxes.
 	void add_small_node(Box* b, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 8)
 		{
 			cout << "Adding veps-small box: ";
 			b->out();
@@ -1633,6 +1634,8 @@ public:
 	// Show how many boxes that are expanded with hints.
 	void show_expansion(string hint, bool show = false)
 	{
+		if (Noisity < 0)
+			return;
 		cout << expanded << " cubes have been expanded with average width " << aver3w << " * " << aveso3w << "." << endl;
 		cout << "There are " << stat_mixed << " mixed boxes, " << stat_free << " free boxes and " << stat_stuck << " stuck boxes and " << stat_small << " veps-small boxes." << endl;
 		cout << "The average amount of features for mixed boxes are " << avemixedfeature << "." << endl;
@@ -1653,7 +1656,7 @@ public:
 		for (int i = 0; i < 60; ++i)
 			cout << "-";
 		cout << endl;
-		if (show)
+		if (Noisity >= 5)
 		{
 			reset_viewer();
 			if (forbids.empty())
@@ -1686,26 +1689,26 @@ public:
 			return;
 		}
 
-		if (show)
+		if (Noisity >= 7)
 			cout << "Box is a leaf." << endl;
 
 		// Step 1: subdivide the box.
 		b->subdivide();
 		gerase(b);
 
-		if (show)
+		if (Noisity >= 7)
 			cout << "Box is subdivided." << endl;
 
 		for (int i = 0; i < B->subsize(b); ++i)
 			ginsert(b->child(i));
 
-		if (show)
+		if (Noisity >= 7)
 			cout << "Children are inserted, now " << Global.Vsize() << " boxes in global graph." << endl;
 
 		for (int i = 0; i < B->subsize(b); ++i)
 			gupdate(b->child(i));
 
-		if (show)
+		if (Noisity >= 7)
 			cout << "Box subdivision is set." << endl;
 
 		// Step 2: classify soft pvalues and maintain global graph.
@@ -1722,7 +1725,7 @@ public:
 					default:gcolor(b->child(i), BLACK);
 					}
 
-		if (show)
+		if (Noisity >= 7)
 			cout << "Children colors are set." << endl;
 
 		// Step 3: maintain Q and G.
@@ -1736,7 +1739,7 @@ public:
 			default:add_unknown_node(b->child(i));
 			}
 
-		if (show)
+		if (Noisity >= 7)
 			cout << "Free graph is set." << endl;
 
 		// Step 4: show how many cubes that are expanded to give an intuition of the process.
@@ -1806,7 +1809,7 @@ public:
 			default:add_unknown_node(b->child(i));
 			}
 		}
-		if (show)
+		if (Noisity >= 7)
 			cout << "G is set." << endl;
 
 		for (int i = 0; i < B->subsize(b); ++i)
@@ -1819,7 +1822,7 @@ public:
 			}
 		}
 
-		if (show)
+		if (Noisity >= 7)
 		{
 			cout << "LQ is set, " << Fringe.set_free_num << " boxes are set as alpha/beta box, ";
 			cout << Fringe.old_fringe_num << " boxes are alpha/beta fringe and updated this time, ";
@@ -1893,7 +1896,7 @@ public:
 		if (heu == GBF)
 			GBF_ini();
 
-		if (show)
+		if (Noisity >= 6)
 			cout << "Find path initialization finished." << endl;
 		return true;
 	}
@@ -1918,7 +1921,7 @@ public:
 			return false;													// Empty if no-path.
 		}
 
-		if (show)
+		if (Noisity >= 6)
 			cout << "Classify initial boxes finished." << endl;
 		return true;
 	}
@@ -1926,10 +1929,10 @@ public:
 	// Step 2: find the FREE box containing alpha.
 	bool SSS_find_alpha(bool show = false)
 	{
-		if (show)
+		if (Noisity >= 6)
 			cout << "Finding alpha: (" << alpha.transpose() << ")." << endl;
 		BoxAlpha = B->find(alpha);
-		if (show)
+		if (Noisity >= 6)
 			cout << "Alpha initial box is found." << endl;
 		if (BoxAlpha == NULL)
 		{
@@ -1962,7 +1965,7 @@ public:
 	// Step 3: find the FREE box containing beta.
 	bool SSS_find_beta(bool show = false)
 	{
-		if (show)
+		if (Noisity >= 6)
 			cout << "Finding beta: (" << beta.transpose() << ")." << endl;
 		BoxBeta = B->find(beta);
 		if (BoxBeta == NULL)
@@ -1997,7 +2000,7 @@ public:
 	{
 		if (find(BoxAlpha) == find(BoxBeta))
 		{
-			if (show)
+			if (Noisity >= 6)
 				cout << "Alpha and beta have been in the same FREE component." << endl;
 			return 1;
 		}
@@ -2012,7 +2015,8 @@ public:
 		if (expanded > ExpandLimit)
 		{
 			show_expansion("Run over expand limit (temporary setting for experiments).");
-			cout << "Time Out!" << endl;
+			if (Noisity >= 6)
+				cout << "Time Out!" << endl;
 			return -1;
 		}
 		return 0;
@@ -2051,15 +2055,19 @@ public:
 	// Step 1: Recursive method initialization, push C_t-mixed boxes into local queue and build local graph.
 	void Recur_ini(vector<Box*> BoxSpace, priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 4)
 		{
 			reset_viewer();
-			cout << "BoxAlpha: " << BoxAlpha->ID() << endl;
-			cout << "BoxBeta: " << BoxBeta->ID() << endl;
-			cout << "BoxSpace contains:" << endl;
+			if (Noisity >= 6)
+			{
+				cout << "BoxAlpha: " << BoxAlpha->ID() << endl;
+				cout << "BoxBeta: " << BoxBeta->ID() << endl;
+				cout << "BoxSpace contains:" << endl;
+			}
 			for (auto it = BoxSpace.begin(); it != BoxSpace.end(); ++it)
 			{
-				cout << " " << (*it)->ID();
+				if (Noisity >= 6)
+					cout << " " << (*it)->ID();;
 				if ((*it)->ID() == BoxAlpha->ID())
 					continue;
 				if ((*it)->ID() == BoxBeta->ID())
@@ -2074,10 +2082,11 @@ public:
 				default:continue;
 				}
 			}
-		cout << endl;
-		viewer.add_box(BoxAlpha, Vector3d(0, 0, 1));
-		viewer.add_box(BoxBeta, Vector3d(0, 0, 1));
-		viewer.view();
+			if (Noisity >= 6)
+				cout << endl;
+			viewer.add_box(BoxAlpha, Vector3d(0, 0, 1));
+			viewer.add_box(BoxBeta, Vector3d(0, 0, 1));
+			viewer.view();
 		}
 		Fringe.set_BetaFree(BoxBeta, LQ, Global, GlobalId, t);
 		if (getcolor(BoxAlpha, t) != GREEN)
@@ -2089,7 +2098,7 @@ public:
 	// One step of recursive expansion.
 	pair<vector<Box*>, bool> Recur_one_step(priority_queue<pair<vector<double>, Box*> >& LQ, GBFQuickPath<Box>& Fringe, int t, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 6)
 			cout << "Attempting to find a path for t=" << t << "." << endl;
 		
 		// This if is currently useless.
@@ -2110,7 +2119,7 @@ public:
 		else
 		{
 			list<GraphNode<Box>*> try_path = Global.path(gnode(BoxAlpha), gnode(BoxBeta), forbids.top(), t);
-			if (show)
+			if (Noisity >= 6)
 				cout << "Attempt find path finished." << endl;
 			if (!try_path.empty())
 			{
@@ -2128,23 +2137,24 @@ public:
 					show_expansion("Possible path for t=" + to_string(t) + " fails, continue try for new path.");
 			}
 		}
-		if (show)
+		if (Noisity >= 6)
 			cout << "Checked no current path." << endl;
 		while (!LQ.empty() && !LQ.top().second->is_leaf())
 			LQ.pop();
 		if (LQ.empty())
 			return make_pair(vector<Box*>(), false);
-		if (show)
+		if (Noisity >= 6)
 			cout << "Continue expansions." << endl;		
 		Box* LQ_top = LQ.top().second;
 		Expand_recur(LQ_top, LQ, Fringe, t, show);
 		LQ.pop();
-		if (show)
+		if (Noisity >= 6)
 			cout << "Expand finished." << endl << "-----------------------------------------------" << endl;
 		if (expanded > ExpandLimit)
 		{
 			show_expansion("Run over expand limit (temporary setting for experiments).");
-			cout << "Time Out!" << endl;
+			if (Noisity >= 6)
+				cout << "Time Out!" << endl;
 			return make_pair(vector<Box*>(), false);
 		}
 		return make_pair(vector<Box*>(), true);
@@ -2166,12 +2176,12 @@ public:
 	// Recursively find channel algorithm for fixed BoxAlpha and BoxBeta in a given BoxSpace (substitution for step 4 in main algorithm).
 	vector<Box*> RecurFindChannel(vector<Box*> BoxSpace, int t, bool show = false)
 	{
-		if (show)
+		if (Noisity >= 6)
 			cout << "Finding channel in " << BoxSpace.size() << " boxes." << endl;
 		priority_queue<pair<vector<double>, Box*> > LocalQ;
 		GBFQuickPath<Box> LocalFringe(B->Range(), veps, forbids.top(), BoxSpace);
 		Recur_ini(BoxSpace, LocalQ, LocalFringe, t, show);
-		if (show)
+		if (Noisity >= 9)
 			cout << "There are " << LocalQ.size() << " mixed boxes." << endl;
 		show_expansion("Now finding channel for t = " + to_string(t));
 		return Recur_main_loop(LocalQ, LocalFringe, t, show);
@@ -2257,27 +2267,27 @@ public:
 	{
 		if (!SSS_ini(_alpha, _beta, Omega, varepsilon, _h, show))
 			return Path;
-		if (show)
+		if (Noisity >= 4)
 			cout << "SSS_ini finished!" << endl;
 		if (!SSS_first_classify(show))
 			return Path;
-		if (show)
+		if (Noisity >= 4)
 			cout << "SSS_first_classify finished!" << endl;
 		if (!SSS_find_alpha(show))
 			return Path;
-		if (show)
+		if (Noisity >= 4)
 			cout << "SSS_find_alpha finished!" << endl;
 		if (!SSS_find_beta(show))
 			return Path;
-		if (show)
+		if (Noisity >= 4)
 			cout << "SSS_find_beta finished!" << endl;
 		if (!SSS_main_loop(show))
 			return Path;
-		if (show)
+		if (Noisity >= 4)
 			cout << "SSS_main_loop finished!" << endl;
 		if (!SSS_discrete_find(show))
 			return Path;
-		if (show)
+		if (Noisity >= 4)
 			cout << "SSS_discrete_find finished!" << endl;
 		show_expansion("Find path algorithm finished!");
 		BoxSizeCount();
