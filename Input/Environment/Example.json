@@ -1,0 +1,27 @@
+{
+	"corner":[{
+			"name": "A",
+			"position": [0,0,0]
+		},{
+			"name": "B",
+			"position": [1,0,0]
+		},{
+			"name": "C",
+			"position": [0,1,0]
+		}],
+	"edge":[{
+			"name": "AB",
+			"p1": "A",
+			"p2": "B"
+		}],
+	"face":[{
+			"name": "ABC",
+			"p1": "A",
+			"p2": "B",
+			"p3": "C"
+		}],
+	"mesh":[],
+	"ViewPoint":[5,5,5],
+	"EnvAmbiency": 0.5,
+	"FpAmbiency": 1
+}

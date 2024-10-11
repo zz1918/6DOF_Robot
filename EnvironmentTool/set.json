@@ -10,3 +10,9 @@
 	"scaleY": 1,
 	"scaleZ": 1
 }
+
+// rotA = rotation Axis
+// rotC = relative Center
+// rotTheta = rotation angle
+// trans = translation
+// scale = zoom in/out
