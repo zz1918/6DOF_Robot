@@ -367,6 +367,8 @@ public:
 		}
 
 		// Unknown case.
+
+		// C1 predicate.
 		if (pvalue_C1_of(b) == UNKNOWN)
 		{
 			auto start_time = std::chrono::high_resolution_clock::now();
@@ -390,26 +392,109 @@ public:
 		DeltaFeature new_phi;
 		DeltaWtFp* Fp = AppFp(b);
 
-		if (show)
+		// Use approximate footprint of point A to quick exclude stuckness.
+		AapFp* Fa = new AapFp(Fp);
+		bool Amixed = false;
+		if (!Amixed)
+		{
+			for (int i = 0; i < phi.Vlist.size(); ++i)
+				if (Fa->classify(phi.Vlist[i]) != FREE)
+				{
+					Amixed = true;
+					break;
+				}
+		}
+		if (!Amixed)
+		{
+			for (int i = 0; i < phi.Elist.size(); ++i)
+				if (Fa->classify(phi.Elist[i]) != FREE)
+				{
+					Amixed = true;
+					break;
+				}
+		}
+		if (!Amixed)
+		{
+			for (int i = 0; i < phi.Tlist.size(); ++i)
+				if (Fa->classify(phi.Tlist[i]) != FREE)
+				{
+					Amixed = true;
+					break;
+				}
+		}
+		if (!Amixed)
+		{
+			// After there is no boundary features, let's determine if the box is stuck or not.
+			for (int i = 0; i < phi.Mlist.size(); ++i)
+				if (Fa->classify(phi.Mlist[i]) != FREE)
+				{
+					set_pvalue(b, STUCK);
+					set_feature(b, eset);
+					if (Noisity >= 10)
+						cout << "The box is STUCK." << endl;
+					return STUCK;
+				}
+		}
+
+		// Use approximate footprint of point B to quick exclude stuckness.
+		BapFp* Fb = new BapFp(Fp);
+		bool Bmixed = false;
+		if (!Bmixed)
+		{
+			for (int i = 0; i < phi.Vlist.size(); ++i)
+				if (Fb->classify(phi.Vlist[i]) != FREE)
+				{
+					Bmixed = true;
+					break;
+				}
+		}
+		if (!Bmixed)
+		{
+			for (int i = 0; i < phi.Elist.size(); ++i)
+				if (Fb->classify(phi.Elist[i]) != FREE)
+				{
+					Bmixed = true;
+					break;
+				}
+		}
+		if (!Bmixed)
+		{
+			for (int i = 0; i < phi.Tlist.size(); ++i)
+				if (Fb->classify(phi.Tlist[i]) != FREE)
+				{
+					Bmixed = true;
+					break;
+				}
+		}
+		if (!Bmixed)
+		{
+			// After there is no boundary features, let's determine if the box is stuck or not.
+			for (int i = 0; i < phi.Mlist.size(); ++i)
+				if (Fb->classify(phi.Mlist[i]) != FREE)
+				{
+					set_pvalue(b, STUCK);
+					set_feature(b, eset);
+					if (Noisity >= 10)
+						cout << "The box is STUCK." << endl;
+					return STUCK;
+				}
+		}
+
+		// Both A and B are not able to assign stuck. Let's focus on the real approximate footprint.
+		if (Noisity >= 15)
 			Fp->out();
 
 		for (int i = 0; i < phi.Vlist.size(); ++i)
 			if (Fp->classify(phi.Vlist[i]) != FREE)
 				new_phi.Vlist.push_back(phi.Vlist[i]);
-			else
-				continue;
 		for (int i = 0; i < phi.Elist.size(); ++i)
 			if (Fp->classify(phi.Elist[i]) != FREE)
 				new_phi.Elist.push_back(phi.Elist[i]);
-			else
-				continue;
 		for (int i = 0; i < phi.Tlist.size(); ++i)
 			if (Fp->classify(phi.Tlist[i]) != FREE)
 				new_phi.Tlist.push_back(phi.Tlist[i]);
-			else
-				continue;
 
-		if (show)
+		if (Noisity >= 15)
 			new_phi.out();
 
 		// Stuck check.

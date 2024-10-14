@@ -528,6 +528,160 @@ public:
 	}
 };
 
+// Approximate footprint of point A.
+class AapFp
+{
+	Ball* AppA;
+public:
+	AapFp(DeltaWtFp* AppFp)
+	{
+		if (AppFp->initial)
+			AppA = NULL;
+		else
+			AppA = new Ball(AppFp->opA, AppFp->dB);
+	}
+	// If the WtFp does not intersect point feature f.
+	bool free_from(Point* f)
+	{
+		if (AppA == NULL)
+			return true;
+		return AppA->Sep(f);
+	}
+	// If the WtFp does not intersect edge feature f.
+	bool free_from(Edge* f)
+	{
+		if (AppA == NULL)
+			return true;
+		return AppA->Sep(f);
+	}
+	// If the WtFp does not intersect triangle feature f.
+	bool free_from(Triangle* f)
+	{
+		if (AppA == NULL)
+			return true;
+		return AppA->Sep(f);
+	}
+	// Classify the relation between WtFp with a point feature.
+	pvalue classify(Point* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between WtFp with a point feature.
+	pvalue classify(Edge* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between WtFp with a point feature.
+	pvalue classify(Triangle* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between WtFp with a mesh after classifying all its boundary features to be FREE.
+	pvalue classify(Mesh* f, bool show = false)
+	{
+		if (AppA == NULL)
+			return FREE;
+		else if (f->inside(AppA->origin->p))
+			return STUCK;
+		else
+			return FREE;
+	}
+	// Output the approximate footprint.
+	void out(ostream& os = cout)
+	{
+		if (AppA == NULL)
+			os << "This is not R-splitted, no need for approximate footprint of point A." << endl;
+		else
+			os << "This is approximate footprint of point A, which is a ball center at (" << AppA->origin->p.transpose() << ") with radius " << AppA->radius << "." << endl;
+	}
+};
+
+// Approximate footprint of point B.
+class BapFp
+{
+	Ball* AppB;
+public:
+	BapFp(DeltaWtFp* AppFp)
+	{
+		if (AppFp->initial)
+			AppB = NULL;
+		else
+			AppB = new Ball(AppFp->opB, AppFp->dB);
+	}
+	// If the WtFp does not intersect point feature f.
+	bool free_from(Point* f)
+	{
+		if (AppB == NULL)
+			return true;
+		return AppB->Sep(f);
+	}
+	// If the WtFp does not intersect edge feature f.
+	bool free_from(Edge* f)
+	{
+		if (AppB == NULL)
+			return true;
+		return AppB->Sep(f);
+	}
+	// If the WtFp does not intersect triangle feature f.
+	bool free_from(Triangle* f)
+	{
+		if (AppB == NULL)
+			return true;
+		return AppB->Sep(f);
+	}
+	// Classify the relation between WtFp with a point feature.
+	pvalue classify(Point* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between WtFp with a point feature.
+	pvalue classify(Edge* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between WtFp with a point feature.
+	pvalue classify(Triangle* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between WtFp with a mesh after classifying all its boundary features to be FREE.
+	pvalue classify(Mesh* f, bool show = false)
+	{
+		if (AppB == NULL)
+			return FREE;
+		else if (f->inside(AppB->origin->p))
+			return STUCK;
+		else
+			return FREE;
+	}
+	// Output the approximate footprint.
+	void out(ostream& os = cout)
+	{
+		if (AppB == NULL)
+			os << "This is not R-splitted, no need for approximate footprint of point B." << endl;
+		else
+			os << "This is approximate footprint of point B, which is a ball center at (" << AppB->origin->p.transpose() << ") with radius " << AppB->radius << "." << endl;
+	}
+};
+
 // Inner approximate footprint for Delta robot.
 // A set InFp(B) such that for each b in B, InFp(B) \cap Fp(b) is none empty.
 // An obvious construction is the circumball of Bt.
