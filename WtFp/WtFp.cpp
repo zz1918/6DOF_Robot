@@ -85,11 +85,13 @@ class Mesh
 
 	// Bounding box of mesh for quick exclusion.
 	MatrixId bbox;
+	// Inscribe box of mesh for quick check.
+	MatrixId ibox;
 public:
 	vector<Point*> corners;
 	vector<Edge*> edges;
 	vector<Triangle*> faces;
-	Mesh(MatrixXd _V, MatrixXi _F, bool show = false)
+	Mesh(MatrixXd _V, MatrixXi _F, bool is_block = false)
 	{
 		V = _V;
 		F = _F;
@@ -125,9 +127,33 @@ public:
 				edges[i]->set_inv(edges[Eid(EV(i, 1), EV(i, 0))]);
 		if (Noisity >= 10)
 			cout << "Topology constructed." << endl;
-		bbox = MatrixId(Vector3d(V.col(0).minCoeff(), V.col(1).minCoeff(), V.col(2).minCoeff()), Vector3d(V.col(0).maxCoeff(), V.col(1).maxCoeff(), V.col(2).maxCoeff()));
+		Vector3d bmax = Vector3d(V.col(0).maxCoeff(), V.col(1).maxCoeff(), V.col(2).maxCoeff());
+		Vector3d bmin = Vector3d(V.col(0).minCoeff(), V.col(1).minCoeff(), V.col(2).minCoeff());
+		bbox = MatrixId(bmin, bmax);
 		if (Noisity >= 10)
 			cout << "Bounding box constructed." << endl;
+		if (is_block)
+			ibox = bbox;
+		else
+		{
+			Vector3d center = Vector3d(0, 0, 0);
+			for (int i = 0; i < V.rows(); ++i)
+				center = center + V.row(i).transpose();
+			center = center / V.rows();
+			double min_dis = (bbox.max() - bbox.min()).norm();
+			for (int i = 0; i < faces.size(); ++i)
+			{
+				double dis = faces[i]->plane_distance(center);
+				if (min_dis > dis)
+					min_dis = dis;
+			}
+			double min_width = min_dis / sqrt(3);
+			Vector3d imax = center + Vector3d(min_width, min_width, min_width);
+			Vector3d imin = center - Vector3d(min_width, min_width, min_width);
+			ibox = MatrixId(imin, imax);
+		}
+		if (is_block && Noisity >= 10)
+			cout << "Set ibox as bbox since this is a block." << endl;
 	}
 	// V matrix.
 	MatrixXd Vertices()
@@ -155,6 +181,11 @@ public:
 	MatrixId BBox()
 	{
 		return bbox;
+	}
+	// Return the ibox
+	MatrixId IBox()
+	{
+		return ibox;
 	}
 };
 
@@ -433,7 +464,17 @@ public:
 	pvalue quick_classify(Mesh* f, bool show = false)
 	{
 		if (!bbox.intersects(f->BBox()))
+		{
+			if (Noisity >= 15)
+				cout << "A box is classified as FREE by bounding box check." << endl;
 			return FREE;
+		}
+		else if (bbox.is_included(f->IBox()))
+		{
+			if (Noisity >= 15)
+				cout << "A box is classified as STUCK by bounding box check." << endl;
+			return STUCK;
+		}
 		else
 			return MIXED;
 	}
@@ -450,8 +491,9 @@ public:
 		for (int i = 0; i < f->faces.size(); ++i)
 			if (!free_from(f->faces[i]))
 				return MIXED;*/
-		if (quick_classify(f, show) == FREE)
-			return FREE;
+		pvalue qc = quick_classify(f, show);
+		if (qc != MIXED)
+			return qc;
 		if (f->inside(mB))
 			return STUCK;
 		else
@@ -581,6 +623,103 @@ public:
 	{
 		os << "This inner footprint is a ball with center (";
 		os << mB.transpose() << ") and radius " << rB << "." << endl;
+	}
+};
+
+// Exact footprint for point O.
+class OExFp
+{
+	// The footprint solid cuboid.
+	Cuboid* bt;
+	// Bounding box of footprint for quick exclusion.
+	MatrixId bbox;
+	// Center of the footprint.
+	Vector3d mB;
+public:
+	// return bbox.
+	MatrixId BBox()
+	{
+		return bbox;
+	}
+	// Constructor by a box B in \intbox W.
+	OExFp(MatrixId Bt, MatrixId Br = MatrixId(Vector3d(-1, -1, -1), Vector3d(1, 1, 1)), int wxyz = -1)
+	{
+		bt = new Cuboid(Bt.min(), Bt.max());
+		bbox = Bt;
+		mB = (Bt.min() + Bt.max()) / 2;
+	}
+	// If the OExFp does not intersect point feature f.
+	bool free_from(Point* f)
+	{
+		return bt->Sep(f);
+	}
+	// If the OExFp does not intersect edge feature f.
+	bool free_from(Edge* f)
+	{
+		return bt->Sep(f);
+	}
+	// If the OExFp does not intersect triangle feature f.
+	bool free_from(Triangle* f)
+	{
+		return bt->Sep(f);
+	}
+	// Classify the relation between OExFp with a point feature.
+	pvalue classify(Point* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between OExFp with a point feature.
+	pvalue classify(Edge* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Classify the relation between OExFp with a point feature.
+	pvalue classify(Triangle* f)
+	{
+		if (free_from(f))
+			return FREE;
+		else
+			return MIXED;
+	}
+	// Quickly classifying the relation between InFp with a mesh.
+	pvalue quick_classify(Mesh* f, bool show = false)
+	{
+		if (!bbox.intersects(f->BBox()))
+		{
+			if (Noisity >= 15)
+				cout << "A box is classified as FREE by bounding box check." << endl;
+			return FREE;
+		}
+		else if (bbox.is_included(f->IBox()))
+		{
+			if (Noisity >= 15)
+				cout << "A box is classified as STUCK by bounding box check." << endl;
+			return STUCK;
+		}
+		else
+			return MIXED;
+	}
+	// Classify the relation between InFp with a mesh after classifying all its boundary features to be FREE.
+	pvalue classify(Mesh* f, bool show = false)
+	{
+		pvalue qc = quick_classify(f, show);
+		if (qc != MIXED)
+			return qc;
+		if (f->inside(mB))
+			return STUCK;
+		else
+			return FREE;
+	}
+	// Output the inner footprint.
+	void out(ostream& os = cout)
+	{
+		os << "This exact footprint is a cuboid." << endl;
 	}
 };
 

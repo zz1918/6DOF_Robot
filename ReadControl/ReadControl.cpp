@@ -25,6 +25,7 @@ string extern modelplace;
 string extern envplace;
 string extern fileformat;
 string extern jsonformat;
+string extern cubeformat;
 
 EnvironmentFeature extern env;
 VectorXd extern SSSalpha, SSSbeta;
@@ -146,6 +147,18 @@ void read_json(string filename)
 			continue;
 		}
 		env.add_mesh(offfilename, string(entrym));
+	}
+
+	for (const auto& entrym : obstacle["cuboid"]) {
+		if (string(entrym).empty())
+			continue;
+		string cubefilename = modelplace + string(entrym) + cubeformat;
+		if (!exist(cubefilename))
+		{
+			cout << "bash: file " << cubefilename << " not found" << endl;
+			continue;
+		}
+		env.add_cube(cubefilename, string(entrym));
 	}
 
 	ViewPoint = read_vec3(obstacle["ViewPoint"]);

@@ -1036,6 +1036,146 @@ public:
     }
 };
 
+// A box formed by a corner and three directions to be edges.
+class Cuboid: public Solid {
+public:
+    // Relative center.
+    Vector3d rc;
+    // Relative x,y,z axis.
+    Vector3d rx, ry, rz;
+    // 8 corners.
+    Point* corner[8];
+    // 6 faces.
+    Trapezoid* facet[6];
+    // The i-th corner.
+    Point* V(int i)
+    {
+        return corner[i];
+    }
+    // The i-th face.
+    Trapezoid* F(int i)
+    {
+        return facet[i];
+    }
+    // The corners of the cuboid is then rc, rc+rx, rc+ry, rc+rx+ry, rc+rz, rc+rx+rz, rc+ry+rz, rc+rx+ry+rz
+    void set_VF()
+    {
+        corner[0] = new Point(rc);
+        corner[1] = new Point(rc + rx);
+        corner[2] = new Point(rc + ry);
+        corner[3] = new Point(rc + rx + ry);
+        corner[4] = new Point(rc + rz);
+        corner[5] = new Point(rc + rx + rz);
+        corner[6] = new Point(rc + ry + rz);
+        corner[7] = new Point(rc + rx + ry + rz);
+        facet[0] = new Trapezoid(V(0), V(1), V(3), V(2));
+        facet[1] = new Trapezoid(V(1), V(0), V(4), V(5));
+        facet[2] = new Trapezoid(V(4), V(0), V(2), V(6));
+        facet[3] = new Trapezoid(V(5), V(4), V(6), V(7));
+        facet[4] = new Trapezoid(V(3), V(1), V(5), V(7));
+        facet[5] = new Trapezoid(V(2), V(3), V(7), V(6));
+    }
+    // Construct from relative center and relative bases.
+    Cuboid(Vector3d _rc, Vector3d _rx, Vector3d _ry, Vector3d _rz)
+    {
+        rc = _rc;
+        rx = _rx;
+        ry = _ry;
+        rz = _rz;
+        set_VF();
+    }
+    // Construct from a matrix interval.
+    Cuboid(Vector3d Imin, Vector3d Imax)
+    {
+        rc = Imin;
+        rx = Vector3d(Imax(0) - Imin(0), 0, 0);
+        ry = Vector3d(0, Imax(1) - Imin(1), 0);
+        rz = Vector3d(0, 0, Imax(2) - Imin(2));
+        set_VF();
+    }
+    
+    // v relative to rc.
+    Vector3d dir(Vector3d v)
+    {
+        return v - rc;
+    }
+    // If a point is inside the cuboid.
+    bool inside(Vector3d v)
+    {
+        Vector3d dv = dir(v);
+        if (dv.dot(rx) < 0)
+            return false;
+        if (dv.dot(rx) > rx.squaredNorm())
+            return false;
+        if (dv.dot(ry) < 0)
+            return false;
+        if (dv.dot(ry) > ry.squaredNorm())
+            return false;
+        if (dv.dot(rz) < 0)
+            return false;
+        if (dv.dot(rz) > rz.squaredNorm())
+            return false;
+        return true;
+    }
+    // If a point feature may inside this  cuboid.
+    bool inside(Point* f)
+    {
+        return inside(f->p);
+    }
+    // If an edge feature may inside this  cuboid.
+    bool inside(Edge* f)
+    {
+        return inside(f->P(0));
+    }
+    // If a triangle feature may inside this  cuboid.
+    bool inside(Triangle* f)
+    {
+        return inside(f->P(0));
+    }
+    // Sep(this,f)>t?
+    bool Sep(Point* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (inside(f))
+            return false_update(f, t);
+        for (int i = 0; i < 6; ++i)
+            if (!F(i)->Sep(f, t))
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Edge* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (inside(f))
+            return false_update(f, t);
+        for (int i = 0; i < 6; ++i)
+            if (!F(i)->Sep(f, t))
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+    // Sep(this,f)>t?
+    bool Sep(Triangle* f, double t = 0)
+    {
+        if (contains(f, t))
+            return false;
+        if (ncontains(f, t))
+            return true;
+        if (inside(f))
+            return false_update(f, t);
+        for (int i = 0; i < 6; ++i)
+            if (!F(i)->Sep(f, t))
+                return false_update(f, t);
+        return true_update(f, t);
+    }
+};
+
 // A ball with center o and radius r.
 class Ball :public Solid {
 public:

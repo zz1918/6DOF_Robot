@@ -48,4 +48,39 @@ void write_OFF(const string& filename, MatrixXd& V, MatrixXi& F) {
 	}
 }
 
+// Read a cube mesh from a cube file
+void read_CUBE(const string& filename, MatrixXd& V, MatrixXi& F)
+{
+	ifstream in(filename);
+	string token;
+	in >> token;
+	Vector3d rc, rx, ry, rz;
+	in >> rc(0) >> rc(1) >> rc(2);
+	in >> rx(0) >> rx(1) >> rx(2);
+	in >> ry(0) >> ry(1) >> ry(2);
+	in >> rz(0) >> rz(1) >> rz(2);
+	V.resize(8, 3);
+	F.resize(12, 3);
+	V.row(0) = rc;
+	V.row(1) = rc + rx;
+	V.row(2) = rc + ry;
+	V.row(3) = rc + rx + ry;
+	V.row(4) = rc + rz;
+	V.row(5) = rc + rx + rz;
+	V.row(6) = rc + ry + rz;
+	V.row(7) = rc + rx + ry + rz;
+	F << 0, 1, 5,
+		0, 5, 4,
+		0, 4, 6,
+		0, 6, 2,
+		0, 2, 3,
+		0, 3, 1,
+		4, 5, 6,
+		6, 5, 7,
+		7, 5, 3,
+		3, 5, 1,
+		6, 7, 3,
+		6, 3, 2;
+}
+
 #endif

@@ -22,16 +22,8 @@
 	"hint": [],
 	"CheckYellow": false,
 	"AlwaysFullClassify": false,
-	"Noisity": 0,
-	"obstacle":{
-		"corner":[],
-		"edge":[],
-		"face":[],
-		"mesh":["GarageCeil","GarageGround","GaragePillar","GarageGate","PreCornerWall","SufCornerWall"],
-		"ViewPoint":[0,0,0],
-		"EnvAmbiency": 0.5,
-		"FpAmbiency": 1
-	}
+	"Noisity": 4,
+	"obstacle": "Corredor"
 }
 
 // The nlohmann json cannot read footnotes like this in the middle of json.

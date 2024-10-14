@@ -20,7 +20,13 @@
 			"p2": "B",
 			"p3": "C"
 		}],
+	“cuboid”:[
+			"name": "box",
+			"min": [-1,-1,-1],
+			"max": [1,1,1]
+		],
 	"mesh":[],
+	"cuboid":[],
 	"ViewPoint":[5,5,5],
 	"EnvAmbiency": 0.5,
 	"FpAmbiency": 1

@@ -19,10 +19,11 @@ string outputplace = "Output/";
 string modelplace = "Input/Model/";
 string envplace = "Input/Environment/";
 string toolplace = "EnvironmentTool/";
+string cubeformat = ".cube";
 string fileformat = ".off";
 string outputformat = ".log";
 string jsonformat = ".json";
-string version = "1.7";
+string version = "1.8";
 
 double Point_Size = 15.0;
 double Line_Width = 1.0;

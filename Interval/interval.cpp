@@ -363,6 +363,7 @@ public:
             return false;
         return !contains(X);
     }
+    // If M is inside this?
     bool is_include(MatrixInterval<Scarlar> M)
     {
         if (rows() != M.rows())
@@ -375,6 +376,7 @@ public:
                     return false;
         return true;
     }
+    // If this is inside M?
     bool is_included(MatrixInterval<Scarlar> M)
     {
         if (rows() != M.rows())

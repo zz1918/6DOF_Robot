@@ -174,12 +174,6 @@ public:
 	Mesh* add_mesh(MatrixXd V, MatrixXi F, string name)
 	{
 		Mesh* new_mesh = new Mesh(V, F);
-		/*for (int i = 0; i < new_mesh->corners.size(); ++i)
-			Vlist.insert(make_pair(name + "_P_" + to_string(i), new_mesh->corners[i]));
-		for (int i = 0; i < new_mesh->edges.size(); ++i)
-			Elist.insert(make_pair(name + "_E_" + to_string(i), new_mesh->edges[i]));
-		for (int i = 0; i < new_mesh->faces.size(); ++i)
-			Tlist.insert(make_pair(name + "_F_" + to_string(i), new_mesh->faces[i]));*/
 		Mlist.insert(make_pair(name, new_mesh));
 		return new_mesh;
 	}
@@ -190,6 +184,21 @@ public:
 		MatrixXi F;
 		read_OFF(filename, V, F);
 		return add_mesh(V, F, name);
+	}
+	// Construct a new cuboid mesh from V-F matrix.
+	Mesh* add_cube(MatrixXd V, MatrixXi F, string name)
+	{
+		Mesh* new_mesh = new Mesh(V, F, true);
+		Mlist.insert(make_pair(name, new_mesh));
+		return new_mesh;
+	}
+	// Construct a new cuboid mesh from .cube address.
+	Mesh* add_cube(string filename, string name)
+	{
+		MatrixXd V;
+		MatrixXi F;
+		read_CUBE(filename, V, F);
+		return add_cube(V, F, name);
 	}
 	// Remove a point by name.
 	int remove_point(string name)

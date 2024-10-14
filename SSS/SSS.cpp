@@ -44,8 +44,6 @@ bool is_hinted(SE3Box *b)
 	return false;
 }
 
-
-
 //*************** Statistic variables ***************//
 
 long long set_fringe_time = 0;
@@ -55,6 +53,11 @@ long long get_color_time = 0;
 long long get_graph_node_time = 0;
 long long waste_time = 0;
 long long classification_time = 0;
+long long classification_C1_time = 0;
+long long construct_box_time = 0;
+long long classify_p0_known_time = 0;
+long long p0_quick_classify_time = 0;
+long long p0_classify_feature_time = 0;
 
 // The amount of cube that is expanded.
 int expanded = 0;
@@ -122,6 +125,8 @@ class DeltaPredicate
 	map<int, DeltaFeature> box_features;
 	// Classified predicate values.
 	map<int, pvalue> box_pvalues;
+	// Classified C1 values.
+	map<int, pvalue> box_C1_pvalues;
 	// How many predicates?
 	int size = 2;
 public:
@@ -198,12 +203,30 @@ public:
 		else
 			return target->second;
 	}
+	// C1 predicate value of box b.
+	pvalue pvalue_C1_of(SE3Box* b)
+	{
+		map<int, pvalue>::iterator target = box_C1_pvalues.find(b->ID());
+		if (target == box_C1_pvalues.end())
+			return UNKNOWN;
+		else
+			return target->second;
+	}
 	// Set the predicate of box b.
 	void set_pvalue(SE3Box* b,pvalue Cb)
 	{
 		map<int, pvalue>::iterator target = box_pvalues.find(b->ID());
 		if (target == box_pvalues.end())
 			box_pvalues.insert(make_pair(b->ID(), Cb));
+		else
+			target->second = Cb;
+	}
+	// Set the C1 predicate of box b.
+	void set_C1_pvalue(SE3Box* b, pvalue Cb)
+	{
+		map<int, pvalue>::iterator target = box_C1_pvalues.find(b->ID());
+		if (target == box_C1_pvalues.end())
+			box_C1_pvalues.insert(make_pair(b->ID(), Cb));
 		else
 			target->second = Cb;
 	}
@@ -222,6 +245,15 @@ public:
 	{
 		return new DeltaInFp(b->BT()->range);
 	}
+	// Construct the OExFp of box b.
+	OExFp* OexFp(SE3Box* b)
+	{
+		auto start_time = std::chrono::high_resolution_clock::now();
+		OExFp* newFp = new OExFp(b->BT()->range);
+		auto end_time = std::chrono::high_resolution_clock::now();
+		construct_box_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return newFp;
+	}
 	// Construct the CnFp of two boxes b and p.
 	/*
 	DeltaCnFp* ACnFp(SE3Box* b, SE3Box* p)
@@ -239,16 +271,57 @@ public:
 		switch (k)
 		{
 		case 2:return FREE;
-		case 1:return C1(b, show);
+		case 1:
+		{
+			auto start_time = std::chrono::high_resolution_clock::now();
+			pvalue C1b = C1(b, show);
+			auto end_time = std::chrono::high_resolution_clock::now();
+			classification_C1_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+			return C1b;
+		}
 		default:return wtC(b, show);
 		}
 	}
 	// Classification of b by point O.
 	pvalue C1(SE3Box* b, bool show = false)
 	{
+		auto start_time = std::chrono::high_resolution_clock::now();
+		auto end_time = std::chrono::high_resolution_clock::now();
+		// Known case.
+		pvalue Cb = pvalue_C1_of(b);
+		if (Cb != UNKNOWN)
+		{
+			end_time = std::chrono::high_resolution_clock::now();
+			classify_p0_known_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+			return Cb;
+		}
 		DeltaFeature phi = feature_of(b);
+		if (phi.empty())
+		{
+			set_C1_pvalue(b, FREE);
+			end_time = std::chrono::high_resolution_clock::now();
+			classify_p0_known_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+			return FREE;
+		}
+
+		end_time = std::chrono::high_resolution_clock::now();
+		classify_p0_known_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		// Unknonw case.
 		DeltaFeature new_phi;
+		OExFp* Fp = OexFp(b);
 		DeltaInFp* Fq = AinFp(b);
+		start_time = std::chrono::high_resolution_clock::now();
+		for (int i = 0; i < phi.Mlist.size(); ++i)
+			if (Fp->quick_classify(phi.Mlist[i]) == STUCK)
+			{
+				set_C1_pvalue(b, STUCK); end_time = std::chrono::high_resolution_clock::now();
+				p0_quick_classify_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+				return STUCK;
+			}
+		set_C1_pvalue(b, STUCK);
+		end_time = std::chrono::high_resolution_clock::now();
+		p0_quick_classify_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		start_time = std::chrono::high_resolution_clock::now();
 		for (int i = 0; i < phi.Vlist.size(); ++i)
 			if (Fq->classify(phi.Vlist[i]) != FREE)
 				new_phi.Vlist.push_back(phi.Vlist[i]);
@@ -258,17 +331,26 @@ public:
 		for (int i = 0; i < phi.Tlist.size(); ++i)
 			if (Fq->classify(phi.Tlist[i]) != FREE)
 				new_phi.Tlist.push_back(phi.Tlist[i]);
+		end_time = std::chrono::high_resolution_clock::now();
+		p0_classify_feature_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 		// Stuck check.
 		if (new_phi.empty())
 		{
 			// After there is no boundary features, let's determine if the box is stuck or not.
 			for (int i = 0; i < phi.Mlist.size(); ++i)
-				if (Fq->classify(phi.Mlist[i]) != FREE)
+				if (Fp->classify(phi.Mlist[i]) != FREE)
+				{
+					set_C1_pvalue(b, STUCK);
 					return STUCK;
+				}
+			set_C1_pvalue(b, FREE);
 			return FREE;
 		}
 		else
+		{
+			set_C1_pvalue(b, MIXED);
 			return MIXED;
+		}
 	}
 	// Classification of b by soft predicate.
 	pvalue wtC(SE3Box* b, bool show = false)
@@ -285,6 +367,18 @@ public:
 		}
 
 		// Unknown case.
+		if (pvalue_C1_of(b) == UNKNOWN)
+		{
+			auto start_time = std::chrono::high_resolution_clock::now();
+			C1(b, show);
+			auto end_time = std::chrono::high_resolution_clock::now();
+			classification_C1_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		}
+		if (pvalue_C1_of(b) == STUCK)
+		{
+			set_pvalue(b, STUCK);
+			return STUCK;
+		}
 
 		if (Noisity >= 10)
 		{
@@ -294,59 +388,36 @@ public:
 		}
 
 		DeltaFeature new_phi;
-		DeltaFeature new_in_phi;
 		DeltaWtFp* Fp = AppFp(b);
-		DeltaInFp* Fq = AinFp(b);
 
 		if (show)
-		{
 			Fp->out();
-			Fq->out();
-		}
 
 		for (int i = 0; i < phi.Vlist.size(); ++i)
-			if (Fq->classify(phi.Vlist[i]) != FREE)
-			{
-				new_in_phi.Vlist.push_back(phi.Vlist[i]);
-				new_phi.Vlist.push_back(phi.Vlist[i]);
-			}
-			else if (Fp->classify(phi.Vlist[i]) != FREE)
+			if (Fp->classify(phi.Vlist[i]) != FREE)
 				new_phi.Vlist.push_back(phi.Vlist[i]);
 			else
 				continue;
 		for (int i = 0; i < phi.Elist.size(); ++i)
-			if (Fq->classify(phi.Elist[i]) != FREE)
-			{
-				new_in_phi.Elist.push_back(phi.Elist[i]);
-				new_phi.Elist.push_back(phi.Elist[i]);
-			}
-			else if (Fp->classify(phi.Elist[i]) != FREE)
+			if (Fp->classify(phi.Elist[i]) != FREE)
 				new_phi.Elist.push_back(phi.Elist[i]);
 			else
 				continue;
 		for (int i = 0; i < phi.Tlist.size(); ++i)
-			if (Fq->classify(phi.Tlist[i]) != FREE)
-			{
-				new_in_phi.Tlist.push_back(phi.Tlist[i]);
-				new_phi.Tlist.push_back(phi.Tlist[i]);
-			}
-			else if (Fp->classify(phi.Tlist[i]) != FREE)
+			if (Fp->classify(phi.Tlist[i]) != FREE)
 				new_phi.Tlist.push_back(phi.Tlist[i]);
 			else
 				continue;
 
 		if (show)
-		{
 			new_phi.out();
-			new_in_phi.out();
-		}
 
 		// Stuck check.
-		if (new_in_phi.empty())
+		if (new_phi.empty())
 		{
 			// After there is no boundary features, let's determine if the box is stuck or not.
 			for (int i = 0; i < phi.Mlist.size(); ++i)
-				if (Fq->classify(phi.Mlist[i]) != FREE)
+				if (Fp->classify(phi.Mlist[i]) != FREE)
 				{
 					set_pvalue(b, STUCK);
 					set_feature(b, eset);
@@ -1650,6 +1721,11 @@ public:
 		cout << "Getting graph node costs " << (get_graph_node_time / (long double)(1000000.0)) << "s in total till now." << endl;
 		cout << "Repeat expansions wastes " << (waste_time / (long double)(1000000.0)) << "s in total till now." << endl;
 		cout << "Classifying boxes costs " << (classification_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Classifying boxes by predicate pO costs " << (classification_C1_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Constructing Bt solid costs " << (construct_box_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Check known case of pO costs " << (classify_p0_known_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Check quick classification of pO costs " << (p0_quick_classify_time / (long double)(1000000.0)) << "s in total till now." << endl;
+		cout << "Classifying of pO costs " << (p0_classify_feature_time / (long double)(1000000.0)) << "s in total till now." << endl;
 		//cout << "The average amount of features for free boxes are " << avefreefeature << "." << endl;
 		if (hint.length() > 0)
 			cout << hint << endl;
@@ -2139,10 +2215,16 @@ public:
 		}
 		if (Noisity >= 6)
 			cout << "Checked no current path." << endl;
+		if (Noisity >= 6 && !LQ.empty() && !LQ.top().second->is_leaf())
+			cout << "Getting rid of non-leaf boxes. There are " << LQ.size() << " boxes in local queue." << endl;
 		while (!LQ.empty() && !LQ.top().second->is_leaf())
 			LQ.pop();
 		if (LQ.empty())
+		{
+			if (Noisity >= 3)
+				cout << "This t = " << t << " channel has no path, return to last level to find another path." << endl;
 			return make_pair(vector<Box*>(), false);
+		}
 		if (Noisity >= 6)
 			cout << "Continue expansions." << endl;		
 		Box* LQ_top = LQ.top().second;
@@ -2201,12 +2283,12 @@ public:
 	{
 		set<int> new_forbid;
 		vector<Box*> leaves = current_leaves();
-		if (show)
+		if (Noisity >= 4)
 			reset_viewer();
 		for (int i = 0; i < leaves.size(); ++i)
 			if (!isVor(leaves[i]))
 				new_forbid.insert(leaves[i]->ID());
-			else if (show)
+			else if (Noisity >= 4)
 				switch (getcolor(leaves[i], C->psize() - 1))
 				{
 				case GREEN: viewer.add_box(leaves[i], Vector3d(0, 1, 0)); break;
@@ -2216,7 +2298,7 @@ public:
 				case GREY: viewer.add_box(leaves[i], Vector3d(0.5, 0.5, 0.5)); break;
 				default:continue;
 				}
-		if (show)
+		if (Noisity >= 7)
 			viewer.view();
 		auto lpath = Global.path(gnode(BoxAlpha), gnode(BoxBeta), new_forbid, C->psize());
 		return make_channel(lpath);
