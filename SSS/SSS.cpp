@@ -2133,6 +2133,7 @@ public:
 	{
 		if (Noisity >= 4)
 		{
+			cout << "Now drawing the box space for t = " << t << "." << endl;
 			reset_viewer();
 			if (Noisity >= 6)
 			{
@@ -2263,7 +2264,7 @@ public:
 		priority_queue<pair<vector<double>, Box*> > LocalQ;
 		GBFQuickPath<Box> LocalFringe(B->Range(), veps, forbids.top(), BoxSpace);
 		Recur_ini(BoxSpace, LocalQ, LocalFringe, t, show);
-		if (Noisity >= 9)
+		if (Noisity >= 7)
 			cout << "There are " << LocalQ.size() << " mixed boxes." << endl;
 		show_expansion("Now finding channel for t = " + to_string(t));
 		return Recur_main_loop(LocalQ, LocalFringe, t, show);
@@ -2285,10 +2286,12 @@ public:
 		vector<Box*> leaves = current_leaves();
 		if (Noisity >= 4)
 			reset_viewer();
+		if (Noisity >= 7)
+			cout << "Drawing the initial environment." << endl;
 		for (int i = 0; i < leaves.size(); ++i)
 			if (!isVor(leaves[i]))
 				new_forbid.insert(leaves[i]->ID());
-			else if (Noisity >= 4)
+			else if (Noisity >= 7)
 				switch (getcolor(leaves[i], C->psize() - 1))
 				{
 				case GREEN: viewer.add_box(leaves[i], Vector3d(0, 1, 0)); break;
@@ -2300,6 +2303,8 @@ public:
 				}
 		if (Noisity >= 7)
 			viewer.view();
+		if (Noisity >= 4)
+			cout << "Now finding an initial path." << endl;
 		auto lpath = Global.path(gnode(BoxAlpha), gnode(BoxBeta), new_forbid, C->psize());
 		return make_channel(lpath);
 	}
