@@ -23,7 +23,7 @@
 	"CheckYellow": false,
 	"AlwaysFullClassify": false,
 	"Noisity": 0,
-	"obstacle": "GarageCorner"
+	"obstacle": "Corredor"
 }
 
 // The nlohmann json cannot read footnotes like this in the middle of json.

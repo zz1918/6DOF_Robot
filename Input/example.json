@@ -15,7 +15,7 @@
 	"envrange" : 4,
 	"edgeL" : 1.0,
 	"Qtype" : "rec",
-	"ExpandLimit" : 100000,
+	"ExpandLimit" : 150000,
 	"show" : false,
 	"ExpandShow" : 1000,
 	"DrawBox" : true,
