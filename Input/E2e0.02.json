@@ -22,7 +22,7 @@
 	"hint": [],
 	"CheckYellow": false,
 	"AlwaysFullClassify": false,
-	"Noisity": 0,
+	"Noisity": 4,
 	"obstacle": "Corredor"
 }
 
