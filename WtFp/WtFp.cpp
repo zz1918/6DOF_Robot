@@ -844,7 +844,7 @@ public:
 	// Quickly classifying the relation between InFp with a mesh.
 	pvalue quick_classify(Mesh* f, bool show = false)
 	{
-		if (!bbox.intersects(f->BBox()))
+		if (bbox.essential_nintersects(f->BBox()))
 		{
 			if (Noisity >= 15)
 				cout << "A box is classified as FREE by bounding box check." << endl;

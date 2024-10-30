@@ -401,6 +401,18 @@ public:
                     return false;
         return true;
     }
+    bool essential_nintersects(MatrixInterval<Scarlar> M)
+    {
+        if (rows() != M.rows())
+            return false;
+        if (cols() != M.cols())
+            return false;
+        for (Index i = 0; i < rows(); ++i)
+            for (Index j = 0; j < cols(); ++j)
+                if ((inf(i, j) < M.max()(i, j)) || (sup(i, j) > M.min()(i, j)))
+                    return false;
+        return true;
+    }
     MatrixInterval<Scarlar> block(int startRow, int startCol, int blockRow, int blockCol)
     {
         return MatrixInterval<Scarlar>(inf.block(startRow, startCol, blockRow, blockCol), sup.block(startRow, startCol, blockRow, blockCol), false);

@@ -311,14 +311,24 @@ public:
 		OExFp* Fp = OexFp(b);
 		DeltaInFp* Fq = AinFp(b);
 		start_time = std::chrono::high_resolution_clock::now();
+		bool FpquickFree = true;
 		for (int i = 0; i < phi.Mlist.size(); ++i)
 			if (Fp->quick_classify(phi.Mlist[i]) == STUCK)
 			{
-				set_C1_pvalue(b, STUCK); end_time = std::chrono::high_resolution_clock::now();
+				set_C1_pvalue(b, STUCK);
+				end_time = std::chrono::high_resolution_clock::now();
 				p0_quick_classify_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 				return STUCK;
 			}
-		set_C1_pvalue(b, STUCK);
+			else if (Fp->quick_classify(phi.Mlist[i]) != FREE)
+				FpquickFree = false;
+		if (FpquickFree)
+		{
+			set_C1_pvalue(b, FREE);
+			end_time = std::chrono::high_resolution_clock::now();
+			p0_quick_classify_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+			return FREE;
+		}
 		end_time = std::chrono::high_resolution_clock::now();
 		p0_quick_classify_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 		start_time = std::chrono::high_resolution_clock::now();
@@ -1926,11 +1936,19 @@ public:
 			waste_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
 			return;
 		}
+		
+		// No need to split this box anymore, since there is no possible R-direction in this box for the Delta robot to pass through anymore!
+		/*if (t == 1 && b->BT()->width() <= 0.25)
+		{
+			auto end_time = std::chrono::high_resolution_clock::now();
+			waste_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+			return;
+		}*/
 
 		// Step 1: subdivide the box.
-		if (t == 1)
+		/*if (t == 1)
 			b->subdivide(1);
-		else
+		else*/
 			b->subdivide();
 		gerase(b);
 
@@ -1946,6 +1964,8 @@ public:
 		for (int i = 0; i < B->subsize(b); ++i)
 			for (int j = 0; j < C->psize(); ++j)
 				if (b->child(i)->width() <= veps)
+					gcolor(b->child(i), GREY);
+				else if (j == 1 && b->child(i)->BT()->width() <= 0.125)
 					gcolor(b->child(i), GREY);
 				else
 					switch (C->classify(b->child(i), j))
@@ -2364,7 +2384,7 @@ public:
 		return C->feature_of(b).size() < C->feature_of(b->Parent()).size();
 	}
 
-	// Method to find an initial channel. This is not good yet!!!!!!
+	// Method to find an initial channel.
 	vector<Box*> RecurIniChannel(bool show = false)
 	{
 		set<int> new_forbid;

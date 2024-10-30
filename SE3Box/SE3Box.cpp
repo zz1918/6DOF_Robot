@@ -1641,19 +1641,19 @@ public:
 			T_Split(show);
 		else if (T == -1)
 			R_Split(show);
+		/*
 		else if (Bt->width() > 2 * varepsilon)
 			T_Split(show);
 		else
-			R_Split(show);
-		/*
-		if (Bt->width() > 0.25)
+			R_Split(show);*/
+		else if (Bt->width() > 0.125)
 			T_Split(show);
-		else if (Br->width() * r0 > 0.25)
+		else if (Br->width() * r0 > 0.125)
 			R_Split(show);
 		else if (Bt->width() >= Br->width() * r0)
 			T_Split(show);
 		else
-			R_Split(show);*/
+			R_Split(show);
 	}
 	// Check if a box is a neighbor box (not necessarily principle).
 	bool is_neighbor(SE3Box* B)
