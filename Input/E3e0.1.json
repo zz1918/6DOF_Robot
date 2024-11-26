@@ -26,4 +26,4 @@
 	"obstacle": "GuardedHole"
 }
 
-// The nlohmann json cannot read footnotes like this in the middle of json.
+// The nlohmann json cannot read footnotes like this in the middle of json.//
