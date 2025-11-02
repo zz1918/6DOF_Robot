@@ -1,0 +1,1 @@
+add_library(BinStr BinStr.h BinStr.cpp)

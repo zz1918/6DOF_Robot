@@ -1,13 +1,5 @@
 // SE3Box.cpp : This file implements the oct-tree structure for R^3 and SO(3)
 // and implements the product tree structure for SE(3).
-// 
-// Dictionary:	nb - neighbor
-//				prcpnb - principal neighbor.
-//				idct - indicator
-//				pidct - path indicator
-//				cidct - child indicator
-//				ele - elementary
-
 
 #ifndef SE3BOX_H
 #define SE3BOX_H
@@ -16,179 +8,196 @@
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
-#include <chrono>
 #include <interval.h>
-#include <BinStr.h>
 #include <bimap.h>
+#include <chrono>
 using namespace std;
 
 class R3Box;
-//class SO3Box;
-//template <typename content>
-//class SE3Box;
-//double extern r0;
-//double extern varepsilon;
-//int extern Noisity;
+class SO3Box;
+class SE3Box;
+double extern r0;
+double extern varepsilon;
+int extern Noisity;
 
 vector<R3Box*> R3list;
-//vector<SO3Box*> SO3list;
-//vector<SE3Box*> SE3list;
-//bimap<int, int, int> SE3table;
+vector<SO3Box*> SO3list;
+vector<SE3Box*> SE3list;
+bimap<int, int, int> SE3table;
 
 long long find_neighbor_time = 0;
 
-class R3Box
+// Binary string for the tree code, 0 for \bar{1}, 1 for 1. We add a "1" at the beginning to avoid starting with "0".
+class bit
 {
-#define subsize 8
-#define dim 3
-	// Id number.
-	int id;
-	// Root node.
-	R3Box* root;
-	// Parent node.
-	R3Box* parent;
-	// Depth of the node.
-	int depth;
-	// Is this a leaf?
-	bool leaf;
-	// Children node.
-	R3Box* children[subsize];
-	// Principal neighbors in each direction.
-	R3Box* prcpnbs[2 * dim];
-	// Path indicators of the box.
-	PIdct<dim> pidct;
+#define EMP "E"
+	int n;
 public:
-	// Numerical range of the box.
-	MatrixId range;
-	// Id number.
-	int ID()
+	// Empty string (possibly roots).
+	bit()
 	{
-		return id;
+		n = 1;
 	}
-	// Width of the box.
-	double width()
+	// Non-empty string.
+	bit(int _n)
 	{
-		return (range.max() - range.min()).minCoeff();
+		n = _n;
 	}
-	// Construct a new box.
-	R3Box(MatrixId r)
+	// The number.
+	int num()
 	{
-		range = r;
-		id = R3list.size();
-		R3list.push_back(this);
-		root = this;
-		parent = NULL;
-		depth = 0;
-		leaf = true;
-		for (int i = 0; i < subsize; ++i)
-			children[i] = NULL;
-		for (int i = 0; i < 2 * dim; ++i)
-			prcpnbs[i] = NULL;
-		pidct = PIdct<dim>();
+		return n;
 	}
-	// Root node.
-	R3Box* Root()
+	// If this is an empty bit.
+	bool is_empty()
 	{
-		return root;
+		return n < 2;
 	}
-	// Set the root node.
-	void set_root(R3Box* B)
+	// Length of the string.
+	int length()
 	{
-		root = B;
+		return int(log2(n));
 	}
-	// If this is root.
-	bool is_root()
+	// The i-th position of the bit.
+	int operator[](int i)
 	{
-		return this == root;
+		return (n >> (length() - i)) & 1;
 	}
-	// Parent node.
-	R3Box* Parent()
+	// If this is the positive boundary bit.
+	bool is_pos_boundary()
 	{
-		return parent;
+		return !bool((n + 1) & n);
 	}
-	// Set the parent node.
-	void set_parent(R3Box* B)
+	// If this is the negative boundary bit.
+	bool is_neg_boundary()
 	{
-		parent = B;
+		return !bool((n - 1) & n);
 	}
-	// Depth of the node.
-	int Depth()
+	// If this is the boundary bit.
+	bool is_boundary()
 	{
-		return depth;
+		return is_pos_boundary() || is_neg_boundary();
 	}
-	// Set the depth of the node.
-	void set_depth(int d)
+	// If this is the boundary bit of pos.
+	bool is_boundary(bool pos)
 	{
-		depth = d;
+		if (pos)
+			return is_pos_boundary();
+		else
+			return is_neg_boundary();
 	}
-	// Is this a leaf?
-	bool is_leaf()
+	// Positive child for this bit.
+	bit pos()
 	{
-		return leaf;
+		return bit((n << 1) + 1);
 	}
-	// Child node.
-	R3Box* child(int i)
+	// Negative child for this bit.
+	bit neg()
 	{
-		return children[i % subsize];
+		return bit(n << 1);
 	}
-	// Child node by child indicator.
-	R3Box* child(CIdct<dim> idt)
+	// Flip of the bit.
+	bit flip()
 	{
-		return child(idt.num());
+		return bit(n ^ 1);
 	}
-	// Principal d-neighbor node.
-	R3Box* prcpnb(ELE<dim> d)
+	// Bar of the bit.
+	bit bar()
 	{
-		return prcpnbs[d.elenum()];
+		return bit(n ^ ((1 << length()) - 1));
 	}
-	// Reverse direction.
-	ELE<dim> Rev(ELE<dim> d)
+	// Adj of the bit.
+	bit adj()
 	{
-		return d.flip();
+		if (n & 1)
+			return bit(n + 1);
+		else
+			return bit(n - 1);
 	}
-	// d-cousin node, return NULL if not exist in the tree.
-	R3Box* cousin(ELE<dim> d)
+	// Positive direction of the bit.
+	bit to_pos()
 	{
-		if (is_root())
-			return NULL;
-		if (parent->prcpnb(d) == NULL)
-			return NULL;
-		if (parent->prcpnb(d)->Depth() < parent->Depth())
-			return NULL;
-		return parent->prcpnb(d)->child(pidct.cidct().flip(d.comp));
+		return bit(n + 1);
 	}
-	// Set principal neighbor node.
-	void set_prcpnb(R3Box* B, ELE<dim> d)
+	// Negative direction of the bit.
+	bit to_neg()
 	{
-		prcpnbs[d.elenum()] = B;
+		return bit(n - 1);
 	}
-	// Path indicator.
-	PIdct<dim> Pidct()
+	// The last bit in the positive direction.
+	bit pos_most()
 	{
-		return pidct;
+		return bit((1 << (length() + 1)) - 1);
 	}
-	// Set path indicator.
-	void set_pidct(PIdct<dim> idt)
+	// The last bit in the negative direction.
+	bit neg_most()
 	{
-		pidct = idt;
+		return bit(1 << length());
 	}
-	// Find the deepest node in the subdivision tree by a path indicator.
-	R3Box* find(PIdct<dim> idt)
+	// If two bits are neighbor.
+	bool neighbor_to(bit b)
 	{
-		R3Box* target = root;
-		for (int i = 0; i < idt.e[0].length(); ++i)
-			if (target->is_leaf())
-				break;
-			else
-				target = target->child(idt.cidct(i));
-		return target;
+		if (length() > b.length())
+			return b.neighbor_to(*this);
+		int diff = b.length() - length();
+		if (((n + 1) << diff) == b.n)
+			return true;
+		if ((n << diff) == (b.n + 1))
+			return true;
+		return false;
 	}
-#undef subsize
-#undef dim
+	// If the bit contains another bit.
+	bool contain(bit b)
+	{
+		if (length() > b.length())
+			return false;
+		int diff = b.length() - length();
+		if (((n + 1) << diff) <= b.n)
+			return false;
+		if ((n << diff) >= (b.n + 1))
+			return false;
+		return true;
+	}
+	// If the bit is contained in the other.
+	bool contained(bit b)
+	{
+		return b.contain(*this);
+	}
+	// If the bit is separated to another bit.
+	bool separate(bit b)
+	{
+		if (length() > b.length())
+			return b.separate(*this);
+		int diff = b.length() - length();
+		if (((n + 1) << diff) < b.n)
+			return true;
+		if ((n << diff) > (b.n + 1))
+			return true;
+		return false;
+	}
+	// Output the bit.
+	void out(ostream& os)
+	{
+		if (is_empty())
+			os << EMP;
+		for (int i = length() - 1; i >= 0; --i)
+			os << ((n >> i) & 1);
+	}
+#undef EMP
 };
+// Output a bit.
+ostream& operator<<(ostream& os, bit t)
+{
+	t.out(os);
+	return os;
+}
 
+// Get the t-th binary bit of n.
+bool getBin(int n, int t)
+{
+	return bool((n >> t) & 1);
+}
 
-/*
 class R3Box
 {
 #define subsize 8
@@ -205,8 +214,8 @@ class R3Box
 	bool leaf;
 	// Children node.
 	R3Box* children[subsize];
-	// Principal neighbor node, 0 for neg, 1 for pos.
-	R3Box* prcpnbs[dim][2];
+	// Neighbor node, 0 for neg, 1 for pos.
+	R3Box* neighbors[dim][2];
 	// Path indicator of the box.
 	bit codes[dim];
 public:
@@ -236,9 +245,9 @@ public:
 			children[i] = NULL;
 		for (int i = 0; i < dim; ++i)
 			for (int j = 0; j < 2; ++j)
-				prcpnbs[i][j] = NULL;
+				neighbors[i][j] = NULL;
 		for (int i = 0; i < dim; ++i)
-			codes[i] = bit::emp();
+			codes[i] = bit();
 	}
 	// Root node.
 	R3Box* Root()
@@ -288,41 +297,41 @@ public:
 			target += (t[i] % 2) << i;
 		return child(target);
 	}
-	// Principal neighbor node.
-	R3Box* prcpnb(int i, bool pos)
+	// Neighbor node.
+	R3Box* neighbor(int i, bool pos)
 	{
 		if (pos)
-			return prcpnbs[i % dim][1];
+			return neighbors[i % dim][1];
 		else
-			return prcpnbs[i % dim][0];
+			return neighbors[i % dim][0];
 	}
-	// Positive principal neighbor node.
-	R3Box* pos_prcpnb(int i)
+	// Positive neighbor node.
+	R3Box* pos_neighbor(int i)
 	{
-		return prcpnbs[i % dim][1];
+		return neighbors[i % dim][1];
 	}
-	// Negative principal neighbor node.
-	R3Box* neg_prcpnb(int i)
+	// Negative neighbor node.
+	R3Box* neg_neighbor(int i)
 	{
-		return prcpnbs[i % dim][0];
+		return neighbors[i % dim][0];
 	}
-	// Set principal neighbor node.
-	void set_prcpnb(R3Box* B, int i, bool pos)
+	// Set neighbor node.
+	void set_neighbor(R3Box* B, int i, bool pos)
 	{
 		if (pos)
-			prcpnbs[i % dim][1] = B;
+			neighbors[i % dim][1] = B;
 		else
-			prcpnbs[i % dim][0] = B;
+			neighbors[i % dim][0] = B;
 	}
-	// Set positive principal neighbor node.
-	void set_pos_prcpnb(R3Box* B, int i)
+	// Set positive neighbor node.
+	void set_pos_neighbor(R3Box* B, int i)
 	{
-		prcpnbs[i % dim][1] = B;
+		neighbors[i % dim][1] = B;
 	}
-	// Set negative principal neighbor node.
-	void set_neg_prcpnb(R3Box* B, int i)
+	// Set negative neighbor node.
+	void set_neg_neighbor(R3Box* B, int i)
 	{
-		prcpnbs[i % dim][0] = B;
+		neighbors[i % dim][0] = B;
 	}
 	// The i-th bit of the node.
 	bit code(int i)
@@ -399,7 +408,7 @@ public:
 		// Step 2: This is not a leaf anymore.
 		leaf = false;
 
-		// Step 3: Assign principal neighbors for children and re-new_child principal neighbors for principal neighbors and their children.
+		// Step 3: Assign neighbors for children and re-new_child neighbors for neighbors and their children.
 
 		for (int i = 0; i < subsize; ++i)
 		{
@@ -409,7 +418,7 @@ public:
 			for (int j = 0; j < dim; ++j)
 			{
 				// If this is not the negative boundary of j-th direction,
-				// then there is a negative j-principal neighbor box (NULL otherwise).
+				// then there is a negative j-neighbor box (NULL otherwise).
 				if (!new_child->code(j).is_neg_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
@@ -418,12 +427,12 @@ public:
 						else
 							tcode[k] = new_child->code(k);
 					target = find(tcode);
-					new_child->set_neg_prcpnb(target, j);
+					new_child->set_neg_neighbor(target, j);
 					if (new_child->Depth() == target->Depth())
-						target->set_pos_prcpnb(new_child, j);
+						target->set_pos_neighbor(new_child, j);
 				}
 				// If this is not the positive boundary of j-th direction,
-				// then there is a positive j-principal neighbor box (NULL otherwise).
+				// then there is a positive j-neighbor box (NULL otherwise).
 				if (!new_child->code(j).is_pos_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
@@ -432,20 +441,20 @@ public:
 						else
 							tcode[k] = new_child->code(k);
 					target = find(tcode);
-					new_child->set_pos_prcpnb(target, j);
+					new_child->set_pos_neighbor(target, j);
 					if (new_child->Depth() == target->Depth())
-						target->set_neg_prcpnb(new_child, j);
+						target->set_neg_neighbor(new_child, j);
 				}
 			}
 		}
 	}
-	// Check if a box is a neighbor box (not necessarily principal).
+	// Check if a box is a neighbor box (not necessarily principle).
 	bool is_neighbor(R3Box* B)
 	{
 		int int_co_dim = 0;
 		for (int i = 0; i < dim; ++i)
 		{
-			if (code(i).nintersect(B->code(i)))
+			if (code(i).separate(B->code(i)))
 				return false;
 			if (code(i).neighbor_to(B->code(i)))
 				int_co_dim += 1;
@@ -480,7 +489,7 @@ public:
 	{
 		return range;
 	}
-	// cout this.
+	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
 		if (l > MAXSHOW)
@@ -503,28 +512,28 @@ public:
 			children[i]->out(os, l + 1);
 		}
 	}
-	// cout principal nieghbors.
-	void show_prcpnb(ostream& os = cout, int l = 0)
+	// cout *neighbors.
+	void show_neighbor(ostream& os = cout, int l = 0)
 	{
 		for (int i = 0; i < dim; ++i)
 		{
-			if (pos_prcpnb(i) != NULL)
+			if (pos_neighbor(i) != NULL)
 			{
 				for (int j = 0; j < l; ++j)
 					os << "      ";
-				os << "prcpnb pos " << i << ":" << endl;
-				pos_prcpnb(i)->show_code(os, l);
+				os << "neighbor pos " << i << ":" << endl;
+				pos_neighbor(i)->show_code(os, l);
 			}
-			if (neg_prcpnb(i) != NULL)
+			if (neg_neighbor(i) != NULL)
 			{
 				for (int j = 0; j < l; ++j)
 					os << "      ";
-				os << "prcpnb neg " << i << ":" << endl;
-				neg_prcpnb(i)->show_code(os, l);
+				os << "neighbor neg " << i << ":" << endl;
+				neg_neighbor(i)->show_code(os, l);
 			}
 		}
 	}
-	// cout bit codes.
+	// cout *codes.
 	void show_code(ostream& os = cout, int l = 0)
 	{
 		if (l > MAXSHOW)
@@ -541,9 +550,8 @@ public:
 
 #undef subsize
 #undef dim
-};*/
+};
 
-/*
 class SO3Box
 {
 #define subsize 8
@@ -565,7 +573,7 @@ class SO3Box
 	// Children node.
 	SO3Box* children[subsize];
 	// Neighbor node, 0 for neg, 1 for pos.
-	SO3Box* prcpnbs[dim][2];
+	SO3Box* neighbors[dim][2];
 	// Bits of the box.
 	bit codes[dim];
 	// Skip the wxyz.
@@ -604,8 +612,8 @@ public:
 					continue;
 				else
 				{
-					roots[i]->set_pos_prcpnb(roots[j], j);
-					roots[i]->set_neg_prcpnb(roots[j], j);
+					roots[i]->set_pos_neighbor(roots[j], j);
+					roots[i]->set_neg_neighbor(roots[j], j);
 				}
 		}
 		parent = NULL;
@@ -616,7 +624,7 @@ public:
 			children[i] = NULL;
 		for (int i = 0; i < dim; ++i)
 			for (int j = 0; j < 2; ++j)
-				prcpnbs[i][j] = NULL;
+				neighbors[i][j] = NULL;
 		for (int i = 0; i < dim; ++i)
 			codes[i] = bit();
 	}
@@ -636,7 +644,7 @@ public:
 			children[i] = NULL;
 		for (int i = 0; i < dim; ++i)
 			for (int j = 0; j < 2; ++j)
-				prcpnbs[i][j] = NULL;
+				neighbors[i][j] = NULL;
 		for (int i = 0; i < dim; ++i)
 			codes[i] = bit();
 	}
@@ -715,28 +723,28 @@ public:
 		return child(target);
 	}
 	// Neighbor node.
-	SO3Box* prcpnb(int i, bool pos)
+	SO3Box* neighbor(int i, bool pos)
 	{
 		if (wxyz < 0)
 			return NULL;
 		if (pos)
-			return prcpnbs[i % dim][1];
+			return neighbors[i % dim][1];
 		else
-			return prcpnbs[i % dim][0];
+			return neighbors[i % dim][0];
 	}
-	// Positive principal neighbor node.
-	SO3Box* pos_prcpnb(int i)
+	// Positive neighbor node.
+	SO3Box* pos_neighbor(int i)
 	{
 		if (wxyz < 0)
 			return NULL;
-		return prcpnbs[i % dim][1];
+		return neighbors[i % dim][1];
 	}
-	// Negative principal neighbor node.
-	SO3Box* neg_prcpnb(int i)
+	// Negative neighbor node.
+	SO3Box* neg_neighbor(int i)
 	{
 		if (wxyz < 0)
 			return NULL;
-		return prcpnbs[i % dim][0];
+		return neighbors[i % dim][0];
 	}
 	// If the box is the negative boundary of the root to the direction i.
 	bool is_neg_boundary(int i)
@@ -752,23 +760,23 @@ public:
 			return true;
 		return codes[i].is_pos_boundary();
 	}
-	// Set principal neighbor node.
-	void set_prcpnb(SO3Box* B, int i, bool pos)
+	// Set neighbor node.
+	void set_neighbor(SO3Box* B, int i, bool pos)
 	{
 		if (pos)
-			prcpnbs[i % dim][1] = B;
+			neighbors[i % dim][1] = B;
 		else
-			prcpnbs[i % dim][0] = B;
+			neighbors[i % dim][0] = B;
 	}
-	// Set positive principal neighbor node.
-	void set_pos_prcpnb(SO3Box* B, int i)
+	// Set positive neighbor node.
+	void set_pos_neighbor(SO3Box* B, int i)
 	{
-		prcpnbs[i % dim][1] = B;
+		neighbors[i % dim][1] = B;
 	}
-	// Set negative principal neighbor node.
-	void set_neg_prcpnb(SO3Box* B, int i)
+	// Set negative neighbor node.
+	void set_neg_neighbor(SO3Box* B, int i)
 	{
-		prcpnbs[i % dim][0] = B;
+		neighbors[i % dim][0] = B;
 	}
 	// The i-th bit of the node.
 	bit code(int i)
@@ -879,7 +887,7 @@ public:
 		// Step 2: This is not a leaf anymore.
 		leaf = false;
 
-		// Step 3: Assign prcpnbs for children and re-new_child prcpnbs for prcpnbs and their children.
+		// Step 3: Assign neighbors for children and re-new_child neighbors for neighbors and their children.
 
 		if (wxyz < 0)
 			return;
@@ -901,7 +909,7 @@ public:
 				if (j == wxyz)
 					continue;
 				// If this is not the negative boundary of j-th direction,
-				// then there is a negative j-prcpnb box (NULL otherwise).
+				// then there is a negative j-neighbor box (NULL otherwise).
 				if (!new_child->code(j).is_neg_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
@@ -910,9 +918,9 @@ public:
 						else
 							tcode[k] = new_child->code(k);
 					target = find(tcode, wxyz, show);
-					new_child->set_neg_prcpnb(target, j);
+					new_child->set_neg_neighbor(target, j);
 					if (new_child->Depth() == target->Depth())
-						target->set_pos_prcpnb(new_child, j);
+						target->set_pos_neighbor(new_child, j);
 				}
 				else
 				{
@@ -924,12 +932,12 @@ public:
 						else
 							tcode[k] = new_child->code(k).bar();
 					target = find(tcode, j, show);
-					new_child->set_neg_prcpnb(target, j);
+					new_child->set_neg_neighbor(target, j);
 					if (new_child->Depth() == target->Depth())
-						target->set_neg_prcpnb(new_child, wxyz);
+						target->set_neg_neighbor(new_child, wxyz);
 				}
 				// If this is not the positive boundary of j-th direction,
-				// then there is a positive j-prcpnb box (NULL otherwise).
+				// then there is a positive j-neighbor box (NULL otherwise).
 				if (!new_child->code(j).is_pos_boundary())
 				{
 					for (int k = 0; k < dim; ++k)
@@ -938,9 +946,9 @@ public:
 						else
 							tcode[k] = new_child->code(k);
 					target = find(tcode, wxyz, show);
-					new_child->set_pos_prcpnb(target, j);
+					new_child->set_pos_neighbor(target, j);
 					if (new_child->Depth() == target->Depth())
-						target->set_neg_prcpnb(new_child, j);
+						target->set_neg_neighbor(new_child, j);
 				}
 				else
 				{
@@ -952,9 +960,9 @@ public:
 						else
 							tcode[k] = new_child->code(k);
 					target = find(tcode, j, show);
-					new_child->set_pos_prcpnb(target, j);
+					new_child->set_pos_neighbor(target, j);
 					if (new_child->Depth() == target->Depth())
-						target->set_pos_prcpnb(new_child, wxyz);
+						target->set_pos_neighbor(new_child, wxyz);
 				}
 			}
 		}
@@ -971,7 +979,7 @@ public:
 			{
 				if (i == WXYZ())
 					continue;
-				if (code(i).nintersect(B->code(i)))
+				if (code(i).separate(B->code(i)))
 					return false;
 				if (code(i).neighbor_to(B->code(i)))
 					int_co_dim += 1;
@@ -1112,7 +1120,7 @@ public:
 		default:return MatrixId(Vector4d(-1, -1, -1, -1), Vector4d(1, 1, 1, 1));
 		}
 	}
-	// cout this.
+	// cout *this.
 	void out(ostream& os = cout, int l = 0, bool recur = true)
 	{
 		if (l > MAXSHOW)
@@ -1133,30 +1141,30 @@ public:
 			children[i]->out(os, l + 1);
 		}
 	}
-	// cout principal neighbors.
-	void show_prcpnb(ostream& os = cout, int l = 0)
+	// cout *neighbors.
+	void show_neighbor(ostream& os = cout, int l = 0)
 	{
 		for (int i = 0; i < dim; ++i)
 		{
 			for (int j = 0; j < l; ++j)
 				os << "      ";
-			os << "prcpnb neg " << i << ":" << endl;
-			if (neg_prcpnb(i) != NULL)
-				neg_prcpnb(i)->show_code(os, l);
+			os << "neighbor neg " << i << ":" << endl;
+			if (neg_neighbor(i) != NULL)
+				neg_neighbor(i)->show_code(os, l);
 			else
 				os << "NULL";
 			os << endl;
 			for (int j = 0; j < l; ++j)
 				os << "      ";
-			os << "prcpnb pos " << i << ":" << endl;
-			if (pos_prcpnb(i) != NULL)
-				pos_prcpnb(i)->show_code(os, l);
+			os << "neighbor pos " << i << ":" << endl;
+			if (pos_neighbor(i) != NULL)
+				pos_neighbor(i)->show_code(os, l);
 			else
 				os << "NULL";
 			os << endl;
 		}
 	}
-	// cout bit codes.
+	// cout *codes.
 	void show_code(ostream& os = cout, int l = 0)
 	{
 		if (l > MAXSHOW)
@@ -1182,7 +1190,6 @@ public:
 #undef boxsize
 };
 
-template<typename Content>
 class SE3Box
 {
 #define subsize 8
@@ -1205,8 +1212,8 @@ protected:
 	bool leaf;
 	// Children node.
 	SE3Box* children[subsize];
-	// Principal neighbor nodes, 0 for neg, 1 for pos.
-	SE3Box* prcpnbs[dim][2];
+	// Principle neighbor node, 0 for neg, 1 for pos.
+	SE3Box* neighbors[dim][2];
 	// Is this subdividing by R3?
 	bool BTsub;
 	// Is this subdividing by SO3?
@@ -1256,7 +1263,7 @@ public:
 			children[i] = NULL;
 		for (int i = 0; i < dim; ++i)
 			for (int j = 0; j < 2; ++j)
-				prcpnbs[i][j] = NULL;
+				neighbors[i][j] = NULL;
 	}
 	// Deconstruct the box.
 	~SE3Box()
@@ -1371,51 +1378,51 @@ public:
 			return children[i % boxsize];
 		return children[i % subsize];
 	}
-	// Principal neighbor node.
-	SE3Box* prcpnb(int i, bool pos)
+	// Principle neighbor node.
+	SE3Box* neighbor(int i, bool pos)
 	{
 		if (pos)
-			return prcpnbs[i % dim][1];
+			return neighbors[i % dim][1];
 		else
-			return prcpnbs[i % dim][0];
+			return neighbors[i % dim][0];
 	}
-	// Principal neighbor for translational directions.
-	SE3Box* T_prcpnb(int i, bool pos)
+	// Principle neighbor for translational directions.
+	SE3Box* T_neighbor(int i, bool pos)
 	{
-		return prcpnb(i % subdim, pos);
+		return neighbor(i % subdim, pos);
 	}
-	// Principal neighbor for rotational directions.
-	SE3Box* R_prcpnb(int i, bool pos)
+	// Principle neighbor for rotational directions.
+	SE3Box* R_neighbor(int i, bool pos)
 	{
-		return prcpnb((i % (dim - subdim)) + subdim, pos);
+		return neighbor((i % (dim - subdim)) + subdim, pos);
 	}
-	// Positive principal neighbor node.
-	SE3Box* pos_prcpnb(int i)
+	// Principle positive neighbor node.
+	SE3Box* pos_neighbor(int i)
 	{
-		return prcpnbs[i % dim][1];
+		return neighbors[i % dim][1];
 	}
-	// Negative principal neighbor node.
-	SE3Box* neg_prcpnb(int i)
+	// Principle negative neighbor node.
+	SE3Box* neg_neighbor(int i)
 	{
-		return prcpnbs[i % dim][0];
+		return neighbors[i % dim][0];
 	}
-	// Set principal neighbor node.
-	void set_prcpnb(SE3Box* B, int i, bool pos)
+	// Set principle neighbor node.
+	void set_neighbor(SE3Box* B, int i, bool pos)
 	{
 		if (pos)
-			prcpnbs[i % dim][1] = B;
+			neighbors[i % dim][1] = B;
 		else
-			prcpnbs[i % dim][0] = B;
+			neighbors[i % dim][0] = B;
 	}
-	// Set positive principal neighbor node.
-	void set_pos_prcpnb(SE3Box* B, int i)
+	// Set principle positive neighbor node.
+	void set_pos_neighbor(SE3Box* B, int i)
 	{
-		prcpnbs[i % dim][1] = B;
+		neighbors[i % dim][1] = B;
 	}
-	// Set negative principal neighbor node.
-	void set_neg_prcpnb(SE3Box* B, int i)
+	// Set principle negative neighbor node.
+	void set_neg_neighbor(SE3Box* B, int i)
 	{
-		prcpnbs[i % dim][0] = B;
+		neighbors[i % dim][0] = B;
 	}
 	// Find a target box from product table.
 	SE3Box* find(int Btid, int Brid)
@@ -1425,23 +1432,23 @@ public:
 		else
 			return SE3list[SE3table.coeff(Btid, Brid)];
 	}
-	// Determine  i-principal neighbor for translational directions.
-	SE3Box* find_T_prcpnb(int i, bool pos, bool show = false)
+	// Determine pinciple i-neighbor for translational directions.
+	SE3Box* find_T_neighbor(int i, bool pos, bool show = false)
 	{
 		i = i % subdim;
-		R3Box* Tprcpnb = BT()->prcpnb(i, pos);
-		if (Tprcpnb == NULL)
+		R3Box* Tneighbor = BT()->neighbor(i, pos);
+		if (Tneighbor == NULL)
 			return NULL;
-		if (Tprcpnb->Depth() != BT()->Depth())
-			return parent->T_prcpnb(i, pos);
+		if (Tneighbor->Depth() != BT()->Depth())
+			return parent->T_neighbor(i, pos);
 		if (Noisity >= 12)
 		{
 			cout << endl << "Finding: ";
-			Tprcpnb->show_code();
+			Tneighbor->show_code();
 			cout << " *";
 			BR()->show_code();
 		}
-		SE3Box* target = find(Tprcpnb->ID(), BR()->ID());
+		SE3Box* target = find(Tneighbor->ID(), BR()->ID());
 		if (Noisity >= 12)
 		{
 			cout << endl << "Found: ";
@@ -1451,31 +1458,31 @@ public:
 				target->show_code();
 		}
 		if (target == NULL)
-			return parent->T_prcpnb(i, pos);
+			return parent->T_neighbor(i, pos);
 		else
 			return target;
 	}
-	// Determine i-principal neighbor for rotational directions.
-	SE3Box* find_R_prcpnb(int i, bool pos, bool show = false)
+	// Determine pinciple i-neighbor for rotational directions.
+	SE3Box* find_R_neighbor(int i, bool pos, bool show = false)
 	{
 		if (is_root())
 			return NULL;
 		i = i % (dim - subdim);
 		if (i == wxyz)
 			return NULL;
-		SO3Box* Rprcpnb = BR()->prcpnb(i, pos);
-		if (Rprcpnb == NULL)
+		SO3Box* Rneighbor = BR()->neighbor(i, pos);
+		if (Rneighbor == NULL)
 			return NULL;
-		if (Rprcpnb->Depth() != BR()->Depth())
-			return parent->R_prcpnb(i, pos);
+		if (Rneighbor->Depth() != BR()->Depth())
+			return parent->R_neighbor(i, pos);
 		if (Noisity >= 12)
 		{
 			cout << endl << "Finding: ";
 			BT()->show_code();
 			cout << " *";
-			Rprcpnb->show_code();
+			Rneighbor->show_code();
 		}
-		SE3Box* target = find(BT()->ID(), Rprcpnb->ID());
+		SE3Box* target = find(BT()->ID(), Rneighbor->ID());
 		if (Noisity >= 12)
 		{
 			cout << endl << "Found: ";
@@ -1485,17 +1492,17 @@ public:
 				target->show_code();
 		}
 		if (target == NULL)
-			return parent->R_prcpnb(i, pos);
+			return parent->R_neighbor(i, pos);
 		else
 			return target;
 	}
-	// Determine i-principal neighbor.
-	SE3Box* find_prcpnb(int i, bool pos, bool show = false)
+	// Determine pinciple i-neighbor.
+	SE3Box* find_neighbor(int i, bool pos, bool show = false)
 	{
 		if (i < subdim)
-			return find_T_prcpnb(i, pos, show);
+			return find_T_neighbor(i, pos, show);
 		else
-			return find_R_prcpnb(i - subdim, pos, show);
+			return find_R_neighbor(i - subdim, pos, show);
 	}
 	// Determine if a box is aligned to this.
 	bool align_to(SE3Box* B)
@@ -1504,8 +1511,8 @@ public:
 			return false;
 		return BT()->Depth() == B->BT()->Depth() && BR()->Depth() == B->BR()->Depth();
 	}
-	// When the principal neighbor is aligned, determine the direction from the principal neighbor to this.
-	pair<int, bool> prcpnb_dir(int i, bool pos)
+	// When the principle neighbor is aligned, determine the direction from the neighbor to this.
+	pair<int, bool> neighbor_dir(int i, bool pos)
 	{
 		if (i < subdim)
 			return make_pair(i, !pos);
@@ -1541,12 +1548,12 @@ public:
 		leaf = false;
 		BTsub = true;
 
-		// Step 4: Assign prcpnbs for children and re-assign prcpnbs for prcpnbs and their children.
+		// Step 4: Assign neighbors for children and re-assign neighbors for neighbors and their children.
 		for (int i = 0; i < subsize; ++i)
 		{
-			// The box that is going to be assigned to have a prcpnb.
+			// The box that is going to be assigned to have a neighbor.
 			SE3Box* new_child = children[i];
-			// The box that is going to be assigned as the prcpnb.
+			// The box that is going to be assigned as the neighbor.
 			SE3Box* target = NULL;
 			if (Noisity >= 14)
 			{
@@ -1557,16 +1564,16 @@ public:
 			{
 				if (Noisity >= 14)
 					cout << endl << "direction " << j << ":";
-				// Principle negative j-prcpnb.
+				// Principle negative j-neighbor.
 				for (int k = 0; k < 2; ++k)
 				{
 					bool pos = bool(k % 2);
-					target = new_child->find_prcpnb(j, pos, show);
-					new_child->set_prcpnb(target, j, pos);
+					target = new_child->find_neighbor(j, pos, show);
+					new_child->set_neighbor(target, j, pos);
 					if (new_child->align_to(target))
 					{
-						pair<int, bool> nd = new_child->prcpnb_dir(j, pos);
-						target->set_prcpnb(new_child, nd.first, nd.second);
+						pair<int, bool> nd = new_child->neighbor_dir(j, pos);
+						target->set_neighbor(new_child, nd.first, nd.second);
 					}
 				}
 			}
@@ -1595,7 +1602,7 @@ public:
 		leaf = false;
 		BRsub = true;
 
-		// Step 4: Assign prcpnbs for children and re-assign prcpnbs for prcpnbs and their children.
+		// Step 4: Assign neighbors for children and re-assign neighbors for neighbors and their children.
 
 		for (int i = 0; i < (is_root() ? boxsize : subsize); ++i)
 		{
@@ -1612,16 +1619,16 @@ public:
 					cout << endl << "direction " << j << ":";
 				if (Noisity >= 14)
 					cout << endl << "direction " << j << ":";
-				// Principle negative j-prcpnb.
+				// Principle negative j-neighbor.
 				for (int k = 0; k < 2; ++k)
 				{
 					bool pos = bool(k % 2);
-					target = new_child->find_prcpnb(j, pos, show);
-					new_child->set_prcpnb(target, j, pos);
+					target = new_child->find_neighbor(j, pos, show);
+					new_child->set_neighbor(target, j, pos);
 					if (new_child->align_to(target))
 					{
-						pair<int, bool> nd = new_child->prcpnb_dir(j, pos);
-						target->set_prcpnb(new_child, nd.first, nd.second);
+						pair<int, bool> nd = new_child->neighbor_dir(j, pos);
+						target->set_neighbor(new_child, nd.first, nd.second);
 					}
 				}
 			}
@@ -1634,11 +1641,11 @@ public:
 			T_Split(show);
 		else if (T == -1)
 			R_Split(show);
-		
+		/*
 		else if (Bt->width() > 2 * varepsilon)
 			T_Split(show);
 		else
-			R_Split(show);
+			R_Split(show);*/
 		else if (Bt->width() > 0.125)
 			T_Split(show);
 		else if (Br->width() * r0 > 0.125)
@@ -1648,82 +1655,82 @@ public:
 		else
 			R_Split(show);
 	}
-	// Check if a box is a neighbor box (not necessarily principal).
+	// Check if a box is a neighbor box (not necessarily principle).
 	bool is_neighbor(SE3Box* B)
 	{
 		return(BT()->is_neighbor(B->BT()) && BR()->is_intersect(B->BR())) || (BT()->is_intersect(B->BT()) && BR()->is_neighbor(B->BR()));
 	}
-	// Collection of all neighbor boxes (not necessarily principal) in B.
+	// Collection of all neighbor boxes (not necessarily principle) in B.
 	vector<SE3Box*> adj_neighbors(SE3Box* B)
 	{
-		vector<SE3Box*> prcpnbs;
+		vector<SE3Box*> neighbors;
 		if (B == NULL)
-			return prcpnbs;
-		if (!is_prcpnb(B))
-			return prcpnbs;
+			return neighbors;
+		if (!is_neighbor(B))
+			return neighbors;
 		else if (B->Leaf())
-			prcpnbs.push_back(B);
+			neighbors.push_back(B);
 		else
 			for (int i = 0; i < subsize; ++i)
 			{
-				vector<SE3Box*> subprcpnbs = adj_prcpnbs(B->child(i));
-				for (int j = 0; j < subprcpnbs.size(); ++j)
-					prcpnbs.push_back(subprcpnbs[j]);
+				vector<SE3Box*> subneighbors = adj_neighbors(B->child(i));
+				for (int j = 0; j < subneighbors.size(); ++j)
+					neighbors.push_back(subneighbors[j]);
 			}
-		return prcpnbs;
+		return neighbors;
 	}
-	// Collection of all neighbor boxes (not necessarily principal).
+	// Collection of all neighbor boxes (not necessarily principle).
 	vector<SE3Box*> all_adj_neighbors(bool show = false)
 	{
 		auto start_time = std::chrono::high_resolution_clock::now();
-		vector<SE3Box*> prcpnbs;
-		vector<SE3Box*> subprcpnbs;
+		vector<SE3Box*> neighbors;
+		vector<SE3Box*> subneighbors;
 		for (int i = 0; i < dim; ++i)
 		{
 			if (Noisity >= 14)
 				cout << endl << i;
-			subprcpnbs = adj_prcpnbs(neg_prcpnb(i));
+			subneighbors = adj_neighbors(neg_neighbor(i));
 			if (Noisity >= 14)
 			{
 				cout << endl;
-				if (neg_prcpnb(i) != NULL)
-					neg_prcpnb(i)->show_code();
+				if (neg_neighbor(i) != NULL)
+					neg_neighbor(i)->show_code();
 				else
 					cout << "NULL";
 			}
-			for (int j = 0; j < subprcpnbs.size(); ++j)
+			for (int j = 0; j < subneighbors.size(); ++j)
 			{
-				prcpnbs.push_back(subprcpnbs[j]);
+				neighbors.push_back(subneighbors[j]);
 				if (Noisity >= 14)
 				{
 					cout << endl;
-					subprcpnbs[j]->show_code();
+					subneighbors[j]->show_code();
 				}
 			}
-			subprcpnbs = adj_prcpnbs(pos_prcpnb(i));
+			subneighbors = adj_neighbors(pos_neighbor(i));
 			if (Noisity >= 14)
 			{
 				cout << endl;
-				if (pos_prcpnb(i) != NULL)
-					pos_prcpnb(i)->show_code();
+				if (pos_neighbor(i) != NULL)
+					pos_neighbor(i)->show_code();
 				else
 					cout << "NULL";
 			}
-			for (int j = 0; j < subprcpnbs.size(); ++j)
+			for (int j = 0; j < subneighbors.size(); ++j)
 			{
-				prcpnbs.push_back(subprcpnbs[j]);
+				neighbors.push_back(subneighbors[j]);
 				if (Noisity >= 14)
 				{
 					cout << endl;
-					subprcpnbs[j]->show_code();
+					subneighbors[j]->show_code();
 				}
 			}
 		}
 		auto end_time = std::chrono::high_resolution_clock::now();
-		find_prcpnb_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-		return prcpnbs;
+		find_neighbor_time += std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+		return neighbors;
 	}
-	// cout this.
+	// cout *this.
 	void out(ostream& os = cout, int l = 0)
 	{
 		if (l > MAXSHOW)
@@ -1746,27 +1753,27 @@ public:
 			children[i]->out(os, l + 1);
 		}
 	}
-	// cout principal neighbors.
-	void show_prcpnb(ostream& os = cout, int l = 0)
+	// cout *neighbors.
+	void show_neighbor(ostream& os = cout, int l = 0)
 	{
 		for (int i = 0; i < dim; ++i)
 		{
 			for (int j = 0; j < l; ++j)
 				os << "      ";
-			os << "prcpnb pos " << i << ": ";
-			if (pos_prcpnb(i) != NULL)
+			os << "neighbor pos " << i << ": ";
+			if (pos_neighbor(i) != NULL)
 			{
-				pos_prcpnb(i)->show_code(os, l);
+				pos_neighbor(i)->show_code(os, l);
 				os << endl;
 			}
 			else
 				os << "NULL" << endl;
 			for (int j = 0; j < l; ++j)
 				os << "      ";
-			os << "prcpnb neg " << i << ": ";
-			if (neg_prcpnb(i) != NULL)
+			os << "neighbor neg " << i << ": ";
+			if (neg_neighbor(i) != NULL)
 			{
-				neg_prcpnb(i)->show_code(os, l);
+				neg_neighbor(i)->show_code(os, l);
 				os << endl;
 			}
 			else
@@ -1800,17 +1807,17 @@ public:
 double Sep(SE3Box* b, SE3Box* p)
 {
 	return Sep(b->Range(), p->Range()).norm();
-	
+	/*
 	double BTSep = Sep(b->BT()->Range(), p->BT()->Range()).norm();
 	if (BTSep > 0)
 		return BTSep;
 	else
-		return Sep(b->BR()->Range(), p->BR()->Range()).norm();
+		return Sep(b->BR()->Range(), p->BR()->Range()).norm();*/
 	//return 10 * Sep(b->BT()->Range(), p->BT()->Range()).norm() + Sep(b->BR()->Range(), p->BR()->Range()).norm();
 }
 
 SE3Box* to_box(int ID)
 {
 	return SE3list[ID];
-}*/
+}
 #endif

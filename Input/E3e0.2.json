@@ -1,0 +1,29 @@
+{
+	"startOx" : -3.5,
+	"startOy" : -3.5,
+	"startOz" : -3.5,
+	"startAphi" : 0,
+	"startAtheta" : 0,
+	"startBtheta" : 0,
+	"goalOx" : 3.5,
+	"goalOy" : 3.5,
+	"goalOz" : 3.5,
+	"goalAphi" : 180,
+	"goalAtheta" : 0,
+	"goalBtheta" : 0,
+	"epsilon" : 0.2,
+	"envrange" : 4,
+	"edgeL" : 1.0,
+	"Qtype" : "rec",
+	"ExpandLimit" : 1000000,
+	"show" : true,
+	"ExpandShow" : 4000,
+	"DrawBox" : true,
+	"hint": [],
+	"CheckYellow": false,
+	"AlwaysFullClassify": false,
+	"Noisity": 0,
+	"obstacle": "GuardedHole"
+}
+
+// The nlohmann json cannot read footnotes like this in the middle of json.//

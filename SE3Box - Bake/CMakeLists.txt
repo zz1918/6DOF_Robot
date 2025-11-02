@@ -13,17 +13,3 @@ if (NOT TARGET Bimap)
 endif()
 target_link_libraries(SE3Box PUBLIC Bimap)
 target_include_directories(SE3Box PUBLIC "../Bimap")
-
-if (NOT TARGET BinStr)
-	add_subdirectory("../BinStr" BinStr)
-endif()
-target_link_libraries(SE3Box PUBLIC BinStr)
-target_include_directories(SE3Box PUBLIC "../BinStr")
-
-if (NOT TARGET Indicator)
-	add_subdirectory("../Indicator" Indicator)
-endif()
-target_link_libraries(SE3Box PUBLIC Indicator)
-target_include_directories(SE3Box PUBLIC "../Indicator")
-
-

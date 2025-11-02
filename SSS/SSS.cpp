@@ -2391,12 +2391,12 @@ public:
 		vector<Box*> leaves = current_leaves();
 		if (Noisity >= 4)
 			reset_viewer();
-		if (Noisity >= 7)
+		if (Noisity >= 4)
 			cout << "Drawing the initial environment." << endl;
 		for (int i = 0; i < leaves.size(); ++i)
 			if (!isVor(leaves[i]))
 				new_forbid.insert(leaves[i]->ID());
-			else if (Noisity >= 7)
+			else if (Noisity >= 4)
 				switch (getcolor(leaves[i], C->psize() - 1))
 				{
 				case GREEN: viewer.add_box(leaves[i], Vector3d(0, 1, 0)); break;
@@ -2411,6 +2411,11 @@ public:
 		if (Noisity >= 4)
 			cout << "Now finding an initial path." << endl;
 		auto lpath = Global.path(gnode(BoxAlpha), gnode(BoxBeta), new_forbid, C->psize());
+		if (Noisity >= 4 && lpath.empty())
+		{
+			cout << "Initial path not found." << endl;
+			viewer.view();
+		}
 		return make_channel(lpath);
 	}
 
@@ -2422,7 +2427,11 @@ public:
 		{
 			vector<Box*> IniChannel = RecurIniChannel(show);
 			if (IniChannel.empty())
+			{
+				if (Noisity >= 4)
+					cout << "Initial channel not found." << endl;
 				break;
+			}
 			set<int> new_forbid = Global.Vlist;
 			for (int i = 0; i < IniChannel.size(); ++i)
 				new_forbid.erase(gnode(IniChannel[i])->id);
